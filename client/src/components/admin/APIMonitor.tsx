@@ -141,9 +141,26 @@ export default function APIMonitor() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Controls */}
-      <div className="flex items-center justify-between">
+    <>
+      <style>{`
+        .api-monitor-card {
+          background-color: #1e293b !important;
+          border-color: #475569 !important;
+          color: #ffffff !important;
+        }
+        .api-monitor-card * {
+          color: inherit !important;
+        }
+        .api-monitor-card .text-label {
+          color: #94a3b8 !important;
+        }
+        .api-monitor-card .text-value {
+          color: #ffffff !important;
+        }
+      `}</style>
+      <div className="space-y-6">
+        {/* Controls */}
+        <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button
             onClick={handleRefresh}
@@ -181,29 +198,29 @@ export default function APIMonitor() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {serviceStats.map((stats) => (
-              <Card key={stats.service} className="bg-slate-800 border-slate-600" style={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#ffffff' }}>
+              <Card key={stats.service} className="api-monitor-card">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       {getServiceIcon(stats.service)}
-                      <CardTitle className="text-sm font-medium" style={{ color: '#ffffff' }}>{stats.service}</CardTitle>
+                      <CardTitle className="text-sm font-medium text-value">{stats.service}</CardTitle>
                     </div>
                     {getStatusIcon(healthStatus.find(h => h.service === stats.service)?.status || 'offline')}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span style={{ color: '#94a3b8' }}>Uptime</span>
-                    <span className="font-medium" style={{ color: '#ffffff' }}>{stats.uptime.toFixed(1)}%</span>
+                    <span className="text-label">Uptime</span>
+                    <span className="font-medium text-value">{stats.uptime.toFixed(1)}%</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span style={{ color: '#94a3b8' }}>Avg Response</span>
+                    <span className="text-label">Avg Response</span>
                     <div className={`font-medium ${getResponseTimeColor(stats.averageResponseTime)}`}>
                       {Math.round(stats.averageResponseTime)}ms
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span style={{ color: '#94a3b8' }}>Error Rate</span>
+                    <span className="text-label">Error Rate</span>
                     <Badge 
                       variant={stats.errorRate < 5 ? 'default' : 'destructive'}
                     >
@@ -211,8 +228,8 @@ export default function APIMonitor() {
                     </Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span style={{ color: '#94a3b8' }}>Requests</span>
-                    <span className="font-medium" style={{ color: '#ffffff' }}>{stats.totalRequests}</span>
+                    <span className="text-label">Requests</span>
+                    <span className="font-medium text-value">{stats.totalRequests}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -223,14 +240,14 @@ export default function APIMonitor() {
         {/* Health Status Tab */}
         <TabsContent value="health" className="space-y-4">
           {healthStatus.map((service) => (
-            <Card key={service.service} className="bg-slate-800 border-slate-600" style={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#ffffff' }}>
+            <Card key={service.service} className="api-monitor-card">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     {getServiceIcon(service.service)}
                     <div>
-                      <CardTitle className="text-lg" style={{ color: '#ffffff' }}>{service.service}</CardTitle>
-                      <CardDescription style={{ color: '#94a3b8' }}>
+                      <CardTitle className="text-lg text-value">{service.service}</CardTitle>
+                      <CardDescription className="text-label">
                         Last checked: {formatTimestamp(service.lastChecked)}
                       </CardDescription>
                     </div>
@@ -246,25 +263,25 @@ export default function APIMonitor() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-1">
-                    <p className="text-sm" style={{ color: '#94a3b8' }}>Response Time</p>
+                    <p className="text-sm text-label">Response Time</p>
                     <p className={`text-lg font-medium ${getResponseTimeColor(service.responseTime)}`}>
                       {service.responseTime}ms
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm" style={{ color: '#94a3b8' }}>Uptime</p>
-                    <p className="text-lg font-medium" style={{ color: '#ffffff' }}>
+                    <p className="text-sm text-label">Uptime</p>
+                    <p className="text-lg font-medium text-value">
                       {service.uptime > 0 ? Math.min(100, (service.uptime / (service.uptime + service.errorCount)) * 100).toFixed(1) : 100}%
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm" style={{ color: '#94a3b8' }}>Error Count</p>
+                    <p className="text-sm text-label">Error Count</p>
                     <p className={`text-lg font-medium ${service.errorCount > 5 ? 'text-red-400' : 'text-green-400'}`}>
                       {service.errorCount}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm" style={{ color: '#94a3b8' }}>Status</p>
+                    <p className="text-sm text-label">Status</p>
                     <Badge variant={service.status === 'online' ? 'default' : 'destructive'}>
                       {service.status}
                     </Badge>
@@ -283,10 +300,10 @@ export default function APIMonitor() {
 
         {/* Recent Activity Tab */}
         <TabsContent value="metrics" className="space-y-4">
-          <Card className="bg-slate-800 border-slate-600" style={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#ffffff' }}>
+          <Card className="api-monitor-card">
             <CardHeader>
-              <CardTitle style={{ color: '#ffffff' }}>Recent API Calls</CardTitle>
-              <CardDescription style={{ color: '#94a3b8' }}>
+              <CardTitle className="text-value">Recent API Calls</CardTitle>
+              <CardDescription className="text-label">
                 Latest {metrics.length} API requests across all services
               </CardDescription>
             </CardHeader>
@@ -329,10 +346,10 @@ export default function APIMonitor() {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="bg-slate-800 border-slate-600" style={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#ffffff' }}>
+            <Card className="api-monitor-card">
               <CardHeader>
-                <CardTitle style={{ color: '#ffffff' }}>Error Analysis</CardTitle>
-                <CardDescription style={{ color: '#94a3b8' }}>Recent errors by service</CardDescription>
+                <CardTitle className="text-value">Error Analysis</CardTitle>
+                <CardDescription className="text-label">Recent errors by service</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -341,12 +358,12 @@ export default function APIMonitor() {
                     .map((stats) => (
                     <div key={stats.service} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium" style={{ color: '#ffffff' }}>{stats.service}</span>
+                        <span className="font-medium text-value">{stats.service}</span>
                         <Badge variant="destructive">
                           {stats.errorRate.toFixed(1)}%
                         </Badge>
                       </div>
-                      <div className="text-sm" style={{ color: '#94a3b8' }}>
+                      <div className="text-sm text-label">
                         <p>Last error: {stats.lastError}</p>
                         {stats.lastErrorTime && (
                           <p>Time: {formatTimestamp(stats.lastErrorTime)}</p>
@@ -364,17 +381,17 @@ export default function APIMonitor() {
               </CardContent>
             </Card>
 
-            <Card className="bg-slate-800 border-slate-600" style={{ backgroundColor: '#1e293b', borderColor: '#475569', color: '#ffffff' }}>
+            <Card className="api-monitor-card">
               <CardHeader>
-                <CardTitle style={{ color: '#ffffff' }}>Performance Trends</CardTitle>
-                <CardDescription style={{ color: '#94a3b8' }}>Response time trends by service</CardDescription>
+                <CardTitle className="text-value">Performance Trends</CardTitle>
+                <CardDescription className="text-label">Response time trends by service</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {healthStatus.map((service) => (
                     <div key={service.service} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium" style={{ color: '#ffffff' }}>{service.service}</span>
+                        <span className="font-medium text-value">{service.service}</span>
                         <div className="flex items-center space-x-2">
                           <span className={getResponseTimeColor(service.responseTime)}>
                             {service.responseTime}ms
@@ -397,6 +414,7 @@ export default function APIMonitor() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </>
   );
 }
