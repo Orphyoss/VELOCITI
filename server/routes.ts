@@ -168,23 +168,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // LLM endpoints
   app.post("/api/llm/query", async (req, res) => {
+    const startTime = Date.now();
+    console.log(`[API] Received LLM query request`);
+    
     try {
       const { query, type = 'genie' } = req.body;
+      console.log(`[API] Query type: ${type}`);
+      console.log(`[API] Query length: ${query?.length || 0} characters`);
       
       if (!query) {
+        console.log('[API] Error: Query is required');
         return res.status(400).json({ error: 'Query is required' });
       }
       
       let result;
       if (type === 'genie') {
+        console.log('[API] Processing as data query (genie)');
         result = await llmService.processDataQuery(query);
       } else {
+        console.log('[API] Processing as strategic analysis');
         result = await llmService.generateStrategicAnalysis(query);
       }
       
+      const duration = Date.now() - startTime;
+      console.log(`[API] LLM query completed successfully in ${duration}ms`);
+      
       res.json(result);
     } catch (error) {
-      console.error('LLM query error:', error);
+      const duration = Date.now() - startTime;
+      console.error(`[API] LLM query error after ${duration}ms:`, error);
       res.status(500).json({ error: 'Failed to process query' });
     }
   });
