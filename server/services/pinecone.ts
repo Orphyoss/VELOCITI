@@ -186,14 +186,41 @@ export class PineconeService {
 
   async deleteDocument(filename: string): Promise<void> {
     try {
-      // Delete all vectors for this document
-      await this.index.deleteMany({
-        filter: { filename }
+      console.log(`[Pinecone] Starting delete for: ${filename}`);
+      
+      // First, find all vectors by querying without filters
+      const dummyVector = new Array(1024).fill(0);
+      const queryResponse = await this.index.query({
+        vector: dummyVector,
+        topK: 10000,
+        includeMetadata: true,
+        includeValues: false
       });
-      console.log(`[Pinecone] Deleted vectors for ${filename}`);
+
+      console.log(`[Pinecone] Found ${queryResponse.matches?.length} total vectors`);
+
+      // Filter vectors that match the filename on client side
+      const matchingVectorIds: string[] = [];
+      queryResponse.matches?.forEach((match: any) => {
+        if (match.metadata?.filename === filename) {
+          matchingVectorIds.push(match.id);
+        }
+      });
+      
+      console.log(`[Pinecone] Found ${matchingVectorIds.length} vectors matching filename: ${filename}`);
+      
+      if (matchingVectorIds.length > 0) {
+        // Delete vectors by their IDs - use the deleteMany with array of IDs
+        for (const id of matchingVectorIds) {
+          await this.index.deleteOne(id);
+        }
+        console.log(`[Pinecone] Successfully deleted ${matchingVectorIds.length} vectors for ${filename}`);
+      } else {
+        console.log(`[Pinecone] No vectors found for filename: ${filename}`);
+      }
     } catch (error) {
       console.error('[Pinecone] Delete error:', error);
-      throw error;
+      throw new Error(`Failed to delete document: ${error.message}`);
     }
   }
 
