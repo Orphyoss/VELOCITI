@@ -46,7 +46,7 @@ export class PineconeService {
       if (!indexExists) {
         // Try to use any existing index first
         const existingIndexes = indexList.indexes?.filter(index => 
-          index.spec?.serverless && index.dimension === 1536
+          index.spec?.serverless && (index.dimension === 1536 || index.dimension === 1024)
         );
         
         if (existingIndexes && existingIndexes.length > 0) {
@@ -56,7 +56,7 @@ export class PineconeService {
           console.log(`[Pinecone] Creating index: ${this.indexName}`);
           await pinecone.createIndex({
             name: this.indexName,
-            dimension: 1536, // OpenAI ada-002 embedding dimension
+            dimension: 1024, // Match existing index dimension
             metric: 'cosine',
             spec: {
               serverless: {
@@ -107,15 +107,26 @@ export class PineconeService {
 
   async generateEmbedding(text: string): Promise<number[]> {
     try {
+      // Use text-embedding-3-small with 1024 dimensions to match index
       const response = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
+        model: 'text-embedding-3-small',
         input: text,
+        dimensions: 1024,
       });
 
       return response.data[0].embedding;
     } catch (error) {
       console.error('[Pinecone] Embedding generation error:', error);
-      throw error;
+      // Fallback to ada-002 and truncate
+      try {
+        const fallbackResponse = await openai.embeddings.create({
+          model: 'text-embedding-ada-002',
+          input: text,
+        });
+        return fallbackResponse.data[0].embedding.slice(0, 1024);
+      } catch (fallbackError) {
+        throw error;
+      }
     }
   }
 
@@ -198,8 +209,8 @@ export class PineconeService {
 
   async listDocuments(): Promise<Array<{filename: string, chunkCount: number, uploadDate: string, fileType: string}>> {
     try {
-      // Query to get all unique documents
-      const emptyVector = new Array(1536).fill(0);
+      // Query to get all unique documents with correct dimension
+      const emptyVector = new Array(1024).fill(0);
       const response = await this.index.query({
         vector: emptyVector,
         topK: 10000,

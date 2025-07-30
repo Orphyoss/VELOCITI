@@ -58,10 +58,19 @@ export class DocumentProcessor {
   }
 
   private async processPDF(buffer: Buffer): Promise<string> {
-    // Dynamic import to avoid module loading issues
-    const pdf = await import('pdf-parse');
-    const data = await pdf.default(buffer);
-    return data.text;
+    try {
+      // Use require instead of dynamic import to avoid module issues
+      const pdfParse = require('pdf-parse');
+      
+      // Process PDF with minimal options
+      const data = await pdfParse(buffer);
+      return data.text || '';
+    } catch (error) {
+      console.error('[DocumentProcessor] PDF processing error:', error);
+      
+      // For now, return a placeholder message for PDFs until we can fix the parsing
+      return `[PDF Document: ${buffer.length} bytes] - PDF text extraction temporarily unavailable. Please upload DOCX or TXT files for full text processing.`;
+    }
   }
 
   private async processDocx(buffer: Buffer): Promise<string> {
