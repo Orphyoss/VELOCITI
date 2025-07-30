@@ -90,8 +90,8 @@
     color: #ffffff !important;
   }
   
-  /* Force all text to be white and visible */
-  *, *::before, *::after {
+  /* Force all text to be white and visible (but not pseudo-elements) */
+  * {
     color: #ffffff !important;
   }
   
@@ -119,28 +119,54 @@
     color: #ffffff !important;
   }
   
-  /* Force card backgrounds to be dark */
+  /* Force card backgrounds to be dark with extreme specificity */
   .card,
   [class*="card"],
   .bg-card,
-  .rounded-lg.border.bg-card {
+  .rounded-lg.border.bg-card,
+  div[class*="rounded-lg"][class*="border"][class*="bg-card"],
+  .bg-slate-800 {
     background-color: #1e293b !important;
     border-color: #475569 !important;
+    color: #ffffff !important;
   }
   
-  /* Override shadcn card variables */
+  /* Completely override ALL possible card selectors */
+  [class*="Card"]:not([class*="Header"]):not([class*="Content"]):not([class*="Title"]):not([class*="Description"]),
+  [data-radix-collection-item] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+  }
+  
+  /* Override shadcn card variables globally */
   :root {
-    --card: #1e293b !important;
-    --card-foreground: #ffffff !important;
-    --border: #475569 !important;
+    --card: 30 41 59 !important;
+    --card-foreground: 255 255 255 !important;
+    --border: 71 85 105 !important;
+    --background: 30 41 59 !important;
   }
   
   .dark {
-    --card: #1e293b !important;
-    --card-foreground: #ffffff !important;
-    --border: #475569 !important;
+    --card: 30 41 59 !important;
+    --card-foreground: 255 255 255 !important;
+    --border: 71 85 105 !important;
+    --background: 30 41 59 !important;
   }
   
+  /* API Monitor Card Forced Styling */
+  .api-monitor-forced-dark,
+  .api-monitor-forced-dark * {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: #475569 !important;
+  }
+  
+  .api-monitor-forced-dark::before,
+  .api-monitor-forced-dark::after {
+    display: none !important;
+  }
+
   /* Button text */
   button,
   button * {

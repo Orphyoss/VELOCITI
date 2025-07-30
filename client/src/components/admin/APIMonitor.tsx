@@ -204,7 +204,7 @@ export default function APIMonitor() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {serviceStats.map((stats) => (
-              <Card key={stats.service} style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+              <Card key={stats.service} className="api-monitor-forced-dark !bg-slate-800 !border-slate-600 !text-white" style={{ backgroundColor: '#1e293b !important', borderColor: '#475569 !important', color: '#ffffff !important', boxShadow: 'inset 0 0 0 1000px #1e293b !important' }}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
@@ -246,7 +246,7 @@ export default function APIMonitor() {
         {/* Health Status Tab */}
         <TabsContent value="health" className="space-y-4">
           {healthStatus.map((service) => (
-            <Card key={service.service} style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+            <Card key={service.service} className="!bg-slate-800 !border-slate-600 !text-white" style={{ backgroundColor: '#1e293b !important', borderColor: '#475569 !important', color: '#ffffff !important' }}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -306,7 +306,7 @@ export default function APIMonitor() {
 
         {/* Recent Activity Tab */}
         <TabsContent value="metrics" className="space-y-4">
-          <Card style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+          <Card className="!bg-slate-800 !border-slate-600 !text-white" style={{ backgroundColor: '#1e293b !important', borderColor: '#475569 !important', color: '#ffffff !important' }}>
             <CardHeader>
               <CardTitle>Recent API Calls</CardTitle>
               <CardDescription>
@@ -352,7 +352,7 @@ export default function APIMonitor() {
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+            <Card className="!bg-slate-800 !border-slate-600 !text-white" style={{ backgroundColor: '#1e293b !important', borderColor: '#475569 !important', color: '#ffffff !important' }}>
               <CardHeader>
                 <CardTitle>Error Analysis</CardTitle>
                 <CardDescription>Recent errors by service</CardDescription>
@@ -387,7 +387,7 @@ export default function APIMonitor() {
               </CardContent>
             </Card>
 
-            <Card style={{ backgroundColor: '#1e293b', borderColor: '#475569' }}>
+            <Card className="!bg-slate-800 !border-slate-600 !text-white" style={{ backgroundColor: '#1e293b !important', borderColor: '#475569 !important', color: '#ffffff !important' }}>
               <CardHeader>
                 <CardTitle>Performance Trends</CardTitle>
                 <CardDescription>Response time trends by service</CardDescription>
