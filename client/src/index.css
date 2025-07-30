@@ -85,9 +85,40 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased;
     background-color: hsl(var(--dark-950));
-    color: hsl(var(--dark-50));
+    color: hsl(0, 0%, 95%); /* Much brighter white text */
+  }
+  
+  /* Ensure all text elements have good contrast */
+  h1, h2, h3, h4, h5, h6 {
+    color: hsl(0, 0%, 98%) !important;
+  }
+  
+  p, span, div {
+    color: hsl(0, 0%, 90%) !important;
+  }
+  
+  /* Card text visibility */
+  .card h3, .card h4, .card p, .card span {
+    color: hsl(0, 0%, 95%) !important;
+  }
+  
+  /* Specific text colors for readability */
+  .text-sm {
+    color: hsl(0, 0%, 85%) !important;
+  }
+  
+  .text-muted-foreground {
+    color: hsl(0, 0%, 75%) !important;
+  }
+  
+  /* Alert text visibility */
+  .alert-critical .card-title,
+  .alert-high .card-title,
+  .alert-medium .card-title,
+  .alert-low .card-title {
+    color: hsl(0, 0%, 98%) !important;
   }
 }
 
