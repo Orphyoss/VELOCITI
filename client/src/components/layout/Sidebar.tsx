@@ -83,14 +83,14 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-t-3 border-orange-500 bg-gradient-to-r from-gray-800 to-gray-900 relative z-10">
+      <div className="p-4 border-t-4 border-red-500 bg-gradient-to-r from-black via-gray-900 to-black relative z-20 shadow-inner">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+          <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg border border-red-400">
             <Users className="text-white text-sm" />
           </div>
           <div>
             <p className="text-sm font-bold text-white">Development Mode</p>
-            <p className="text-xs text-orange-200">No Auth Required</p>
+            <p className="text-xs text-red-200">No Auth Required</p>
           </div>
         </div>
       </div>
