@@ -264,6 +264,8 @@
     position: relative;
     z-index: 10;
     box-shadow: inset 0 0 20px rgba(255, 102, 0, 0.1);
+    padding: 16px;
+    text-align: center;
   }
 
   .alert-critical {

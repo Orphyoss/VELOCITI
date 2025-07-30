@@ -37,8 +37,8 @@ export default function AgentStatus() {
   };
 
   return (
-    <div className="pt-6 mt-6 border-t border-dark-800 px-4">
-      <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3">
+    <div className="w-full">
+      <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3 text-center">
         Agent Status
       </h3>
       <div className="space-y-2">
