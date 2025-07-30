@@ -92,14 +92,14 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
       'border rounded-lg transition-all duration-200 hover:shadow-lg',
       `alert-${alert.priority}`
     )}>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-3">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            <span className="text-lg">{getAlertIcon()}</span>
-            <Badge className={cn('text-xs font-medium px-2 py-1', getPriorityColor(alert.priority))}>
+            <span className="text-sm">{getAlertIcon()}</span>
+            <Badge className={cn('text-xs font-medium px-1.5 py-0.5', getPriorityColor(alert.priority))}>
               {alert.priority.toUpperCase()}
             </Badge>
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs px-1.5 py-0.5">
               {alert.category}
             </Badge>
           </div>
@@ -108,25 +108,21 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
           </span>
         </div>
 
-        <h4 className="font-medium text-foreground mb-2">{alert.title}</h4>
-        <p className="text-sm text-muted-foreground mb-3">{alert.description}</p>
+        <h4 className="font-medium text-foreground mb-1 text-sm">{alert.title}</h4>
+        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{alert.description}</p>
 
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center space-x-4 text-xs">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-3 text-xs">
             {alert.route && (
               <span className="text-muted-foreground">
-                Route: <span className="text-foreground font-medium">{alert.route}</span>
+                <span className="text-foreground font-medium">{alert.route}</span>
               </span>
             )}
             {alert.impact && (
-              <span className="text-muted-foreground">
-                Impact: <span className="text-foreground font-medium">{formatCurrency(alert.impact)}</span>
-              </span>
+              <span className="text-foreground font-medium">{formatCurrency(alert.impact)}</span>
             )}
             {alert.confidence && (
-              <span className="text-muted-foreground">
-                Confidence: <span className="text-foreground font-medium">{Math.round(alert.confidence * 100)}%</span>
-              </span>
+              <span className="text-foreground font-medium">{Math.round(alert.confidence * 100)}%</span>
             )}
           </div>
           
@@ -134,29 +130,29 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
             variant="ghost"
             size="sm"
             onClick={() => setExpanded(!expanded)}
-            className="text-aviation-400 hover:text-aviation-300"
+            className="text-aviation-400 hover:text-aviation-300 h-6 px-2 text-xs"
           >
             {expanded ? (
               <>
-                <ChevronUp className="w-4 h-4 mr-1" />
+                <ChevronUp className="w-3 h-3 mr-1" />
                 Less
               </>
             ) : (
               <>
-                <ChevronDown className="w-4 h-4 mr-1" />
-                Details
+                <ChevronDown className="w-3 h-3 mr-1" />
+                More
               </>
             )}
           </Button>
         </div>
 
         {expanded && (
-          <div className="border-t border-border pt-3 space-y-3">
+          <div className="border-t border-border pt-2 space-y-2">
             {/* Natural Language Analysis */}
             {showAnalysis && (
-              <div className="bg-dark-800/30 rounded-lg p-4 space-y-3">
-                <h4 className="font-medium text-dark-50 mb-2">Insights & Recommendations</h4>
-                <p className="text-dark-300 leading-relaxed text-sm">
+              <div className="bg-dark-800/30 rounded-lg p-3 space-y-2">
+                <h4 className="font-medium text-dark-50 mb-1 text-sm">Insights & Recommendations</h4>
+                <p className="text-dark-300 leading-relaxed text-xs">
                   {generateNaturalLanguageAnalysis()}
                 </p>
                 <div className="flex items-center justify-between text-xs text-dark-400">
@@ -167,8 +163,8 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-2">
-              <div className="flex space-x-2">
+            <div className="flex items-center justify-between pt-1">
+              <div className="flex space-x-1">
                 {alert.status === 'active' && (
                   <>
                     <Button
@@ -205,21 +201,21 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
             </div>
 
             {/* Feedback Section */}
-            <div className="bg-dark-800/50 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-dark-200">Help improve this alert</span>
+            <div className="bg-dark-800/50 rounded-lg p-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-dark-200">Help improve this alert</span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs px-2 bg-blue-600/20 border-blue-600/40 hover:bg-blue-600/30"
+                  className="text-xs px-2 py-1 bg-blue-600/20 border-blue-600/40 hover:bg-blue-600/30 h-6"
                   onClick={() => setShowFeedback(!showFeedback)}
                 >
-                  {showFeedback ? 'Hide Feedback' : 'Give Feedback'}
+                  {showFeedback ? 'Hide' : 'Feedback'}
                 </Button>
               </div>
               
               {showFeedback && (
-                <div className="mt-3 pt-3 border-t border-dark-700">
+                <div className="mt-2 pt-2 border-t border-dark-700">
                   <AlertFeedback
                     alertId={alert.id}
                     agentId={alert.agentId}
