@@ -39,6 +39,7 @@ export default function Header() {
       case 'agents': return 'AI Agents';
       case 'genie': return 'Databricks Genie';
       case 'strategic': return 'Strategic Analysis';
+      case 'admin': return 'Admin Dashboard';
       default: return 'Dashboard';
     }
   };

@@ -8,6 +8,7 @@ import AnalystWorkbench from "@/pages/AnalystWorkbench";
 import Agents from "@/pages/Agents";
 import DatabricsGenie from "@/pages/DatabricsGenie";
 import StrategicAnalysis from "@/pages/StrategicAnalysis";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/agents" component={Agents} />
       <Route path="/genie" component={DatabricsGenie} />
       <Route path="/strategic" component={StrategicAnalysis} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

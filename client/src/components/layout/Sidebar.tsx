@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings } from 'lucide-react';
 import AgentStatus from '../agents/AgentStatus';
 
 export default function Sidebar() {
@@ -37,6 +37,12 @@ export default function Sidebar() {
       label: 'AI Agents',
       icon: Users,
       path: '/agents'
+    },
+    {
+      id: 'admin',
+      label: 'Admin',
+      icon: Settings,
+      path: '/admin'
     }
   ];
 

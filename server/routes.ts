@@ -1,8 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
 import { storage } from "./storage";
 import { agentService } from "./services/agents";
 import { llmService } from "./services/llm";
+import { pineconeService } from "./services/pinecone";
+import { documentProcessor } from "./services/documentProcessor";
+import { apiMonitor, type PerformanceMetric } from "./services/apiMonitor";
 import { WebSocketService } from "./services/websocket";
 import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
@@ -172,13 +176,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log(`[API] Received LLM query request`);
     
     try {
-      const { query, type = 'genie' } = req.body;
+      const { query, type = 'genie', useRAG = false } = req.body;
       console.log(`[API] Query type: ${type}`);
       console.log(`[API] Query length: ${query?.length || 0} characters`);
+      console.log(`[API] RAG enabled: ${useRAG}`);
       
       if (!query) {
         console.log('[API] Error: Query is required');
         return res.status(400).json({ error: 'Query is required' });
+      }
+      
+      let context = '';
+      
+      // Add RAG context if enabled
+      if (useRAG) {
+        console.log(`[RAG] Searching for relevant context...`);
+        const ragResults = await pineconeService.searchSimilar(query, 3);
+        
+        if (ragResults.length > 0) {
+          context = ragResults.map(result => 
+            `Source: ${result.metadata.filename}\n${result.text}`
+          ).join('\n\n---\n\n');
+          
+          console.log(`[RAG] Found ${ragResults.length} relevant documents`);
+          console.log(`[RAG] Context length: ${context.length} characters`);
+        } else {
+          console.log(`[RAG] No relevant documents found`);
+        }
       }
       
       let result;
@@ -281,6 +305,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Background agent execution error:', error);
     }
   }, 5 * 60 * 1000); // Run every 5 minutes for demo
+
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      const supportedTypes = documentProcessor.getSupportedTypes();
+      if (supportedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Unsupported file type: ${file.mimetype}`));
+      }
+    }
+  });
+
+  // Middleware to log API performance
+  app.use((req, res, next) => {
+    const startTime = Date.now();
+    
+    res.on('finish', () => {
+      const responseTime = Date.now() - startTime;
+      const metric: PerformanceMetric = {
+        timestamp: new Date().toISOString(),
+        endpoint: req.path,
+        method: req.method,
+        responseTime,
+        statusCode: res.statusCode,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+      };
+      
+      apiMonitor.logRequest(metric);
+    });
+    
+    next();
+  });
+
+  // Document Management Routes
+  app.post("/api/admin/documents/upload", upload.single('document'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      console.log(`[Admin] Processing upload: ${req.file.originalname}`);
+      
+      const processed = await documentProcessor.processDocument(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+
+      await pineconeService.upsertDocument(processed.chunks);
+
+      res.json({
+        success: true,
+        document: {
+          filename: processed.filename,
+          fileType: processed.fileType,
+          fileSize: processed.fileSize,
+          chunks: processed.chunks.length
+        }
+      });
+    } catch (error) {
+      console.error('Document upload error:', error);
+      res.status(500).json({ error: 'Failed to process document' });
+    }
+  });
+
+  app.get("/api/admin/documents", async (req, res) => {
+    try {
+      const documents = await pineconeService.listDocuments();
+      const stats = await pineconeService.getIndexStats();
+      
+      res.json({
+        documents,
+        stats: {
+          totalVectors: stats.totalVectorCount || 0,
+          namespaces: stats.namespaces || {}
+        }
+      });
+    } catch (error) {
+      console.error('List documents error:', error);
+      res.status(500).json({ error: 'Failed to fetch documents' });
+    }
+  });
+
+  app.delete("/api/admin/documents/:filename", async (req, res) => {
+    try {
+      const { filename } = req.params;
+      await pineconeService.deleteDocument(filename);
+      
+      console.log(`[Admin] Deleted document: ${filename}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete document error:', error);
+      res.status(500).json({ error: 'Failed to delete document' });
+    }
+  });
+
+  app.post("/api/admin/documents/search", async (req, res) => {
+    try {
+      const { query, topK = 5 } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      const results = await pineconeService.searchSimilar(query, topK);
+      res.json({ results });
+    } catch (error) {
+      console.error('Document search error:', error);
+      res.status(500).json({ error: 'Failed to search documents' });
+    }
+  });
+
+  // API Monitoring Routes
+  app.get("/api/admin/health", async (req, res) => {
+    try {
+      const healthChecks = apiMonitor.getHealthChecks();
+      res.json({ healthChecks });
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(500).json({ error: 'Failed to fetch health status' });
+    }
+  });
+
+  app.get("/api/admin/performance", async (req, res) => {
+    try {
+      const hours = parseInt(req.query.hours as string) || 24;
+      const stats = apiMonitor.getPerformanceStats(hours);
+      const metrics = apiMonitor.getPerformanceMetrics(hours);
+      
+      res.json({
+        stats,
+        recentMetrics: metrics.slice(-100) // Last 100 requests
+      });
+    } catch (error) {
+      console.error('Performance stats error:', error);
+      res.status(500).json({ error: 'Failed to fetch performance data' });
+    }
+  });
+
+
 
   return httpServer;
 }
