@@ -21,12 +21,6 @@ export default function Sidebar() {
       path: '/workbench'
     },
     {
-      id: 'agents',
-      label: 'AI Agents',
-      icon: Users,
-      path: '/agents'
-    },
-    {
       id: 'genie',
       label: 'Databricks Genie',
       icon: Database,
@@ -37,6 +31,12 @@ export default function Sidebar() {
       label: 'Strategic Analysis',
       icon: Brain,
       path: '/strategic'
+    },
+    {
+      id: 'agents',
+      label: 'AI Agents',
+      icon: Users,
+      path: '/agents'
     }
   ];
 
