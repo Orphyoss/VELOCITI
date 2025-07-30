@@ -141,17 +141,47 @@
 }
 
 @layer components {
+  /* Sidebar styling */
+  .sidebar {
+    background: linear-gradient(180deg, hsl(220, 25%, 12%) 0%, hsl(220, 20%, 8%) 100%);
+    border-right: 2px solid hsl(var(--aviation-600));
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+  }
+  
   .nav-item {
-    @apply transition-colors duration-200;
+    @apply transition-all duration-200;
   }
 
   .nav-item.active a {
-    @apply text-white font-medium;
-    background-color: hsl(var(--aviation-600));
+    background: linear-gradient(135deg, hsl(var(--aviation-600)), hsl(var(--aviation-700)));
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+    border-left: 4px solid hsl(var(--aviation-400));
   }
 
   .nav-item:not(.active) a {
-    @apply text-muted-foreground hover:bg-secondary hover:text-foreground;
+    color: #e0e0e0 !important;
+    background-color: transparent;
+  }
+  
+  .nav-item:not(.active) a:hover {
+    background-color: hsl(220, 20%, 15%) !important;
+    color: #ffffff !important;
+    transform: translateX(4px);
+  }
+  
+  /* Sidebar header styling */
+  .sidebar-header {
+    background: linear-gradient(135deg, hsl(var(--aviation-700)), hsl(var(--aviation-800)));
+    border-bottom: 2px solid hsl(var(--aviation-600));
+  }
+  
+  /* Agent status styling */
+  .agent-status-section {
+    background: hsl(220, 25%, 10%);
+    border-top: 1px solid hsl(var(--aviation-600));
+    border-bottom: 1px solid hsl(var(--aviation-600));
   }
 
   .alert-critical {
