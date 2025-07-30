@@ -86,39 +86,57 @@
 
   body {
     @apply font-sans antialiased;
-    background-color: hsl(var(--dark-950));
-    color: hsl(0, 0%, 95%); /* Much brighter white text */
+    background-color: hsl(220, 20%, 8%);
+    color: #ffffff !important;
   }
   
-  /* Ensure all text elements have good contrast */
+  /* Force all text to be white and visible */
+  *, *::before, *::after {
+    color: #ffffff !important;
+  }
+  
+  /* Override any muted text */
+  .text-muted-foreground,
+  .text-gray-500,
+  .text-gray-400,
+  .text-slate-500,
+  .text-slate-400 {
+    color: #e5e5e5 !important;
+  }
+  
+  /* Ensure headings are bright white */
   h1, h2, h3, h4, h5, h6 {
-    color: hsl(0, 0%, 98%) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
   }
   
-  p, span, div {
-    color: hsl(0, 0%, 90%) !important;
+  /* Card content visibility */
+  .card,
+  .card *,
+  [class*="card"] *,
+  .bg-card *,
+  .bg-background * {
+    color: #ffffff !important;
   }
   
-  /* Card text visibility */
-  .card h3, .card h4, .card p, .card span {
-    color: hsl(0, 0%, 95%) !important;
+  /* Button text */
+  button,
+  button * {
+    color: #ffffff !important;
   }
   
-  /* Specific text colors for readability */
-  .text-sm {
-    color: hsl(0, 0%, 85%) !important;
+  /* Links */
+  a,
+  a * {
+    color: #ffffff !important;
   }
   
-  .text-muted-foreground {
-    color: hsl(0, 0%, 75%) !important;
-  }
-  
-  /* Alert text visibility */
-  .alert-critical .card-title,
-  .alert-high .card-title,
-  .alert-medium .card-title,
-  .alert-low .card-title {
-    color: hsl(0, 0%, 98%) !important;
+  /* Input text */
+  input,
+  textarea,
+  select {
+    color: #ffffff !important;
+    background-color: hsl(220, 20%, 15%) !important;
   }
 }
 
