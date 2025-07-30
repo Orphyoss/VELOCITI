@@ -20,11 +20,13 @@ import {
 
 interface APIHealthStatus {
   service: string;
-  status: 'healthy' | 'degraded' | 'down';
+  endpoint: string;
+  status: 'online' | 'offline' | 'degraded';
   responseTime: number;
   lastChecked: string;
   uptime: number;
-  errorRate: number;
+  errorCount: number;
+  lastError?: string;
 }
 
 interface APIMetric {
@@ -71,7 +73,7 @@ export default function APIMonitor() {
     const serviceMetrics = metrics.filter(m => m.service === service.service);
     const errorCount = serviceMetrics.filter(m => m.statusCode >= 400).length;
     const totalRequests = serviceMetrics.length;
-    const errorRate = totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0;
+    const errorRate = totalRequests > 0 ? (errorCount / totalRequests) * 100 : service.errorCount || 0;
     
     const lastError = serviceMetrics
       .filter(m => m.statusCode >= 400)
@@ -95,18 +97,18 @@ export default function APIMonitor() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'healthy': return <CheckCircle className="w-4 h-4 text-green-500" />;
+      case 'online': return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'degraded': return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      case 'down': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'offline': return <AlertCircle className="w-4 h-4 text-red-500" />;
       default: return <Activity className="w-4 h-4 text-dark-400" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'healthy': return 'text-green-500';
+      case 'online': return 'text-green-500';
       case 'degraded': return 'text-yellow-500';
-      case 'down': return 'text-red-500';
+      case 'offline': return 'text-red-500';
       default: return 'text-dark-400';
     }
   };
@@ -252,18 +254,18 @@ export default function APIMonitor() {
                   <div className="space-y-1">
                     <p className="text-sm text-dark-400">Uptime</p>
                     <p className="text-lg font-medium text-dark-50">
-                      {service.uptime.toFixed(2)}%
+                      {service.uptime > 0 ? Math.min(100, (service.uptime / (service.uptime + service.errorCount)) * 100).toFixed(1) : 100}%
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm text-dark-400">Error Rate</p>
-                    <p className={`text-lg font-medium ${service.errorRate > 5 ? 'text-red-400' : 'text-green-400'}`}>
-                      {service.errorRate.toFixed(1)}%
+                    <p className="text-sm text-dark-400">Error Count</p>
+                    <p className={`text-lg font-medium ${service.errorCount > 5 ? 'text-red-400' : 'text-green-400'}`}>
+                      {service.errorCount}
                     </p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-dark-400">Status</p>
-                    <Badge variant={service.status === 'healthy' ? 'default' : 'destructive'}>
+                    <Badge variant={service.status === 'online' ? 'default' : 'destructive'}>
                       {service.status}
                     </Badge>
                   </div>
