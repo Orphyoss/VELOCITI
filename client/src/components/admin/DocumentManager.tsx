@@ -11,13 +11,11 @@ import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface Document {
-  id: string;
   filename: string;
   fileType: string;
   chunkCount: number;
   uploadDate: string;
-  processedAt?: string;
-  status: 'processing' | 'completed' | 'failed';
+  status?: 'processing' | 'completed' | 'failed';
   error?: string;
 }
 
@@ -75,9 +73,15 @@ export default function DocumentManager() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (filename: string) => {
-      return await apiRequest(`/api/admin/documents/${filename}`, {
+      const response = await fetch(`/api/admin/documents/${filename}`, {
         method: 'DELETE',
       });
+      
+      if (!response.ok) {
+        throw new Error(`Delete failed: ${response.statusText}`);
+      }
+      
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/documents'] });
@@ -255,10 +259,10 @@ export default function DocumentManager() {
           ) : (
             <div className="space-y-4">
               {documents.map((doc) => (
-                <div key={doc.id} className="flex items-center justify-between p-4 border border-dark-600 rounded-lg hover:border-dark-500 transition-colors">
+                <div key={doc.filename} className="flex items-center justify-between p-4 border border-dark-600 rounded-lg hover:border-dark-500 transition-colors">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center justify-center w-10 h-10 bg-dark-700 rounded-lg">
-                      {getStatusIcon(doc.status)}
+                      {getStatusIcon(doc.status || 'completed')}
                     </div>
                     <div>
                       <h4 className="font-medium text-dark-50">{doc.filename}</h4>
@@ -269,14 +273,14 @@ export default function DocumentManager() {
                         </Badge>
                         <span>{formatDate(doc.uploadDate)}</span>
                       </div>
-                      {doc.status === 'failed' && doc.error && (
+                      {(doc.status === 'failed') && doc.error && (
                         <p className="text-sm text-red-400 mt-1">{doc.error}</p>
                       )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className={`text-sm font-medium ${getStatusColor(doc.status)}`}>
-                      {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                    <span className={`text-sm font-medium ${getStatusColor(doc.status || 'completed')}`}>
+                      {(doc.status || 'completed').charAt(0).toUpperCase() + (doc.status || 'completed').slice(1)}
                     </span>
                     <Button
                       variant="outline"
