@@ -1,0 +1,34 @@
+import { useEffect } from 'react';
+import { useVelocitiStore } from '@/stores/useVelocitiStore';
+import { wsService } from '@/services/websocket';
+import Sidebar from './Sidebar';
+import Header from './Header';
+
+interface AppShellProps {
+  children: React.ReactNode;
+}
+
+export default function AppShell({ children }: AppShellProps) {
+  const { setConnectionStatus } = useVelocitiStore();
+
+  useEffect(() => {
+    // Initialize WebSocket connection
+    wsService.connect();
+
+    return () => {
+      wsService.disconnect();
+    };
+  }, [setConnectionStatus]);
+
+  return (
+    <div className="flex h-screen bg-dark-950">
+      <Sidebar />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header />
+        <main className="flex-1 overflow-auto p-6 bg-dark-950">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+}

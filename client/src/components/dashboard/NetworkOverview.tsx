@@ -1,0 +1,149 @@
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/services/api';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Globe, TrendingUp, TrendingDown } from 'lucide-react';
+
+export default function NetworkOverview() {
+  const [timeframe, setTimeframe] = useState('7d');
+
+  const { data: routeData, isLoading } = useQuery({
+    queryKey: ['/api/routes/performance', timeframe],
+    queryFn: () => api.getRoutePerformance(undefined, parseInt(timeframe)),
+  });
+
+  // Mock data for top and bottom performing routes
+  const topRoutes = [
+    { code: 'LGW→FCO', name: 'London Gatwick → Rome', performance: 15.2, yield: 142.30 },
+    { code: 'STN→BCN', name: 'Stansted → Barcelona', performance: 12.7, yield: 138.45 },
+    { code: 'LTN→CDG', name: 'Luton → Paris Charles de Gaulle', performance: 8.9, yield: 156.20 },
+  ];
+
+  const bottomRoutes = [
+    { code: 'LGW→MAD', name: 'London Gatwick → Madrid', performance: -8.3, yield: 119.75 },
+    { code: 'STN→BER', name: 'Stansted → Berlin', performance: -5.7, yield: 98.50 },
+    { code: 'LTN→NAP', name: 'Luton → Naples', performance: -4.2, yield: 112.80 },
+  ];
+
+  const timeframes = [
+    { value: '1', label: '24h' },
+    { value: '7', label: '7d' },
+    { value: '30', label: '30d' },
+  ];
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: 'GBP',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatPerformance = (value: number) => {
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(1)}%`;
+  };
+
+  return (
+    <Card className="bg-dark-900 border-dark-800 mb-8">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+            <Globe className="text-aviation-500 mr-2" />
+            Network Performance
+          </CardTitle>
+          <div className="flex space-x-2">
+            {timeframes.map((tf) => (
+              <Button
+                key={tf.value}
+                variant={timeframe === tf.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTimeframe(tf.value)}
+                className={timeframe === tf.value 
+                  ? "bg-aviation-600 text-white" 
+                  : "bg-dark-800 hover:bg-dark-700 text-dark-50 border-dark-600"
+                }
+              >
+                {tf.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        {isLoading ? (
+          <div className="animate-pulse space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <div className="h-4 bg-dark-800 rounded w-1/3"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 bg-dark-800 rounded w-1/3"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+                <div className="h-12 bg-dark-800 rounded"></div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Top Performing Routes */}
+            <div>
+              <h5 className="text-sm font-medium text-green-400 mb-3 flex items-center">
+                <TrendingUp className="w-4 h-4 mr-1" />
+                Top Performing Routes
+              </h5>
+              <div className="space-y-2">
+                {topRoutes.map((route, index) => (
+                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded p-3 hover:bg-dark-700 transition-colors">
+                    <div className="flex-1">
+                      <span className="font-medium text-dark-50">{route.code}</span>
+                      <p className="text-xs text-dark-400">{route.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10">
+                        {formatPerformance(route.performance)}
+                      </Badge>
+                      <p className="text-xs text-dark-400 mt-1">{formatCurrency(route.yield)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            {/* Underperforming Routes */}
+            <div>
+              <h5 className="text-sm font-medium text-red-400 mb-3 flex items-center">
+                <TrendingDown className="w-4 h-4 mr-1" />
+                Underperforming Routes
+              </h5>
+              <div className="space-y-2">
+                {bottomRoutes.map((route, index) => (
+                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded p-3 hover:bg-dark-700 transition-colors">
+                    <div className="flex-1">
+                      <span className="font-medium text-dark-50">{route.code}</span>
+                      <p className="text-xs text-dark-400">{route.name}</p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10">
+                        {formatPerformance(route.performance)}
+                      </Badge>
+                      <p className="text-xs text-dark-400 mt-1">{formatCurrency(route.yield)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
