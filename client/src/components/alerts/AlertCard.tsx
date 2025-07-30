@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import FeedbackSystem from '../agents/FeedbackSystem';
+import AlertFeedback from './AlertFeedback';
 
 interface AlertCardProps {
   alert: Alert;
@@ -207,30 +207,20 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
             {/* Feedback Section */}
             <div className="bg-dark-800/50 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-dark-200">Rate this alert's accuracy</span>
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-8 h-8 p-0 bg-green-600/20 border-green-600/40 hover:bg-green-600/30"
-                    onClick={() => setShowFeedback(true)}
-                  >
-                    <ThumbsUp className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-8 h-8 p-0 bg-red-600/20 border-red-600/40 hover:bg-red-600/30"
-                    onClick={() => setShowFeedback(true)}
-                  >
-                    <ThumbsDown className="w-3 h-3" />
-                  </Button>
-                </div>
+                <span className="text-sm font-medium text-dark-200">Help improve this alert</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs px-2 bg-blue-600/20 border-blue-600/40 hover:bg-blue-600/30"
+                  onClick={() => setShowFeedback(!showFeedback)}
+                >
+                  {showFeedback ? 'Hide Feedback' : 'Give Feedback'}
+                </Button>
               </div>
               
               {showFeedback && (
                 <div className="mt-3 pt-3 border-t border-dark-700">
-                  <FeedbackSystem
+                  <AlertFeedback
                     alertId={alert.id}
                     agentId={alert.agentId}
                     onSubmitted={() => setShowFeedback(false)}
