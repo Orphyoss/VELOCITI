@@ -119,6 +119,14 @@
     color: #ffffff !important;
   }
   
+  /* Force card backgrounds to be dark */
+  .card,
+  [class*="card"],
+  .bg-card {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+  }
+  
   /* Button text */
   button,
   button * {
