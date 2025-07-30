@@ -456,7 +456,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Memory system endpoints
+  const { memoryService } = await import('./services/memoryService');
 
+  app.get('/api/memory/stats', async (req, res) => {
+    try {
+      const stats = await memoryService.getMemoryStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Memory stats error:', error);
+      res.status(500).json({ error: 'Failed to get memory stats' });
+    }
+  });
+
+  app.post('/api/memory/feedback', async (req, res) => {
+    try {
+      const { agentId, query, response, feedback, userId } = req.body;
+      
+      if (!agentId || !query || !response || !feedback || !userId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      await memoryService.recordAgentFeedback(agentId, query, response, feedback, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Memory feedback error:', error);
+      res.status(500).json({ error: 'Failed to record feedback' });
+    }
+  });
+
+  app.post('/api/memory/enhance-query', async (req, res) => {
+    try {
+      const { query, userId, sessionId } = req.body;
+      
+      if (!query || !userId || !sessionId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      const enhanced = await memoryService.enhanceQueryWithMemory(query, userId, sessionId);
+      res.json(enhanced);
+    } catch (error) {
+      console.error('Query enhancement error:', error);
+      res.status(500).json({ error: 'Failed to enhance query' });
+    }
+  });
+
+  app.delete('/api/memory/context/:userId/:sessionId', async (req, res) => {
+    try {
+      const { userId, sessionId } = req.params;
+      await memoryService.clearUserContext(userId, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Clear context error:', error);
+      res.status(500).json({ error: 'Failed to clear context' });
+    }
+  });
 
   return httpServer;
 }

@@ -3,8 +3,9 @@ import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import AppShell from '@/components/layout/AppShell';
 import DocumentManager from '@/components/admin/DocumentManager';
 import APIMonitor from '@/components/admin/APIMonitor';
+import MemoryStats from '@/components/memory/MemoryStats';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, Activity } from 'lucide-react';
+import { FileText, Activity, Brain } from 'lucide-react';
 
 export default function Admin() {
   const [activeTab, setActiveTab] = useState('documents');
@@ -34,6 +35,10 @@ export default function Admin() {
               <Activity className="w-4 h-4" />
               <span>API Monitoring</span>
             </TabsTrigger>
+            <TabsTrigger value="memory" className="flex items-center space-x-2">
+              <Brain className="w-4 h-4" />
+              <span>Memory System</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="documents" className="space-y-6">
@@ -42,6 +47,10 @@ export default function Admin() {
 
           <TabsContent value="monitoring" className="space-y-6">
             <APIMonitor />
+          </TabsContent>
+
+          <TabsContent value="memory" className="space-y-6">
+            <MemoryStats />
           </TabsContent>
         </Tabs>
       </div>
