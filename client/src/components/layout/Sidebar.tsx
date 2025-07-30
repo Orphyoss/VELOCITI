@@ -50,7 +50,7 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Velociti</h1>
-            <p className="text-xs text-blue-200">Intelligence Platform</p>
+            <p className="text-xs" style={{ color: '#ffaa66' }}>Intelligence Platform</p>
           </div>
         </div>
       </div>
@@ -65,11 +65,11 @@ export default function Sidebar() {
             <div key={item.id} className={`nav-item ${isActive ? 'active' : ''}`}>
               <Link href={item.path}>
                 <a 
-                  className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors"
+                  className="flex items-center space-x-3 text-sm font-medium"
                   onClick={() => setCurrentModule(item.id)}
                 >
-                  <Icon className="w-5 h-5" />
-                  <span>{item.label}</span>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
                 </a>
               </Link>
             </div>
