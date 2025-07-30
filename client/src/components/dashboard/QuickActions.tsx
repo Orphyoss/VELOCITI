@@ -59,76 +59,7 @@ export default function QuickActions() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      {/* Data Interrogation */}
-      <Card className="bg-dark-900 border-dark-800">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-            <Search className="text-aviation-500 mr-2" />
-            Quick Query
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            placeholder="Ask about your data in natural language..."
-            value={dataQuery}
-            onChange={(e) => setDataQuery(e.target.value)}
-            className="bg-dark-800 border-dark-700 text-dark-50 placeholder-dark-400"
-            onKeyDown={(e) => e.key === 'Enter' && handleDataQuery()}
-          />
-          <Button 
-            onClick={handleDataQuery}
-            disabled={dataLoading || !dataQuery.trim()}
-            className="w-full bg-aviation-600 hover:bg-aviation-700"
-          >
-            {dataLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Querying...
-              </>
-            ) : (
-              'Query Data'
-            )}
-          </Button>
-          <div className="text-xs text-dark-400">
-            <p>Recent: "Show LGW routes performance last 7 days"</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Strategic Analysis */}
-      <Card className="bg-dark-900 border-dark-800">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-            <Brain className="text-aviation-500 mr-2" />
-            Strategic Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Textarea
-            placeholder="Ask for strategic analysis and recommendations..."
-            value={strategicQuery}
-            onChange={(e) => setStrategicQuery(e.target.value)}
-            className="bg-dark-800 border-dark-700 text-dark-50 placeholder-dark-400 resize-none"
-            rows={3}
-          />
-          <Button 
-            onClick={handleStrategicAnalysis}
-            disabled={strategicLoading || !strategicQuery.trim()}
-            className="w-full bg-purple-600 hover:bg-purple-700"
-          >
-            {strategicLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              'Analyze'
-            )}
-          </Button>
-        </CardContent>
-      </Card>
-
+    <div className="grid grid-cols-1 gap-6 mb-8">
       {/* Agent Feedback */}
       <Card className="bg-dark-900 border-dark-800">
         <CardHeader>
