@@ -122,9 +122,23 @@
   /* Force card backgrounds to be dark */
   .card,
   [class*="card"],
-  .bg-card {
+  .bg-card,
+  .rounded-lg.border.bg-card {
     background-color: #1e293b !important;
     border-color: #475569 !important;
+  }
+  
+  /* Override shadcn card variables */
+  :root {
+    --card: #1e293b !important;
+    --card-foreground: #ffffff !important;
+    --border: #475569 !important;
+  }
+  
+  .dark {
+    --card: #1e293b !important;
+    --card-foreground: #ffffff !important;
+    --border: #475569 !important;
   }
   
   /* Button text */
