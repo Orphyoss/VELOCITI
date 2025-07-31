@@ -5,7 +5,7 @@ import { api } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
 import MorningBriefing from '@/components/dashboard/MorningBriefing';
 import MetricsOverview from '@/components/dashboard/MetricsOverview';
-import QuickActions from '@/components/dashboard/QuickActions';
+
 import NetworkOverview from '@/components/dashboard/NetworkOverview';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 
@@ -37,8 +37,7 @@ export default function Dashboard() {
         {/* Key Metrics */}
         <MetricsOverview />
         
-        {/* Quick Actions */}
-        <QuickActions />
+
         
         {/* Network Performance & Recent Activity - Side by side on desktop */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
