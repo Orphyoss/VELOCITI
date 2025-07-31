@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, ChevronUp, ExternalLink, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import AlertFeedback from './AlertFeedback';
+// AlertFeedback moved to Analyst Workbench
 
 interface AlertCardProps {
   alert: Alert;
@@ -17,7 +17,7 @@ interface AlertCardProps {
 export default function AlertCard({ alert, showDetails = false }: AlertCardProps) {
   const [expanded, setExpanded] = useState(showDetails);
   const [loading, setLoading] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
+  // showFeedback removed - feedback moved to Analyst Workbench
   const [showAnalysis, setShowAnalysis] = useState(false);
   const { updateAlertStatus } = useVelocitiStore();
 
@@ -200,29 +200,19 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
               </Button>
             </div>
 
-            {/* Feedback Section */}
+            {/* Feedback Section - Moved to Analyst Workbench */}
             <div className="bg-dark-800/50 rounded-lg p-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-dark-200">Help improve this alert</span>
+                <span className="text-xs font-medium text-dark-200">Provide feedback via Analyst Workbench</span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs px-2 py-1 bg-blue-600/20 border-blue-600/40 hover:bg-blue-600/30 h-6"
-                  onClick={() => setShowFeedback(!showFeedback)}
+                  className="text-xs px-2 py-1 bg-aviation-600/20 border-aviation-600/40 hover:bg-aviation-600/30 h-6"
+                  onClick={() => window.location.href = '/workbench'}
                 >
-                  {showFeedback ? 'Hide' : 'Feedback'}
+                  Feedback
                 </Button>
               </div>
-              
-              {showFeedback && (
-                <div className="mt-2 pt-2 border-t border-dark-700">
-                  <AlertFeedback
-                    alertId={alert.id}
-                    agentId={alert.agentId}
-                    onSubmitted={() => setShowFeedback(false)}
-                  />
-                </div>
-              )}
             </div>
           </div>
         )}

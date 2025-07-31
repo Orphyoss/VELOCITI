@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
-import FeedbackSystem from '@/components/agents/FeedbackSystem';
+// FeedbackSystem moved to Analyst Workbench
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,7 @@ import { Agent } from '@/types';
 export default function Agents() {
   const { setCurrentModule, agents, setAgents } = useVelocitiStore();
   const [selectedAgent, setSelectedAgent] = useState<string>('competitive');
-  const [showFeedback, setShowFeedback] = useState(false);
+  // showFeedback state removed - feedback moved to Analyst Workbench
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -427,62 +427,22 @@ export default function Agents() {
           </TabsContent>
         </Tabs>
 
-        {/* Feedback Section */}
+        {/* Agent Feedback - Moved to Analyst Workbench */}
         <Card className="bg-slate-900/80 border-slate-700 backdrop-blur-sm">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-bold text-white">Agent Learning System</CardTitle>
-              <Button
-                onClick={() => setShowFeedback(!showFeedback)}
-                variant="outline"
-                className="bg-orange-600/10 hover:bg-orange-600/20 border-orange-500/50 text-orange-400 hover:text-orange-300 px-4 py-2"
-              >
-                {showFeedback ? 'Hide' : 'Show'} Feedback Panel
-              </Button>
-            </div>
+            <CardTitle className="text-xl font-bold text-white">Agent Learning System</CardTitle>
+            <p className="text-slate-300 text-sm mt-2">
+              Agent feedback and learning controls have been moved to the Analyst Workbench for better workflow integration.
+            </p>
           </CardHeader>
-          {showFeedback && (
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-lg p-4 border border-slate-700/50">
-                  <h4 className="font-bold text-white mb-3 flex items-center">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
-                    Provide Feedback
-                  </h4>
-                  <FeedbackSystem
-                    alertId="sample-alert-id"
-                    agentId={selectedAgent}
-                    onSubmitted={() => setShowFeedback(false)}
-                  />
-                </div>
-                <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-lg p-4 border border-slate-700/50">
-                  <h4 className="font-bold text-white mb-3 flex items-center">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-                    Learning Progress
-                  </h4>
-                  <div className="space-y-3">
-                    {agents.map((agent: Agent) => (
-                      <div key={agent.id} className="bg-slate-800/60 rounded-lg p-3 border border-slate-700/30">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-white font-bold capitalize">{agent.id}</span>
-                          <Badge variant="outline" className="border-slate-600 text-slate-300 bg-slate-800/50 text-xs">
-                            {agent.status}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center space-x-3 mb-2">
-                          <Progress value={parseFloat(agent.accuracy)} className="flex-1 h-2" />
-                          <span className="text-white font-bold">{agent.accuracy}%</span>
-                        </div>
-                        <p className="text-slate-400 text-xs">
-                          {agent.successfulPredictions} successful predictions from {agent.totalAnalyses} analyses
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          )}
+          <CardContent>
+            <Button
+              onClick={() => window.location.href = '/workbench'}
+              className="bg-aviation-600 hover:bg-aviation-700 text-white px-6 py-2"
+            >
+              Go to Agent Feedback
+            </Button>
+          </CardContent>
         </Card>
       </div>
     </AppShell>
