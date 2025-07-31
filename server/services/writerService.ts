@@ -36,14 +36,26 @@ class WriterService {
     }
 
     try {
+      // Enhanced system prompt with RAG awareness
+      let systemPrompt = `You are an expert revenue management analyst for EasyJet. Provide strategic insights and analysis based on airline industry data. Focus on actionable recommendations for revenue optimization, competitive positioning, and network performance.`;
+      
+      // Prepare user prompt with RAG context if available
+      let userPrompt = prompt;
+      if (context?.ragContext) {
+        systemPrompt += ` Use the provided document context to inform your analysis with specific data and insights from EasyJet's internal documents and industry reports.`;
+        userPrompt = `${prompt}\n\n=== RELEVANT DOCUMENT CONTEXT ===\n${context.ragContext}\n\n=== END CONTEXT ===\n\nPlease provide strategic analysis incorporating insights from the above context where relevant.`;
+      } else if (context) {
+        userPrompt = `${prompt}\n\nContext: ${JSON.stringify(context, null, 2)}`;
+      }
+
       const messages: WriterMessage[] = [
         {
           role: 'system',
-          content: `You are an expert revenue management analyst for EasyJet. Provide strategic insights and analysis based on airline industry data. Focus on actionable recommendations for revenue optimization, competitive positioning, and network performance.`
+          content: systemPrompt
         },
         {
           role: 'user',
-          content: context ? `${prompt}\n\nContext: ${JSON.stringify(context, null, 2)}` : prompt
+          content: userPrompt
         }
       ];
 

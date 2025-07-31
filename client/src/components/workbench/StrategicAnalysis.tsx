@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LLMResponse } from '@/types';
 
@@ -23,6 +24,7 @@ export default function StrategicAnalysis() {
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<'openai' | 'writer'>('writer');
+  const [useRAG, setUseRAG] = useState(true);
   const { llmProvider } = useVelocitiStore();
   const { toast } = useToast();
 
@@ -47,7 +49,7 @@ export default function StrategicAnalysis() {
       
       toast({
         title: "Analysis Complete",
-        description: `Strategic analysis generated successfully using ${selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}`,
+        description: `Strategic analysis generated using ${selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}${useRAG ? ' with RAG context' : ''}`,
       });
     },
     onError: (error) => {
@@ -61,10 +63,35 @@ export default function StrategicAnalysis() {
 
   const writerAnalysisMutation = useMutation({
     mutationFn: async (promptText: string) => {
+      // Get RAG context if enabled
+      let ragContext = '';
+      if (useRAG) {
+        try {
+          const ragResponse = await fetch('/api/pinecone/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: promptText, topK: 3 })
+          });
+          if (ragResponse.ok) {
+            const ragData = await ragResponse.json();
+            if (ragData.results && ragData.results.length > 0) {
+              ragContext = ragData.results.map((result: any) => 
+                `Source: ${result.metadata.filename}\n${result.text}`
+              ).join('\n\n---\n\n');
+            }
+          }
+        } catch (error) {
+          console.warn('RAG context retrieval failed, proceeding without context:', error);
+        }
+      }
+
       const response = await fetch('/api/writer/strategic-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptText })
+        body: JSON.stringify({ 
+          prompt: promptText,
+          context: ragContext ? { ragContext } : undefined
+        })
       });
       if (!response.ok) throw new Error('Writer API request failed');
       return response.json();
@@ -174,9 +201,20 @@ export default function StrategicAnalysis() {
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-xs text-dark-400">
-                <span>Press Ctrl+Enter to analyze •</span>
-                <span>RAG context enabled</span>
+              <div className="flex items-center space-x-4 text-xs text-dark-400">
+                <span>Press Ctrl+Enter to analyze</span>
+                <div className="flex items-center space-x-2">
+                  <Database className="w-4 h-4" />
+                  <span>RAG Context:</span>
+                  <Switch 
+                    checked={useRAG} 
+                    onCheckedChange={setUseRAG}
+                    className="scale-75"
+                  />
+                  <span className={useRAG ? 'text-green-400' : 'text-dark-500'}>
+                    {useRAG ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
               </div>
               <Button 
                 onClick={handleSubmit}
