@@ -71,7 +71,7 @@ export default function Sidebar() {
             <Link key={item.id} href={item.path}>
               <div 
                 className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-sm font-medium cursor-pointer`}
-                onClick={() => setCurrentModule(item.id)}
+                onClick={() => setCurrentModule(item.id as any)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="truncate">{item.label}</span>
