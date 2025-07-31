@@ -348,11 +348,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Performance monitoring endpoint
   app.get("/api/monitor/performance", async (req, res) => {
     try {
-      const healthMetrics = await apiMonitor.getHealthStatus();
+      const healthMetrics = apiMonitor.getHealthChecks();
       const cacheStats = cacheService.getStats();
       
-      // Calculate performance metrics
-      const responseTimeMetrics = Object.values(healthMetrics).map(m => m.responseTime);
+      // Calculate performance metrics from health checks
+      const responseTimeMetrics = healthMetrics
+        .filter(check => check.responseTime !== undefined)
+        .map(check => check.responseTime as number);
       const avgResponseTime = responseTimeMetrics.length > 0 
         ? responseTimeMetrics.reduce((a, b) => a + b, 0) / responseTimeMetrics.length 
         : 0;

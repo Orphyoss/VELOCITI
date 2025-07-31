@@ -1,8 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import { db } from './supabase';
-import { alerts, systemMetrics } from '@shared/schema';
-import { desc } from 'drizzle-orm';
+import { storage } from '../storage';
 
 export class WebSocketService {
   private wss: WebSocketServer;
@@ -64,11 +62,8 @@ export class WebSocketService {
 
   private async sendInitialData(ws: WebSocket) {
     try {
-      // Send recent alerts
-      const recentAlerts = await db.select()
-        .from(alerts)
-        .orderBy(desc(alerts.createdAt))
-        .limit(10);
+      // Send recent alerts using storage interface
+      const recentAlerts = await storage.getAlerts(10);
 
       ws.send(JSON.stringify({
         type: 'initial_data',
