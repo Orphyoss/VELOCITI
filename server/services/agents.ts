@@ -19,15 +19,27 @@ export class AgentService {
       const competitiveAlerts = await this.detectCompetitiveChanges();
       
       for (const alert of competitiveAlerts) {
-        await db.insert(alerts).values(alert);
-        
-        // Log activity
-        await db.insert(activities).values({
-          type: 'alert',
-          title: 'Competitive Alert Generated',
-          description: `Competitive Agent detected: ${alert.title}`,
-          agentId: 'competitive',
-        });
+        try {
+          console.log(`[Competitive Agent] Inserting alert:`, {
+            title: alert.title,
+            category: alert.category,
+            priority: alert.priority
+          });
+          
+          await db.insert(alerts).values(alert);
+          
+          await db.insert(activities).values({
+            type: 'alert',
+            title: 'Competitive Alert Generated',
+            description: `Competitive Agent detected: ${alert.title}`,
+            agentId: 'competitive',
+          });
+          
+          console.log(`[Competitive Agent] Successfully inserted alert: ${alert.title}`);
+        } catch (error) {
+          console.error(`[Competitive Agent] Failed to insert alert:`, error);
+          console.error(`[Competitive Agent] Alert data:`, alert);
+        }
       }
 
       // Update agent metrics
@@ -46,14 +58,27 @@ export class AgentService {
       const performanceAlerts = await this.analyzeRoutePerformance();
       
       for (const alert of performanceAlerts) {
-        await db.insert(alerts).values(alert);
-        
-        await db.insert(activities).values({
-          type: 'analysis',
-          title: 'Performance Analysis Complete',
-          description: `Performance Agent analyzed route: ${alert.route}`,
-          agentId: 'performance',
-        });
+        try {
+          console.log(`[Performance Agent] Inserting alert:`, {
+            title: alert.title,
+            category: alert.category,
+            priority: alert.priority
+          });
+          
+          await db.insert(alerts).values(alert);
+          
+          await db.insert(activities).values({
+            type: 'analysis',
+            title: 'Performance Analysis Complete',
+            description: `Performance Agent analyzed route: ${alert.route}`,
+            agentId: 'performance',
+          });
+          
+          console.log(`[Performance Agent] Successfully inserted alert: ${alert.title}`);
+        } catch (error) {
+          console.error(`[Performance Agent] Failed to insert alert:`, error);
+          console.error(`[Performance Agent] Alert data:`, alert);
+        }
       }
 
       await this.updateAgentMetrics('performance', performanceAlerts.length);
@@ -71,14 +96,27 @@ export class AgentService {
       const networkAlerts = await this.analyzeNetworkOptimization();
       
       for (const alert of networkAlerts) {
-        await db.insert(alerts).values(alert);
-        
-        await db.insert(activities).values({
-          type: 'analysis',
-          title: 'Network Analysis Complete',
-          description: `Network Agent identified: ${alert.title}`,
-          agentId: 'network',
-        });
+        try {
+          console.log(`[Network Agent] Inserting alert:`, {
+            title: alert.title,
+            category: alert.category,
+            priority: alert.priority
+          });
+          
+          await db.insert(alerts).values(alert);
+          
+          await db.insert(activities).values({
+            type: 'analysis',
+            title: 'Network Analysis Complete',
+            description: `Network Agent identified: ${alert.title}`,
+            agentId: 'network',
+          });
+          
+          console.log(`[Network Agent] Successfully inserted alert: ${alert.title}`);
+        } catch (error) {
+          console.error(`[Network Agent] Failed to insert alert:`, error);
+          console.error(`[Network Agent] Alert data:`, alert);
+        }
       }
 
       await this.updateAgentMetrics('network', networkAlerts.length);

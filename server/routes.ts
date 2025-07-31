@@ -246,32 +246,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Enhanced streaming endpoints
   app.post("/api/llm/stream", async (req, res) => {
+    const startTime = Date.now();
+    
     try {
       const { query, type = 'strategic', useRAG = false, provider = 'openai' } = req.body;
       
+      console.log(`[API] Starting streaming request:`, {
+        provider,
+        type,
+        useRAG,
+        queryLength: query?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+      
       if (!query) {
+        console.error('[API] Streaming error: Query is required');
         return res.status(400).json({ error: 'Query is required' });
       }
 
       // Get RAG context if enabled
       let ragContext = '';
       if (useRAG) {
+        console.log('[API] Fetching RAG context...');
         const ragResults = await pineconeService.searchSimilar(query, 3);
         if (ragResults.length > 0) {
           ragContext = ragResults.map(result => 
             `Source: ${result.metadata.filename}\n${result.text}`
           ).join('\n\n---\n\n');
+          console.log(`[API] RAG context retrieved: ${ragContext.length} characters from ${ragResults.length} documents`);
+        } else {
+          console.log('[API] No RAG context found');
         }
       }
 
       if (provider === 'writer') {
+        console.log('[API] Using Writer API for streaming');
         await writerService.generateStrategicAnalysis(query, { ragContext }, res);
       } else {
+        console.log('[API] Using OpenAI for streaming');
         await enhancedLLMService.queryLLM(query, type, ragContext, res);
       }
+      
+      const duration = Date.now() - startTime;
+      console.log(`[API] Streaming request completed in ${duration}ms`);
+      
     } catch (error) {
-      console.error('Streaming error:', error);
-      res.status(500).json({ error: 'Streaming failed' });
+      const duration = Date.now() - startTime;
+      console.error(`[API] Streaming error after ${duration}ms:`, error);
+      
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Streaming failed: ' + (error instanceof Error ? error.message : 'Unknown error') });
+      }
     }
   });
 
