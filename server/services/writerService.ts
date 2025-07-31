@@ -1,4 +1,7 @@
 import OpenAI from 'openai';
+import { cacheService } from './cacheService.js';
+import { streamingService } from './streamingService.js';
+import { Response } from 'express';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -29,10 +32,18 @@ class WriterService {
     }
   }
 
-  async generateStrategicAnalysis(prompt: string, context?: any): Promise<string> {
+  async generateStrategicAnalysis(prompt: string, context?: any, res?: Response): Promise<string> {
+    // Check cache first
+    const cacheKey = cacheService.generateKey(prompt, 'writer', context);
+    const cached = cacheService.get(cacheKey);
+    if (cached && !res) {
+      console.log('[WriterService] Returning cached strategic analysis');
+      return cached;
+    }
+
     if (!this.apiKey) {
       console.log('[WriterService] Using OpenAI fallback for strategic analysis');
-      return this.fallbackToOpenAI(prompt, context);
+      return this.fallbackToOpenAI(prompt, context, res);
     }
 
     try {
@@ -59,6 +70,8 @@ class WriterService {
         }
       ];
 
+      const startTime = Date.now();
+      
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -78,12 +91,26 @@ class WriterService {
       }
 
       const data: WriterResponse = await response.json();
-      return data.choices[0]?.message?.content || 'Analysis could not be generated.';
+      const content = data.choices[0]?.message?.content || 'Analysis could not be generated.';
+      const duration = Date.now() - startTime;
+      
+      console.log(`[WriterService] Strategic analysis completed in ${duration}ms`);
+      
+      // Cache the result
+      cacheService.setStrategicAnalysis(cacheKey, content);
+      
+      // Stream the response if SSE connection provided
+      if (res) {
+        await streamingService.streamWriter(content, res);
+        return content;
+      }
+      
+      return content;
 
     } catch (error) {
       console.error('[WriterService] Error calling Writer API:', error);
       console.log('[WriterService] Falling back to OpenAI');
-      return this.fallbackToOpenAI(prompt, context);
+      return this.fallbackToOpenAI(prompt, context, res);
     }
   }
 
@@ -142,7 +169,7 @@ Provide:
     return this.generateStrategicAnalysis(prompt, performanceData);
   }
 
-  private async fallbackToOpenAI(prompt: string, context?: any): Promise<string> {
+  private async fallbackToOpenAI(prompt: string, context?: any, res?: Response): Promise<string> {
     try {
       const response = await openai.chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user

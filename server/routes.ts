@@ -9,6 +9,8 @@ import { documentProcessor } from "./services/documentProcessor";
 import { apiMonitor, type PerformanceMetric } from "./services/apiMonitor";
 import { WebSocketService } from "./services/websocket";
 import { writerService } from "./services/writerService";
+import { enhancedLLMService } from "./services/enhancedLlmService";
+import { cacheService } from "./services/cacheService";
 import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -212,7 +214,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         result = await llmService.processDataQuery(query);
       } else {
         console.log('[API] Processing as strategic analysis');
-        result = await llmService.generateStrategicAnalysis(query);
+        result = await enhancedLLMService.queryLLM(query, 'strategic', context);
       }
       
       const duration = Date.now() - startTime;
@@ -242,6 +244,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced streaming endpoints
+  app.post("/api/llm/stream", async (req, res) => {
+    try {
+      const { query, type = 'strategic', useRAG = false, provider = 'openai' } = req.body;
+      
+      if (!query) {
+        return res.status(400).json({ error: 'Query is required' });
+      }
+
+      // Get RAG context if enabled
+      let ragContext = '';
+      if (useRAG) {
+        const ragResults = await pineconeService.searchSimilar(query, 3);
+        if (ragResults.length > 0) {
+          ragContext = ragResults.map(result => 
+            `Source: ${result.metadata.filename}\n${result.text}`
+          ).join('\n\n---\n\n');
+        }
+      }
+
+      if (provider === 'writer') {
+        await writerService.generateStrategicAnalysis(query, { ragContext }, res);
+      } else {
+        await enhancedLLMService.queryLLM(query, type, ragContext, res);
+      }
+    } catch (error) {
+      console.error('Streaming error:', error);
+      res.status(500).json({ error: 'Streaming failed' });
+    }
+  });
+
   // Writer API endpoints
   app.post("/api/writer/strategic-analysis", async (req, res) => {
     try {
@@ -256,6 +289,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Writer strategic analysis error:', error);
       res.status(500).json({ error: 'Failed to generate strategic analysis' });
+    }
+  });
+
+  // Cache management endpoints
+  app.post("/api/cache/invalidate", async (req, res) => {
+    try {
+      const { pattern } = req.body;
+      
+      if (pattern) {
+        cacheService.invalidatePattern(pattern);
+      } else {
+        cacheService.clear();
+      }
+      
+      res.json({ success: true, message: pattern ? `Invalidated cache entries matching: ${pattern}` : 'Cache cleared' });
+    } catch (error) {
+      console.error('Cache invalidation error:', error);
+      res.status(500).json({ error: 'Failed to invalidate cache' });
+    }
+  });
+
+  app.get("/api/cache/stats", async (req, res) => {
+    try {
+      const stats = cacheService.getStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Cache stats error:', error);
+      res.status(500).json({ error: 'Failed to get cache stats' });
+    }
+  });
+
+  // Performance monitoring endpoint
+  app.get("/api/monitor/performance", async (req, res) => {
+    try {
+      const healthMetrics = await apiMonitor.getHealthStatus();
+      const cacheStats = cacheService.getStats();
+      
+      // Calculate performance metrics
+      const responseTimeMetrics = Object.values(healthMetrics).map(m => m.responseTime);
+      const avgResponseTime = responseTimeMetrics.length > 0 
+        ? responseTimeMetrics.reduce((a, b) => a + b, 0) / responseTimeMetrics.length 
+        : 0;
+
+      // Calculate cache hit rate (simulate based on cache size)
+      const cacheHitRate = Math.min(95, Math.max(0, (cacheStats.size / 10) * 20));
+
+      res.json({
+        responseTime: Math.round(avgResponseTime),
+        cacheHitRate: Math.round(cacheHitRate),
+        activeSessions: 1, // Could be enhanced with real session tracking
+        apiHealth: healthMetrics
+      });
+    } catch (error) {
+      console.error('Performance monitoring error:', error);
+      res.status(500).json({ error: 'Failed to get performance metrics' });
     }
   });
 

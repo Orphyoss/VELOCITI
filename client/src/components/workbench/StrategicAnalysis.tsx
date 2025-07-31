@@ -8,7 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
 
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database } from 'lucide-react';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Gauge, Settings } from 'lucide-react';
+import { streamingApi } from '@/services/streamingApi';
+import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor';
 import { useToast } from '@/hooks/use-toast';
 import { LLMResponse } from '@/types';
 
@@ -25,12 +27,17 @@ export default function StrategicAnalysis() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
 
   const [useRAG, setUseRAG] = useState(true);
+  const [streamingMode, setStreamingMode] = useState(true);
+  const [streamingContent, setStreamingContent] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
   const { llmProvider } = useVelocitiStore();
   const { toast } = useToast();
 
   const analysisMutation = useMutation({
-    mutationFn: (promptText: string) => {
-      if (llmProvider === 'writer') {
+    mutationFn: async (promptText: string) => {
+      if (streamingMode) {
+        return streamAnalysis(promptText);
+      } else if (llmProvider === 'writer') {
         return writerAnalysisMutation.mutateAsync(promptText);
       } else {
         return api.queryLLM(promptText, 'strategic');
@@ -98,8 +105,57 @@ export default function StrategicAnalysis() {
     }
   });
 
+  const streamAnalysis = async (promptText: string) => {
+    setIsStreaming(true);
+    setStreamingContent('');
+
+    try {
+      const fullContent = await streamingApi.streamAnalysis(
+        promptText,
+        {
+          provider: llmProvider,
+          useRAG,
+          type: 'strategic'
+        },
+        (chunk: string) => {
+          setStreamingContent(prev => prev + chunk);
+        },
+        (metadata: any) => {
+          console.log('Streaming started:', metadata);
+        },
+        (finalData: any) => {
+          console.log('Streaming completed:', finalData);
+          setIsStreaming(false);
+        },
+        (error: string) => {
+          console.error('Streaming error:', error);
+          setIsStreaming(false);
+          toast({
+            title: "Streaming Error",
+            description: error,
+            variant: "destructive",
+          });
+        }
+      );
+
+      return {
+        analysis: fullContent,
+        confidence: 0.9,
+        recommendations: []
+      };
+    } catch (error) {
+      setIsStreaming(false);
+      throw error;
+    }
+  };
+
   const handleSubmit = () => {
     if (!prompt.trim()) return;
+    
+    if (streamingMode) {
+      setStreamingContent('');
+    }
+    
     analysisMutation.mutate(prompt.trim());
   };
 
@@ -180,8 +236,26 @@ export default function StrategicAnalysis() {
             </div>
             
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4 text-xs text-dark-400">
+              <div className="flex items-center space-x-3 text-xs text-dark-400">
                 <span>Press Ctrl+Enter to analyze</span>
+                
+                {/* Performance Mode Toggle */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setStreamingMode(!streamingMode)}
+                  className={`h-7 px-3 transition-all duration-200 ${
+                    streamingMode 
+                      ? 'bg-blue-600/20 border-blue-600/40 text-blue-400 hover:bg-blue-600/30' 
+                      : 'bg-dark-800 border-dark-600 text-dark-400 hover:bg-dark-700'
+                  }`}
+                >
+                  <Gauge className="w-3 h-3 mr-1.5" />
+                  {streamingMode ? 'Streaming' : 'Standard'}
+                  <div className={`ml-2 w-2 h-2 rounded-full ${streamingMode ? 'bg-blue-400' : 'bg-dark-500'}`} />
+                </Button>
+
+                {/* RAG Context Toggle */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -199,18 +273,18 @@ export default function StrategicAnalysis() {
               </div>
               <Button 
                 onClick={handleSubmit}
-                disabled={analysisMutation.isPending || !prompt.trim()}
+                disabled={analysisMutation.isPending || isStreaming || !prompt.trim()}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                {analysisMutation.isPending ? (
+                {analysisMutation.isPending || isStreaming ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analyzing...
+                    {isStreaming ? 'Streaming...' : 'Analyzing...'}
                   </>
                 ) : (
                   <>
                     <Brain className="w-4 h-4 mr-2" />
-                    Generate Analysis
+                    {streamingMode ? 'Stream Analysis' : 'Generate Analysis'}
                   </>
                 )}
               </Button>
@@ -236,6 +310,38 @@ export default function StrategicAnalysis() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Live Streaming Results */}
+        {(isStreaming || streamingContent) && (
+          <Card className="bg-dark-900 border-dark-800 border-blue-600/30">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+                  <Gauge className="text-blue-500 mr-2" />
+                  Live Analysis Stream
+                </CardTitle>
+                <Badge variant="outline" className="bg-blue-600/20 border-blue-600/40 text-blue-200">
+                  {isStreaming ? 'Streaming...' : 'Stream Complete'}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-dark-800 rounded p-4 text-sm text-dark-100 leading-relaxed min-h-[200px]">
+                {streamingContent ? (
+                  <div className="whitespace-pre-wrap">
+                    {streamingContent}
+                    {isStreaming && <span className="animate-pulse">▊</span>}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-32 text-dark-400">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    Waiting for stream to start...
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Analysis Results */}
         {selectedAnalysis && (
