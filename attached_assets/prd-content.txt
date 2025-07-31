@@ -1,0 +1,520 @@
+Velociti: EasyJet Intelligence Platform
+Product Requirements Document (PRD) v1.0
+Product Overview
+
+Product Name: Velociti - AI-Powered Revenue Intelligence Platform for EasyJet Product Owner:
+Chief Intelligence Officer, Telos Engineering Lead: [TBD] Target Users: EasyJet Revenue
+Management Analysts, RM Managers, Commercial Executives
+
+Problem Statement
+
+EasyJet analysts face continuous intelligence challenges throughout the day: 3-4 hours each morning
+correlating fragmented overnight data, plus ongoing reactive analysis of real-time competitive moves,
+demand shifts, and operational changes. This fragmented approach delays critical pricing decisions
+and limits competitive response speed in the fast-moving European LCC market where conditions
+change hourly.
+
+Solution Statement
+
+Velociti provides an AI-powered intelligence workbench that operates continuously 24/7, processing
+overnight market changes for morning briefings while providing real-time intelligence throughout the
+day via conversational AI and specialized analytical agents, reducing morning briefing preparation time
+by 61% and total daily analysis time by 40% while improving decision speed and accuracy.
+
+Success Metrics
+
+Primary: 61% reduction in morning briefing preparation time (from 180 minutes to 70 minutes)
+Secondary: 2% improvement in network yield within 6 months
+Adoption: 85% daily active usage by target analyst population
+Accuracy: 90% accuracy on critical competitive intelligence alerts (>£50K revenue impact)
+
+User Personas & Stories
+
+Primary Persona: Revenue Management Analyst
+
+Profile: Sarah, RM Analyst with 3+ years experience, manages 40-60 European routes, proficient with
+Excel/Tableau but limited AI experience.
+Core User Stories:
+
+Epic 1: Continuous Intelligence Operations
+US-001: As an RM Analyst, I want to receive continuous intelligence updates throughout the day
+so that I can respond immediately to market changes
+AC1: Morning briefing delivered by 7 AM GMT with overnight analysis
+AC2: Critical alerts (>£50K impact) delivered within 15 minutes of detection
+AC3: High-priority alerts (£20K-£50K impact) delivered within 30 minutes
+AC4: Intraday market updates every 2 hours during business hours
+AC5: End-of-day performance summary with next-day implications
+US-002: As an RM Analyst, I want to receive a prioritized morning briefing of overnight changes so
+that I can focus on high-impact issues first
+AC1: Briefing loads within 5 seconds of login
+AC2: Critical actions are ranked by revenue impact using defined thresholds
+AC3: Each insight includes confidence score and supporting data links
+AC4: I can dismiss, save, or escalate insights for later action
+US-003: As an RM Analyst, I want to drill down into any intelligence item (morning briefing or realtime alert) to understand the full context and supporting analysis
+AC1: One-click expansion shows detailed analysis with visualizations
+AC2: Historical context is provided for similar situations
+AC3: Related routes/markets are automatically identified
+AC4: I can export analysis for sharing with colleagues
+Epic 2: Real-Time Intelligence & Alerts
+US-004: As an RM Analyst, I want immediate alerts when significant market changes occur during
+the day so I can respond before competitors
+AC1: Critical competitive price changes (>15% and >£50K impact) trigger alerts within 15
+minutes
+AC2: High-priority changes (>10% and £20K-£50K impact) trigger alerts within 30 minutes
+AC3: Medium-priority changes (>10% and £5K-£20K impact) included in next briefing cycle
+AC4: Low-priority changes (<£5K impact) summarized in weekly reports
+AC5: Alert fatigue prevention through intelligent filtering and batching
+US-005: As an RM Analyst, I want to access the same intelligence capabilities throughout the day,
+not just in morning briefings
+AC1: Conversational interface available 24/7 with full context preservation
+
+AC2: All agents (competitive, performance, network) active during business hours
+AC3: Real-time data integration with <15-minute freshness during business hours
+AC4: Contextual recommendations adapt to time-of-day and market conditions
+Epic 3: Data Interrogation & Self-Service Analytics
+US-006: As an RM Analyst, I want to ask natural language questions about my data and get
+immediate analytical responses
+AC1: Databricks Genie integration supports natural language queries against EasyJet data
+AC2: Queries return structured data results with visualizations within 10 seconds
+AC3: Support for complex analytical queries (joins, aggregations, time series analysis)
+AC4: Query history and saved queries for repeated analysis patterns
+AC5: Context preservation when escalating data queries to strategic analysis
+US-007: As an RM Analyst, I want to explore data relationships and drill down into metrics without
+writing SQL
+AC1: Natural language interface supports follow-up questions and data exploration
+AC2: Automatic suggestion of related data points and relevant drill-downs
+AC3: Export capabilities for data results to Excel/CSV for further analysis
+AC4: Integration with existing EasyJet BI tools and workflows
+Epic 4: Strategic Intelligence & Recommendations
+US-008: As an RM Analyst, I want AI-powered strategic recommendations and insights beyond
+raw data analysis
+AC1: System understands aviation terminology and EasyJet-specific context
+AC2: Responses include data visualizations and actionable recommendations
+AC3: I can ask follow-up questions to dive deeper into analysis
+AC4: Conversation history is preserved for reference
+US-007: As an RM Analyst, I want the system to proactively suggest relevant questions and
+actions based on current market conditions throughout the day
+AC1: System suggests 3-5 relevant questions during each session
+AC2: Suggestions adapt based on my historical query patterns
+AC3: I can easily dismiss suggestions without disrupting workflow
+AC4: Suggestion accuracy improves over time based on my interactions
+
+Epic 5: Competitive Intelligence & Market Monitoring
+US-010: As an RM Analyst, I want continuous monitoring of competitor actions with immediate
+impact assessment
+AC1: Real-time monitoring of Ryanair, Wizz Air, Vueling during business hours
+AC2: Competitive moves assessed for revenue impact within 15 minutes using defined
+thresholds
+AC3: Historical pattern matching to identify unusual competitive behavior
+AC4: Automated response scenario modeling for significant competitive moves
+AC5: Alert prioritization based on revenue impact classification system
+AC1: Alerts trigger within 2 hours of competitive price changes >10%
+AC2: Impact assessment shows potential revenue effect on EasyJet routes
+AC3: Historical comparison shows if this is normal or unusual behavior
+AC4: Response recommendations include specific pricing scenarios
+
+Secondary Persona: Revenue Management Manager
+
+Profile: James, RM Manager overseeing European route performance, 8+ years experience, focused
+on network optimization and analyst coordination.
+Core User Stories:
+Epic 6: Network Performance Management
+US-011: As an RM Manager, I want network-wide performance visibility so I can identify
+optimization opportunities across the European network
+AC1: Network performance dashboard shows route-level performance vs. targets
+AC2: Automated identification of underperforming routes with root cause analysis
+AC3: Cross-route performance comparisons and benchmarking
+AC4: Strategic recommendations for capacity reallocation and route optimization
+AC5: Executive-ready reporting with network-level insights and strategic implications
+Epic 7: Strategic Intelligence & Executive Reporting
+US-012: As an RM Manager, I want strategic insights about network performance and competitive
+positioning for executive reporting
+AC1: Executive summary dashboard updated continuously during business hours
+AC2: Key trends and network optimization opportunities automatically identified
+
+AC3: Strategic recommendations include implementation roadmaps and resource
+requirements
+AC4: Reports can be customized for different stakeholder audiences
+AC5: Integration with board presentation templates and formats
+
+Tertiary Persona: Commercial Executive
+
+Profile: Sophie, Head of Commercial, focused on strategic decisions, limited time for detailed analysis,
+needs high-level insights.
+Core User Stories:
+Epic 8: Executive Intelligence & Strategic Oversight
+US-013: As a Commercial Executive, I want continuous executive intelligence with immediate
+alerts for strategic issues
+AC1: Daily executive summary delivered via email by 7 AM GMT
+AC2: Critical strategic issues (>£100K impact) trigger immediate executive alerts
+AC3: Each strategic issue includes recommended action and business impact assessment
+AC4: Mobile-optimized interface for strategic decision-making on-the-go
+AC5: Integration with existing executive dashboards and reporting systems
+
+Functional Requirements
+
+Core Platform Requirements
+
+FR-001: Agent Orchestration Engine
+Requirement: System must coordinate multiple specialized AI agents for different intelligence
+domains
+Acceptance Criteria:
+Support minimum 5 concurrent specialized agents
+Agent communication latency <200ms
+Graceful degradation if individual agents fail
+Agent performance monitoring and health checks
+FR-002: Memory & Learning System
+Requirement: Platform must learn analyst preferences and decision patterns over time
+
+Acceptance Criteria:
+Persistent storage of user interaction patterns
+Preference adaptation visible within 5 interaction sessions
+Historical decision outcome tracking for 12+ months
+Privacy controls for individual vs. institutional learning
+FR-003: Real-Time Data Integration
+Requirement: Platform must integrate with EasyJet's data sources for current intelligence
+Acceptance Criteria:
+Databricks integration with <15-minute data freshness
+Infare API integration with <2-hour competitive intelligence lag
+OAG capacity data integration with daily updates
+Internal RM system integration with read-only access
+
+Intelligence Agent Requirements
+
+FR-004: Continuous Intelligence Engine
+Requirement: 24/7 intelligence processing system that provides morning briefings, real-time
+monitoring, and end-of-day analysis
+Acceptance Criteria:
+Morning briefing generation completed by 7 AM GMT
+Real-time competitive monitoring during European business hours (7 AM - 7 PM GMT)
+Intraday intelligence updates every 2 hours
+End-of-day performance analysis and next-day preparation
+FR-005: Real-Time Alert System
+Requirement: Continuous monitoring system that detects significant market changes and delivers
+immediate alerts
+Acceptance Criteria:
+Competitive price changes >10% detected within 30 minutes
+Demand variance >15% from forecast triggers immediate alert
+Alert prioritization based on revenue impact and user preferences
+Alert fatigue prevention through intelligent batching and filtering
+
+FR-006: Competitive Intelligence Agent
+Requirement: Specialized agent for monitoring competitor actions and market intelligence
+Acceptance Criteria:
+Monitor Ryanair, Wizz Air, Vueling pricing changes in real-time
+Detect unusual competitive patterns with 85% accuracy
+Assess revenue impact of competitive moves within £5K accuracy
+Provide historical context for similar competitive situations
+FR-007: Performance Attribution Agent
+Requirement: Agent that analyzes network performance variances and identifies root causes
+Acceptance Criteria:
+Identify performance anomalies >5% variance from forecast
+Attribute variances to specific causes (competitive, operational, market)
+Provide route-level and network-level analysis
+Support drill-down analysis to flight-level detail when needed
+FR-008: RM System Transparency Agent
+Requirement: Agent that analyzes overnight RM system actions and provides transparency
+Acceptance Criteria:
+Track all overnight pricing and inventory changes
+Separate system-automated vs. analyst-manual actions
+Analyze "Segment Finder" distance from profile metrics
+Assess booking curve performance vs. historical patterns
+
+User Interface Requirements
+
+FR-009: Analyst Workbench Interface
+Requirement: Comprehensive workbench interface that integrates all analyst tools and
+intelligence modules
+Acceptance Criteria:
+Unified interface combining morning briefings, real-time alerts, and continuous intelligence
+Role-based customization for different analyst responsibilities and route portfolios
+Drag-and-drop dashboard configuration for personalized workflows
+
+Integration with existing EasyJet tools and export capabilities to Excel/BI systems
+FR-010: Continuous Intelligence Interface
+Requirement: Primary interface that serves morning briefings, real-time alerts, and continuous
+intelligence consumption
+Acceptance Criteria:
+Morning briefing loads within 5 seconds
+Real-time alerts display with <2-second latency
+Seamless transition between briefing and real-time modes
+Persistent state across browser sessions and mobile devices
+FR-011: Real-Time Dashboard
+Requirement: Live dashboard showing current network status and emerging issues
+Acceptance Criteria:
+Real-time data updates every 5 minutes during business hours
+Visual indicators for routes requiring immediate attention
+Drill-down capability from summary to detailed analysis
+Customizable views based on analyst responsibilities
+FR-012: Data Interrogation Interface (Databricks Genie)
+Requirement: Natural language interface for direct data queries and self-service analytics
+Acceptance Criteria:
+Support natural language queries against EasyJet Databricks data warehouse
+Return structured results with automatic visualizations within 10 seconds
+Handle complex analytical queries (joins, aggregations, time series)
+Query history and saved query management for repeated analysis
+FR-013: Strategic Intelligence Interface (Writer Palmyra X5)
+Requirement: AI-powered interface for strategic recommendations and business intelligence
+beyond raw data
+Acceptance Criteria:
+Provide strategic analysis and actionable recommendations with business context
+Scenario modeling and "what-if" analysis capabilities
+
+Integration with data layer for evidence-based recommendations
+Confidence scoring and implementation guidance for all recommendations
+FR-014: Dual-Interface Integration
+Requirement: Seamless integration between data interrogation (Genie) and strategic intelligence
+(Writer) layers
+Acceptance Criteria:
+Users can escalate from data queries to strategic analysis within same interface
+Context preservation when moving between Genie and Writer interactions
+Clear distinction between data results and strategic recommendations
+Unified conversation history across both interfaces
+FR-015: Executive Dashboard
+Requirement: High-level dashboard for executive consumption
+Acceptance Criteria:
+Single-page summary of network health and critical issues
+Customizable metrics and thresholds
+Mobile-optimized for smartphone access
+Automated daily email delivery
+
+Integration Requirements
+
+FR-016: EasyJet System Integration
+Requirement: Secure integration with EasyJet's existing technology stack
+Acceptance Criteria:
+SSO integration with EasyJet authentication system
+Read-only access to sensitive revenue management data
+API rate limiting to prevent system overload
+Audit logging of all data access and user actions
+FR-017: Third-Party Data Integration
+Requirement: Continuous integration with external aviation intelligence sources
+Acceptance Criteria:
+Infare competitive pricing API with real-time updates during business hours
+
+OAG capacity and schedule data with daily batch updates
+Skyscanner search intelligence API with hourly demand updates
+Weather and event data integration for contextual analysis
+FR-018: Alert Classification & Prioritization System
+Requirement: Automated alert classification system based on revenue impact and business
+context
+Acceptance Criteria:
+Critical alerts (>£50K revenue impact): Immediate notification within 15 minutes
+High-priority alerts (£20K-£50K impact): Notification within 30 minutes
+Medium-priority alerts (£5K-£20K impact): Included in next briefing cycle
+Low-priority alerts (<£5K impact): Weekly summary reporting only
+User-configurable thresholds based on role and route portfolio
+FR-019: Data Retention & Privacy Management
+Requirement: Comprehensive data governance system compliant with GDPR and EasyJet policies
+Acceptance Criteria:
+Conversational history retained for 90 days with automatic deletion
+Analysis results and recommendations retained for 2 years
+Personal preferences and customizations retained until account deletion
+GDPR right-to-delete requests processed within 30 days maximum
+Data export capabilities for user data portability
+FR-020: Mobile & Offline Capabilities
+Requirement: Mobile-optimized interface with limited offline capabilities for executives
+Acceptance Criteria:
+Responsive web interface optimized for tablets and smartphones
+Critical alerts accessible via mobile push notifications
+Offline access to last 24 hours of briefings and analysis
+Mobile-specific executive summary format for quick consumption
+
+Non-Functional Requirements
+
+Performance Requirements
+
+NFR-001: System response time <3 seconds for 95% of user interactions
+NFR-002: Continuous intelligence processing with real-time updates during business hours
+NFR-003: Morning briefing generation completed within 4-hour overnight window
+NFR-004: Support 50 concurrent users without performance degradation
+NFR-005: 99.9% uptime during European business hours (7 AM - 7 PM GMT) with 99.5% outside
+hours
+NFR-006: Alert delivery within defined SLA timeframes (15 minutes for critical, 30 minutes for
+high-priority)
+
+Security Requirements
+
+NFR-007: GDPR compliance with European data residency requirements
+NFR-008: SOC 2 Type II security standards for enterprise data handling
+NFR-009: Role-based access controls with comprehensive audit logging
+NFR-010: Data encryption in transit and at rest with key rotation policies
+NFR-011: API rate limiting (1000 requests/hour per user) with abuse prevention
+
+Scalability Requirements
+
+NFR-012: Support expansion to 200+ users without architectural changes
+NFR-013: Handle 10x increase in data volume with linear performance scaling
+NFR-014: Add new intelligence agents without system downtime
+NFR-015: Multi-region deployment capability for disaster recovery
+NFR-016: Automated horizontal scaling based on demand patterns
+
+Usability Requirements
+
+NFR-017: New user onboarding completed within 30 minutes
+NFR-018: 90% of common tasks completable within 3 clicks
+NFR-019: Mobile-responsive design supporting tablet and smartphone usage
+NFR-020: Accessibility compliance with WCAG 2.1 Level AA standards
+
+Reliability Requirements
+
+NFR-021: Disaster recovery with RTO 4 hours and RPO 1 hour
+NFR-022: Automated daily backups with 30-day retention policy
+
+NFR-023: Graceful degradation when individual components fail
+NFR-024: Data integrity verification and corruption detection systems
+
+Technical Architecture Requirements
+Data Architecture
+
+TAR-001: Event-driven architecture for real-time data processing
+TAR-002: Microservices architecture for agent orchestration
+TAR-003: Data lake architecture supporting structured and unstructured data
+TAR-004: API-first design for integration flexibility
+
+AI/ML Architecture
+
+TAR-005: Dual AI engine architecture with Databricks Genie for data interrogation and Writer
+Palmyra X5 for strategic intelligence
+TAR-006: Seamless context preservation and handoff between Genie and Writer interfaces
+TAR-007: Vector database for similarity search and institutional memory functions
+TAR-008: MLOps pipeline for continuous model improvement and A/B testing framework
+TAR-009: Unified conversation history and session management across both AI engines
+TAR-010: Context inheritance system allowing Writer to access previous Genie query results
+
+Infrastructure Architecture
+
+TAR-011: Cloud-native deployment on AWS with European data residency requirements
+TAR-012: Container orchestration with Kubernetes for scalability and high availability
+TAR-013: Infrastructure as Code (IaC) for repeatable deployments and disaster recovery
+TAR-014: Comprehensive monitoring and observability with distributed tracing
+TAR-015: Automated backup systems with 30-day retention and 4-hour RTO/1-hour RPO
+TAR-016: API rate limiting (1000 requests/hour per user) with intelligent throttling
+
+Success Criteria & Metrics
+User Adoption Metrics
+
+Daily Active Users: 85% of target analyst population
+Session Duration: Average 45+ minutes per morning session
+
+Feature Adoption: 70% usage of conversational interface within 30 days
+User Satisfaction: Net Promoter Score (NPS) >7
+
+Business Impact Metrics
+
+Efficiency Improvement: 61% reduction in morning briefing preparation time (180→70 minutes)
+and 40% reduction in total daily analysis time
+Decision Speed: 70% faster response to competitive moves during business hours (average 45
+minutes from detection to EasyJet response)
+Alert Effectiveness: 90% of critical alerts (>£50K impact) result in analyst action within 2 hours
+Revenue Impact: 2% improvement in network yield within 6 months
+Competitive Response: Reduce time-to-response for significant competitive moves from 4 hours
+to 45 minutes average
+Accuracy Improvement: 15% improvement in demand forecast accuracy
+
+Technical Performance Metrics
+
+System Availability: 99.5% uptime during business hours
+Response Time: <3 seconds for 95% of user interactions
+Data Accuracy: 95% accuracy on competitive intelligence alerts
+Processing Reliability: 99% successful overnight briefing generation
+
+Release Planning
+
+Phase 1: MVP Core Intelligence (0-3 months)
+
+Must Have Features:
+Morning briefing interface with prioritized insights
+Basic conversational interface for network queries
+Competitive intelligence agent for Ryanair monitoring
+Performance attribution agent for variance analysis
+EasyJet Databricks integration
+Success Criteria:
+10 pilot users actively using daily
+50% reduction in morning analysis time for pilot users
+
+85% accuracy on competitive move detection
+
+Phase 2: Enhanced Intelligence (3-6 months)
+
+Should Have Features:
+RM system transparency agent
+Advanced conversational capabilities with follow-up questions
+Executive dashboard for strategic intelligence
+Mobile-responsive interface
+Historical pattern recognition and learning
+Success Criteria:
+Full analyst team adoption (30+ users)
+2% measurable improvement in network yield
+Executive team regular usage for strategic decisions
+
+Phase 3: Strategic Intelligence (6-12 months)
+
+Could Have Features:
+Predictive demand modeling
+Advanced scenario planning capabilities
+Cross-route optimization recommendations
+Industry benchmarking intelligence
+Advanced customization and personalization
+Success Criteria:
+Platform recognized as competitive advantage
+Executive dependency for strategic decisions
+Measurable ROI demonstration for enterprise licensing
+
+Dependencies & Constraints
+Technical Dependencies
+
+EasyJet Databricks platform access and API availability
+Writer Palmyra X5 API access and rate limits
+
+Infare competitive intelligence API contracts
+Internal RM system API development and access permissions
+
+Business Dependencies
+
+EasyJet legal approval for data access and processing
+Analyst team availability for user research and testing
+Executive sponsorship for change management and adoption
+Integration with existing EasyJet workflows and tools
+
+Resource Constraints
+
+6-month development timeline for MVP delivery
+Budget constraints for third-party data licensing
+Limited availability of EasyJet domain experts for training
+European data residency and GDPR compliance requirements
+
+Risk Mitigation
+
+Technical Risk: Phased rollout with fallback to existing processes
+Adoption Risk: Extensive user training and change management program
+Performance Risk: Load testing and gradual user onboarding
+Data Risk: Read-only access patterns and comprehensive audit logging
+
+Acceptance Criteria for Release
+MVP Release Criteria
+
+All Phase 1 functional requirements implemented and tested
+Performance benchmarks met (response time, availability)
+Security audit passed with no critical vulnerabilities
+User acceptance testing completed with 80% satisfaction score
+Integration testing with EasyJet systems completed successfully
+Documentation completed for user training and system administration
+
+Production Release Criteria
+
+30-day pilot program completed with success metrics achieved
+Scalability testing passed for target user load
+Disaster recovery procedures tested and validated
+
+Compliance audit passed (GDPR, SOC 2)
+Executive stakeholder approval for full deployment
+Support processes and runbooks completed
+Document Control:
+Version: 1.0
+Last Updated: July 29, 2025
+Next Review: August 15, 2025 (Post-Hackathon)
+Approvers: Chief Intelligence Officer, Head of Engineering, EasyJet Partnership Lead
+Classification: Confidential - Product Development
+
+

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Users, BarChart3, AlertTriangle, Bot } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, BarChart3, AlertTriangle, Bot, Clock, Plane, Target, Zap } from 'lucide-react';
 
 export default function MetricsOverview() {
   const { data: summary, isLoading } = useQuery({
@@ -13,7 +13,7 @@ export default function MetricsOverview() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-        {[...Array(4)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <Card key={i} className="bg-dark-900 border-dark-800">
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="animate-pulse space-y-2 sm:space-y-4">
@@ -32,7 +32,7 @@ export default function MetricsOverview() {
     {
       title: 'Network Yield',
       value: `£${summary?.metrics.networkYield || 127.45}`,
-      change: '+2.3% vs yesterday',
+      change: `+${(summary?.metrics as any)?.yieldImprovement || 1.8}% vs forecast`,
       trend: 'up',
       icon: BarChart3,
     },
@@ -44,19 +44,47 @@ export default function MetricsOverview() {
       icon: Users,
     },
     {
+      title: 'Revenue Impact',
+      value: `£${(((summary?.metrics as any)?.revenueImpact || 2847500) / 1000000).toFixed(1)}M`,
+      change: 'Daily AI impact',
+      trend: 'up',
+      icon: Target,
+    },
+    {
+      title: 'Response Time',
+      value: `${(summary?.metrics as any)?.responseTime || 12}min`,
+      change: 'Avg. alert response',
+      trend: ((summary?.metrics as any)?.responseTime || 12) <= 15 ? 'up' : 'down',
+      icon: Zap,
+    },
+    {
+      title: 'Briefing Efficiency', 
+      value: `${(summary?.metrics as any)?.briefingTime || 73}min`,
+      change: '61% reduction achieved',
+      trend: 'up',
+      icon: Clock,
+    },
+    {
+      title: 'Routes Monitored',
+      value: (summary?.metrics as any)?.routesMonitored || 247,
+      change: 'Active monitoring',
+      trend: 'neutral',
+      icon: Plane,
+    },
+    {
+      title: 'Decision Accuracy',
+      value: `${(summary?.metrics as any)?.decisionAccuracy || 92.4}%`,
+      change: 'Critical decisions',
+      trend: 'up',
+      icon: Target,
+    },
+    {
       title: 'Active Alerts',
       value: summary?.alerts.total || 0,
       change: `${summary?.alerts.critical || 0} Critical`,
       trend: summary && summary.alerts.critical > 0 ? 'down' : 'neutral',
       icon: AlertTriangle,
       highlight: summary && summary.alerts.critical > 0,
-    },
-    {
-      title: 'Agent Performance',
-      value: `${summary?.metrics.agentAccuracy || 94.7}%`,
-      change: 'Accuracy score',
-      trend: 'up',
-      icon: Bot,
     },
   ];
 
