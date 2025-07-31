@@ -68,17 +68,15 @@ export default function Sidebar() {
           const isActive = location === item.path;
           
           return (
-            <div key={item.id} className={`nav-item ${isActive ? 'active' : ''}`}>
-              <Link href={item.path}>
-                <a 
-                  className="flex items-center space-x-3 text-sm font-medium"
-                  onClick={() => setCurrentModule(item.id)}
+            <Link key={item.id} href={item.path}>
+              <div 
+                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-sm font-medium cursor-pointer`}
+                onClick={() => setCurrentModule(item.id)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className="truncate">{item.label}</span>
-                </a>
-              </Link>
-            </div>
+                </div>
+            </Link>
           );
         })}
       </nav>

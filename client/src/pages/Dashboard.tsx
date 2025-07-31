@@ -30,7 +30,7 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-8">
+      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Morning Briefing */}
         <MorningBriefing />
         
@@ -40,11 +40,11 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <QuickActions />
         
-        {/* Network Performance */}
-        <NetworkOverview />
-        
-        {/* Recent Activity */}
-        <RecentActivity />
+        {/* Network Performance & Recent Activity - Side by side on desktop */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          <NetworkOverview />
+          <RecentActivity />
+        </div>
       </div>
     </AppShell>
   );

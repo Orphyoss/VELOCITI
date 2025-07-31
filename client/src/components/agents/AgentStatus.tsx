@@ -3,7 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
 
-export default function AgentStatus() {
+interface AgentStatusProps {
+  compact?: boolean;
+}
+
+export default function AgentStatus({ compact = false }: AgentStatusProps) {
   const { agents, setAgents } = useVelocitiStore();
 
   const { data: agentsData } = useQuery({
@@ -38,22 +42,26 @@ export default function AgentStatus() {
 
   return (
     <div className="w-full">
-      <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3 text-center">
-        Agent Status
-      </h3>
-      <div className="space-y-2">
+      {!compact && (
+        <h3 className="text-xs font-semibold text-dark-400 uppercase tracking-wider mb-3 text-center">
+          Agent Status
+        </h3>
+      )}
+      <div className={compact ? "space-y-1" : "space-y-2"}>
         {agents.map((agent) => (
-          <div key={agent.id} className="flex items-center justify-between text-sm">
-            <span className="text-dark-300 capitalize">{agent.id}</span>
+          <div key={agent.id} className={`flex items-center justify-between ${compact ? 'text-xs' : 'text-sm'}`}>
+            <span className="text-dark-300 capitalize truncate">{agent.id}</span>
             <div className="flex items-center space-x-1">
               <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`} />
-              <span className={`text-xs ${
-                agent.status === 'active' ? 'text-green-400' :
-                agent.status === 'learning' ? 'text-yellow-400' :
-                'text-red-400'
-              }`}>
-                {getStatusLabel(agent.status)}
-              </span>
+              {!compact && (
+                <span className={`text-xs ${
+                  agent.status === 'active' ? 'text-green-400' :
+                  agent.status === 'learning' ? 'text-yellow-400' :
+                  'text-red-400'
+                }`}>
+                  {getStatusLabel(agent.status)}
+                </span>
+              )}
             </div>
           </div>
         ))}

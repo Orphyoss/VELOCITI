@@ -59,12 +59,76 @@ export default function QuickActions() {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 mb-8">
-      {/* Agent Feedback - Moved to Analyst Workbench */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      {/* Quick Data Query */}
       <Card className="bg-dark-900 border-dark-800">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-            <ThumbsUp className="text-aviation-500 mr-2" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
+            <Search className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            Quick Data Query
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 sm:space-y-4">
+          <Input
+            placeholder="Ask about network performance, pricing, or any metric..."
+            value={dataQuery}
+            onChange={(e) => setDataQuery(e.target.value)}
+            className="bg-dark-800 border-dark-700 text-dark-50 text-sm sm:text-base"
+          />
+          <Button 
+            onClick={handleDataQuery}
+            disabled={dataLoading || !dataQuery.trim()}
+            className="w-full bg-aviation-600 hover:bg-aviation-700 text-white"
+          >
+            {dataLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Querying...
+              </>
+            ) : (
+              'Execute Query'
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Strategic Analysis */}
+      <Card className="bg-dark-900 border-dark-800">
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
+            <Brain className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+            Strategic Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 sm:space-y-4">
+          <Textarea
+            placeholder="Request strategic insights, competitive analysis, or market recommendations..."
+            value={strategicQuery}
+            onChange={(e) => setStrategicQuery(e.target.value)}
+            className="bg-dark-800 border-dark-700 text-dark-50 text-sm sm:text-base min-h-[80px] sm:min-h-[100px]"
+          />
+          <Button 
+            onClick={handleStrategicAnalysis}
+            disabled={strategicLoading || !strategicQuery.trim()}
+            className="w-full bg-aviation-600 hover:bg-aviation-700 text-white"
+          >
+            {strategicLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              'Generate Analysis'
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Agent Feedback - Moved to Analyst Workbench */}
+      <Card className="bg-dark-900 border-dark-800 lg:col-span-2">
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
+            <ThumbsUp className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             Agent Feedback
           </CardTitle>
         </CardHeader>

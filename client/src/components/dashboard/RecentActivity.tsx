@@ -53,20 +53,20 @@ export default function RecentActivity() {
   if (isLoading) {
     return (
       <Card className="bg-dark-900 border-dark-800">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-            <Clock className="text-aviation-500 mr-2" />
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
+            <Clock className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             Recent Activity
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className="animate-pulse space-y-3 sm:space-y-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex items-start space-x-4 border-l-2 border-dark-700 pl-4">
-                <div className="w-8 h-8 bg-dark-800 rounded-full"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-dark-800 rounded w-3/4"></div>
-                  <div className="h-3 bg-dark-800 rounded w-1/2"></div>
+              <div key={i} className="flex items-start space-x-3 sm:space-x-4 border-l-2 border-dark-700 pl-3 sm:pl-4">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-dark-800 rounded-full"></div>
+                <div className="flex-1 space-y-1 sm:space-y-2">
+                  <div className="h-3 sm:h-4 bg-dark-800 rounded w-3/4"></div>
+                  <div className="h-2 sm:h-3 bg-dark-800 rounded w-1/2"></div>
                 </div>
               </div>
             ))}
@@ -78,42 +78,42 @@ export default function RecentActivity() {
 
   return (
     <Card className="bg-dark-900 border-dark-800">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-          <Clock className="text-aviation-500 mr-2" />
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
+          <Clock className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
           Recent Activity
         </CardTitle>
       </CardHeader>
       <CardContent>
         {activities && activities.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {activities.map((activity: Activity) => {
               const Icon = getActivityIcon(activity.type);
               const borderColor = getActivityColor(activity.type, activity.agentId);
               
               return (
-                <div key={activity.id} className={`flex items-start space-x-4 border-l-2 ${borderColor} pl-4`}>
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                <div key={activity.id} className={`flex items-start space-x-3 sm:space-x-4 border-l-2 ${borderColor} pl-3 sm:pl-4`}>
+                  <div className={`flex-shrink-0 w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                     activity.type === 'alert' ? 'bg-red-600' :
                     activity.type === 'analysis' ? 'bg-blue-600' :
                     activity.type === 'feedback' ? 'bg-green-600' :
                     'bg-dark-600'
                   }`}>
-                    <Icon className="text-white text-sm" />
+                    <Icon className="text-white w-3 h-3 sm:w-4 sm:h-4" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <h6 className="font-medium text-dark-50">{activity.title}</h6>
-                      <span className="text-xs text-dark-400">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <h6 className="font-medium text-dark-50 text-sm sm:text-base truncate pr-2">{activity.title}</h6>
+                      <span className="text-xs text-dark-400 flex-shrink-0">
                         {formatTimestamp(activity.createdAt)}
                       </span>
                     </div>
                     {activity.description && (
-                      <p className="text-sm text-dark-300 mb-2">{activity.description}</p>
+                      <p className="text-xs sm:text-sm text-dark-300 mb-2 line-clamp-2">{activity.description}</p>
                     )}
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                       {activity.agentId && (
-                        <Badge className={`text-xs px-2 py-1 ${getActivityBadgeColor(activity.agentId)}`}>
+                        <Badge className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 ${getActivityBadgeColor(activity.agentId)}`}>
                           {activity.agentId.charAt(0).toUpperCase() + activity.agentId.slice(1)} Agent
                         </Badge>
                       )}
@@ -134,10 +134,10 @@ export default function RecentActivity() {
             })}
           </div>
         ) : (
-          <div className="text-center py-8">
-            <Clock className="w-12 h-12 text-dark-600 mx-auto mb-4" />
-            <h4 className="text-lg font-medium text-dark-300 mb-2">No Recent Activity</h4>
-            <p className="text-dark-400">
+          <div className="text-center py-6 sm:py-8">
+            <Clock className="w-8 h-8 sm:w-12 sm:h-12 text-dark-600 mx-auto mb-3 sm:mb-4" />
+            <h4 className="text-base sm:text-lg font-medium text-dark-300 mb-2">No Recent Activity</h4>
+            <p className="text-sm text-dark-400">
               System activity will appear here as agents process data and generate insights.
             </p>
           </div>
