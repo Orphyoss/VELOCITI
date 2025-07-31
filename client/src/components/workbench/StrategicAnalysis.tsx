@@ -299,7 +299,10 @@ export default function StrategicAnalysis() {
                           {index + 1}
                         </div>
                         <div className="text-sm text-dark-100 flex-1">
-                          {recommendation}
+                          {typeof recommendation === 'string' ? recommendation : 
+                           typeof recommendation === 'object' && recommendation && 'strategy' in recommendation ? 
+                             `${(recommendation as any).strategy}: ${(recommendation as any).description}` : 
+                             JSON.stringify(recommendation)}
                         </div>
                       </div>
                     ))}
