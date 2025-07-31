@@ -46,9 +46,12 @@ Each agent operates autonomously, generating alerts based on configurable thresh
 - **Message Types**: Support for subscriptions, real-time data updates, and system notifications
 
 ### LLM Integration
-- **Primary Provider**: Writer AI (Palmyra X5 model) for strategic analysis
-- **Fallback Provider**: OpenAI GPT-4o for data queries and general assistance
-- **Use Cases**: Strategic analysis generation, data interrogation, and natural language processing
+- **Primary Provider**: Writer AI (Palmyra X5 model) for strategic analysis with enterprise-grade insights
+- **Secondary Provider**: OpenAI GPT-4o for data queries, fallback operations, and general assistance
+- **Writer API Features**: Competitive intelligence, network analysis, performance attribution, strategic planning
+- **Provider Selection**: User-configurable switching between Writer and OpenAI in Strategic Analysis module
+- **Health Monitoring**: Continuous API health checks with status reporting and automatic failover
+- **Use Cases**: Strategic analysis generation, competitive intelligence, data interrogation, and natural language processing
 
 ### User Interface Modules
 1. **Dashboard**: Executive summary with key metrics and morning briefings
@@ -86,8 +89,13 @@ Each agent operates autonomously, generating alerts based on configurable thresh
 - **Replit**: Development and deployment platform with integrated tooling
 
 ### AI/ML Services
-- **Writer AI**: Primary LLM provider for strategic analysis and insights
+- **Writer AI**: Primary LLM provider using Palmyra X5 model for enterprise strategic analysis
+  - Competitive intelligence generation
+  - Network performance analysis
+  - Revenue optimization recommendations
+  - Performance attribution analysis
 - **OpenAI**: Secondary LLM provider for general queries and fallback operations
+- **Pinecone**: Vector database for RAG-enhanced document search and context retrieval
 
 ### Frontend Libraries
 - **React Query**: Server state management and caching
@@ -114,7 +122,15 @@ Each agent operates autonomously, generating alerts based on configurable thresh
 
 ### Monitoring and Observability
 - **Real-time Metrics**: System performance tracking through custom metrics collection
+- **API Health Monitoring**: Continuous health checks for OpenAI, Writer API, Pinecone, and internal services
+- **Performance Analytics**: Response time tracking, error rate monitoring, and uptime statistics
 - **Agent Performance**: Accuracy tracking and learning analytics
 - **User Activity**: Comprehensive activity logging for audit and analysis purposes
+
+### Recent Changes (January 2025)
+- **Writer API Integration**: Successfully integrated Writer Palmyra X5 model for enhanced strategic analysis
+- **Provider Selection**: Added user-configurable LLM provider switching in Strategic Analysis module
+- **Health Monitoring**: Extended API monitoring to include Writer API with comprehensive health checks
+- **Strategic Analysis Enhancement**: Improved interface with provider selection and real-time status indicators
 
 The system is designed for high availability with automatic failover capabilities, real-time data synchronization, and scalable architecture to handle EasyJet's operational demands.
