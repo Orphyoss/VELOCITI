@@ -141,13 +141,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/agents/:id/feedback", async (req, res) => {
     try {
       const { id: agentId } = req.params;
+      
+      // Map camelCase API fields to snake_case database fields
       const feedbackData = {
-        ...insertFeedbackSchema.parse(req.body),
-        agentId,
-        userId: req.body.userId || '550e8400-e29b-41d4-a716-446655440000' // Development UUID
+        alert_id: req.body.alertId,
+        agent_id: agentId,
+        user_id: req.body.userId || '550e8400-e29b-41d4-a716-446655440000', // Development UUID
+        rating: req.body.rating,
+        comment: req.body.comment,
+        action_taken: req.body.actionTaken || false,
+        impact_realized: req.body.impactRealized ? req.body.impactRealized.toString() : null
       };
       
-      await agentService.processFeedback(feedbackData);
+      // Validate the mapped data
+      const validatedData = insertFeedbackSchema.parse(feedbackData);
+      
+      await agentService.processFeedback(validatedData);
       res.json({ success: true });
     } catch (error) {
       if (error instanceof z.ZodError) {

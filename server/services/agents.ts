@@ -224,40 +224,29 @@ export class AgentService {
   }
 
   async processFeedback(feedbackData: {
-    alertId: string;
-    agentId: string;
-    userId: string;
+    alert_id: string;
+    agent_id: string;
+    user_id: string;
     rating: number;
     comment?: string;
-    actionTaken: boolean;
-    impactRealized?: number;
+    action_taken: boolean;
+    impact_realized?: string;
   }) {
     console.log('[AgentService] Processing feedback:', feedbackData);
     
-    // Map to database column names
-    const dbFeedback = {
-      alert_id: feedbackData.alertId,
-      agent_id: feedbackData.agentId,
-      user_id: feedbackData.userId,
-      rating: feedbackData.rating,
-      comment: feedbackData.comment,
-      action_taken: feedbackData.actionTaken,
-      impact_realized: feedbackData.impactRealized?.toString()
-    };
-    
-    // Store feedback
-    await db.insert(feedback).values([dbFeedback]);
+    // Store feedback directly with snake_case fields
+    await db.insert(feedback).values([feedbackData]);
     console.log('[AgentService] Feedback stored successfully');
     
     // Update agent accuracy based on feedback
-    await this.updateAgentAccuracy(feedbackData.agentId, feedbackData.rating);
+    await this.updateAgentAccuracy(feedbackData.agent_id, feedbackData.rating);
     
     // Log learning activity
     await db.insert(activities).values({
       type: 'feedback',
       title: 'Learning Update',
-      description: `${feedbackData.agentId} Agent improved accuracy based on user feedback`,
-      agentId: feedbackData.agentId,
+      description: `${feedbackData.agent_id} Agent improved accuracy based on user feedback`,
+      agentId: feedbackData.agent_id,
     });
   }
 
