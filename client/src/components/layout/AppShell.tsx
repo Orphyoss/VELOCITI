@@ -25,8 +25,10 @@ export default function AppShell({ children }: AppShellProps) {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto p-6 bg-dark-950">
-          {children}
+        <main className="flex-1 overflow-auto bg-dark-950">
+          <div className="max-w-7xl mx-auto p-6">
+            {children}
+          </div>
         </main>
       </div>
     </div>

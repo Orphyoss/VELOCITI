@@ -111,19 +111,25 @@ export default function Agents() {
 
   return (
     <AppShell>
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">AI Agents</h1>
+          <p className="text-slate-400">Manage and monitor your intelligent revenue management agents</p>
+        </div>
+        
         {/* Agent Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {agents.map((agent: Agent) => {
             const Icon = getAgentIcon(agent.id);
             const iconColor = getAgentColor(agent.id);
             
             return (
-              <Card key={agent.id} className="bg-dark-900 border-dark-800 hover:shadow-lg transition-all duration-200">
+              <Card key={agent.id} className="bg-slate-900 border-slate-700 hover:shadow-xl transition-all duration-200 h-full">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-                      <Icon className={`mr-2 ${iconColor}`} />
+                    <CardTitle className="text-lg font-semibold text-white flex items-center">
+                      <Icon className={`mr-3 w-5 h-5 ${iconColor}`} />
                       {agent.name}
                     </CardTitle>
                     <Badge className={getStatusColor(agent.status)}>
@@ -131,36 +137,38 @@ export default function Agents() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4 text-sm">
                     <div>
-                      <span className="text-dark-400">Accuracy:</span>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <span className="text-slate-400 block mb-2">Accuracy</span>
+                      <div className="flex items-center space-x-3">
                         <Progress 
                           value={parseFloat(agent.accuracy)} 
-                          className="flex-1"
+                          className="flex-1 h-2"
                         />
-                        <span className="text-dark-50 font-medium">{agent.accuracy}%</span>
+                        <span className="text-white font-semibold text-lg">{agent.accuracy}%</span>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-dark-400">Total Analyses:</span>
-                      <p className="text-dark-50 font-medium">{agent.totalAnalyses}</p>
+                      <span className="text-slate-400 block">Total Analyses</span>
+                      <p className="text-white font-semibold text-lg">{agent.totalAnalyses}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block">Last Active</span>
+                      <p className="text-white font-medium">{formatLastActive(agent.lastActive)}</p>
                     </div>
                   </div>
 
                   <div className="text-sm">
-                    <span className="text-dark-400">Last Active:</span>
-                    <p className="text-dark-50">{formatLastActive(agent.lastActive)}</p>
-                  </div>
-
-                  <div className="text-sm">
-                    <span className="text-dark-400">Success Rate:</span>
-                    <p className="text-dark-50">
+                    <span className="text-slate-400 block mb-1">Success Rate</span>
+                    <p className="text-white font-semibold">
                       {agent.totalAnalyses > 0 
                         ? Math.round((agent.successfulPredictions / agent.totalAnalyses) * 100)
                         : 0}% 
-                      ({agent.successfulPredictions}/{agent.totalAnalyses})
+                      <span className="text-slate-400 font-normal">({agent.successfulPredictions}/{agent.totalAnalyses})</span>
                     </p>
                   </div>
 
@@ -169,16 +177,16 @@ export default function Agents() {
                       size="sm"
                       onClick={() => runAgentMutation.mutate(agent.id)}
                       disabled={runAgentMutation.isPending || agent.status === 'maintenance'}
-                      className="flex-1 bg-aviation-600 hover:bg-aviation-700"
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-medium"
                     >
-                      <Play className="w-4 h-4 mr-1" />
+                      <Play className="w-4 h-4 mr-2" />
                       Run Agent
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setSelectedAgent(agent.id)}
-                      className="bg-dark-800 hover:bg-dark-700 border-dark-600"
+                      className="bg-slate-800 hover:bg-slate-700 border-slate-600 text-white"
                     >
                       <Settings className="w-4 h-4" />
                     </Button>
@@ -190,37 +198,48 @@ export default function Agents() {
         </div>
 
         {/* Agent Details Tabs */}
-        <Tabs value={selectedAgent} onValueChange={setSelectedAgent} className="space-y-6">
-          <TabsList className="bg-dark-900 border border-dark-800">
-            <TabsTrigger value="competitive" className="data-[state=active]:bg-aviation-600">
-              Competitive Intelligence
-            </TabsTrigger>
-            <TabsTrigger value="performance" className="data-[state=active]:bg-aviation-600">
-              Performance Attribution
-            </TabsTrigger>
-            <TabsTrigger value="network" className="data-[state=active]:bg-aviation-600">
-              Network Analysis
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={selectedAgent} onValueChange={setSelectedAgent} className="space-y-8">
+          <div className="border-b border-slate-700">
+            <TabsList className="bg-slate-900 border border-slate-700 p-1 rounded-lg">
+              <TabsTrigger 
+                value="competitive" 
+                className="data-[state=active]:bg-orange-600 data-[state=active]:text-white px-6 py-2"
+              >
+                Competitive Intelligence
+              </TabsTrigger>
+              <TabsTrigger 
+                value="performance" 
+                className="data-[state=active]:bg-orange-600 data-[state=active]:text-white px-6 py-2"
+              >
+                Performance Attribution
+              </TabsTrigger>
+              <TabsTrigger 
+                value="network" 
+                className="data-[state=active]:bg-orange-600 data-[state=active]:text-white px-6 py-2"
+              >
+                Network Analysis
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-          <TabsContent value="competitive" className="space-y-6">
-            <Card className="bg-dark-900 border-dark-800">
+          <TabsContent value="competitive" className="space-y-6 mt-8">
+            <Card className="bg-slate-900 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-                  <AlertTriangle className="text-red-500 mr-2" />
+                <CardTitle className="text-xl font-semibold text-white flex items-center">
+                  <AlertTriangle className="text-red-500 mr-3 w-6 h-6" />
                   Competitive Intelligence Agent
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-dark-300">
+                <p className="text-slate-300 text-base leading-relaxed">
                   Monitors competitor pricing changes and market dynamics across key European routes.
                   Tracks Ryanair, Wizz Air, and Vueling pricing strategies in real-time.
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Key Capabilities</h4>
-                    <ul className="text-sm text-dark-300 space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Key Capabilities</h4>
+                    <ul className="text-sm text-slate-300 space-y-2">
                       <li>• Real-time competitor price monitoring</li>
                       <li>• Revenue impact assessment</li>
                       <li>• Pattern recognition for unusual behavior</li>
@@ -228,9 +247,9 @@ export default function Agents() {
                     </ul>
                   </div>
                   
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Configuration</h4>
-                    <div className="text-sm text-dark-300 space-y-1">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Configuration</h4>
+                    <div className="text-sm text-slate-300 space-y-2">
                       <p>• Price change threshold: 10%</p>
                       <p>• Impact threshold: £5,000</p>
                       <p>• Monitoring frequency: 15 minutes</p>
@@ -242,24 +261,24 @@ export default function Agents() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="performance" className="space-y-6">
-            <Card className="bg-dark-900 border-dark-800">
+          <TabsContent value="performance" className="space-y-6 mt-8">
+            <Card className="bg-slate-900 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-                  <BarChart3 className="text-blue-500 mr-2" />
+                <CardTitle className="text-xl font-semibold text-white flex items-center">
+                  <BarChart3 className="text-blue-500 mr-3 w-6 h-6" />
                   Performance Attribution Agent
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-dark-300">
+                <p className="text-slate-300 text-base leading-relaxed">
                   Analyzes route performance variances and identifies root causes for deviations
                   from forecasts. Provides detailed attribution analysis for revenue optimization.
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Key Capabilities</h4>
-                    <ul className="text-sm text-dark-300 space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Key Capabilities</h4>
+                    <ul className="text-sm text-slate-300 space-y-2">
                       <li>• Performance variance detection</li>
                       <li>• Root cause attribution</li>
                       <li>• Booking curve analysis</li>
@@ -267,9 +286,9 @@ export default function Agents() {
                     </ul>
                   </div>
                   
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Configuration</h4>
-                    <div className="text-sm text-dark-300 space-y-1">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Configuration</h4>
+                    <div className="text-sm text-slate-300 space-y-2">
                       <p>• Variance threshold: 5%</p>
                       <p>• Alert threshold: £20,000</p>
                       <p>• Analysis frequency: Hourly</p>
@@ -281,24 +300,24 @@ export default function Agents() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="network" className="space-y-6">
-            <Card className="bg-dark-900 border-dark-800">
+          <TabsContent value="network" className="space-y-6 mt-8">
+            <Card className="bg-slate-900 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-                  <TrendingUp className="text-green-500 mr-2" />
+                <CardTitle className="text-xl font-semibold text-white flex items-center">
+                  <TrendingUp className="text-green-500 mr-3 w-6 h-6" />
                   Network Analysis Agent
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-dark-300">
+                <p className="text-slate-300 text-base leading-relaxed">
                   Provides network-wide optimization insights and identifies capacity reallocation
                   opportunities. Analyzes cross-route performance and strategic positioning.
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Key Capabilities</h4>
-                    <ul className="text-sm text-dark-300 space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Key Capabilities</h4>
+                    <ul className="text-sm text-slate-300 space-y-2">
                       <li>• Network optimization analysis</li>
                       <li>• Capacity reallocation recommendations</li>
                       <li>• Cross-route performance comparison</li>
@@ -306,9 +325,9 @@ export default function Agents() {
                     </ul>
                   </div>
                   
-                  <div className="bg-dark-800 rounded p-4">
-                    <h4 className="font-medium text-dark-50 mb-2">Configuration</h4>
-                    <div className="text-sm text-dark-300 space-y-1">
+                  <div className="bg-slate-800 rounded-lg p-6">
+                    <h4 className="font-semibold text-white mb-3 text-base">Configuration</h4>
+                    <div className="text-sm text-slate-300 space-y-2">
                       <p>• Optimization period: 30 days</p>
                       <p>• Capacity threshold: 80%</p>
                       <p>• Yield threshold: 15%</p>
@@ -322,14 +341,14 @@ export default function Agents() {
         </Tabs>
 
         {/* Feedback Section */}
-        <Card className="bg-dark-900 border-dark-800">
+        <Card className="bg-slate-900 border-slate-700">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-dark-50">Agent Learning System</CardTitle>
+              <CardTitle className="text-xl font-semibold text-white">Agent Learning System</CardTitle>
               <Button
                 onClick={() => setShowFeedback(!showFeedback)}
                 variant="outline"
-                className="bg-dark-800 hover:bg-dark-700 border-dark-600"
+                className="bg-slate-800 hover:bg-slate-700 border-slate-600 text-white"
               >
                 {showFeedback ? 'Hide' : 'Show'} Feedback Panel
               </Button>
@@ -337,9 +356,9 @@ export default function Agents() {
           </CardHeader>
           {showFeedback && (
             <CardContent>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                  <h4 className="font-medium text-dark-50 mb-4">Provide Feedback</h4>
+                  <h4 className="font-semibold text-white mb-4 text-base">Provide Feedback</h4>
                   <FeedbackSystem
                     alertId="sample-alert-id"
                     agentId={selectedAgent}
@@ -347,21 +366,21 @@ export default function Agents() {
                   />
                 </div>
                 <div>
-                  <h4 className="font-medium text-dark-50 mb-4">Learning Progress</h4>
+                  <h4 className="font-semibold text-white mb-4 text-base">Learning Progress</h4>
                   <div className="space-y-4">
                     {agents.map((agent: Agent) => (
-                      <div key={agent.id} className="bg-dark-800 rounded p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-dark-50 font-medium capitalize">{agent.id}</span>
-                          <Badge variant="outline" className="text-xs">
+                      <div key={agent.id} className="bg-slate-800 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-white font-semibold capitalize">{agent.id}</span>
+                          <Badge variant="outline" className="text-xs border-slate-600 text-slate-300">
                             {agent.status}
                           </Badge>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Progress value={parseFloat(agent.accuracy)} className="flex-1" />
-                          <span className="text-sm text-dark-300">{agent.accuracy}%</span>
+                        <div className="flex items-center space-x-3">
+                          <Progress value={parseFloat(agent.accuracy)} className="flex-1 h-2" />
+                          <span className="text-sm text-white font-medium">{agent.accuracy}%</span>
                         </div>
-                        <p className="text-xs text-dark-400 mt-1">
+                        <p className="text-xs text-slate-400 mt-2">
                           {agent.successfulPredictions} successful predictions from {agent.totalAnalyses} analyses
                         </p>
                       </div>
