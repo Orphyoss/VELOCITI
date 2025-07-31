@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ClipboardList, Filter, Search, Calendar, AlertTriangle } from 'lucide-react';
+import { ClipboardList, Filter, Search, Calendar, AlertTriangle, MessageSquare } from 'lucide-react';
 import { Alert } from '@/types';
+import AgentFeedbackTab from '@/components/workbench/AgentFeedbackTab';
 
 export default function AnalystWorkbench() {
   const { setCurrentModule } = useVelocitiStore();
@@ -171,6 +172,10 @@ export default function AnalystWorkbench() {
             <TabsTrigger value="active" className="data-[state=active]:bg-aviation-600">
               Active ({activeAlerts.length})
             </TabsTrigger>
+            <TabsTrigger value="feedback" className="data-[state=active]:bg-aviation-600">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Agent Feedback
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
@@ -279,6 +284,10 @@ export default function AnalystWorkbench() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="feedback" className="space-y-4">
+            <AgentFeedbackTab alerts={allAlerts || []} />
           </TabsContent>
         </Tabs>
       </div>
