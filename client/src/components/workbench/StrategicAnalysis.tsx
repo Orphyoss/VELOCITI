@@ -23,14 +23,14 @@ export default function StrategicAnalysis() {
   const [prompt, setPrompt] = useState('');
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'writer'>('writer');
+
   const [useRAG, setUseRAG] = useState(true);
   const { llmProvider } = useVelocitiStore();
   const { toast } = useToast();
 
   const analysisMutation = useMutation({
     mutationFn: (promptText: string) => {
-      if (selectedProvider === 'writer') {
+      if (llmProvider === 'writer') {
         return writerAnalysisMutation.mutateAsync(promptText);
       } else {
         return api.queryLLM(promptText, 'strategic');
@@ -40,7 +40,7 @@ export default function StrategicAnalysis() {
       const newAnalysis: AnalysisResult = {
         id: Date.now().toString(),
         prompt: promptText,
-        result: selectedProvider === 'writer' ? { analysis: result.analysis, confidence: 0.95, recommendations: [] } : result,
+        result: llmProvider === 'writer' ? { analysis: result.analysis, confidence: 0.95, recommendations: [] } : result,
         timestamp: new Date().toISOString(),
       };
       setAnalyses(prev => [newAnalysis, ...prev.slice(0, 9)]); // Keep last 10 analyses
@@ -49,13 +49,13 @@ export default function StrategicAnalysis() {
       
       toast({
         title: "Analysis Complete",
-        description: `Strategic analysis generated using ${selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}${useRAG ? ' with RAG context' : ''}`,
+        description: `Strategic analysis generated using ${llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}${useRAG ? ' with RAG context' : ''}`,
       });
     },
     onError: (error) => {
       toast({
         title: "Analysis Failed",
-        description: `Failed to generate strategic analysis using ${selectedProvider === 'writer' ? 'Writer API' : 'OpenAI'}. Please try again.`,
+        description: `Failed to generate strategic analysis using ${llmProvider === 'writer' ? 'Writer API' : 'OpenAI'}. Please try again.`,
         variant: "destructive",
       });
     },
@@ -162,30 +162,9 @@ export default function StrategicAnalysis() {
                 <Brain className="text-aviation-500 mr-2" />
                 Strategic Analysis
               </CardTitle>
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40">
-                  {selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
-                </Badge>
-                <Select value={selectedProvider} onValueChange={(value: 'openai' | 'writer') => setSelectedProvider(value)}>
-                  <SelectTrigger className="w-8 h-8 p-0 bg-dark-800 border-dark-700">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-dark-800 border-dark-700">
-                    <SelectItem value="writer" className="text-dark-50 focus:bg-dark-700">
-                      <div className="flex items-center">
-                        <TrendingUp className="w-4 h-4 mr-2" />
-                        Writer Palmyra X5
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="openai" className="text-dark-50 focus:bg-dark-700">
-                      <div className="flex items-center">
-                        <Zap className="w-4 h-4 mr-2" />
-                        OpenAI GPT-4o
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40 text-purple-200">
+                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
