@@ -26,7 +26,7 @@ export default function AppShell({ children }: AppShellProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 overflow-auto bg-dark-950">
-          <div className="container mx-auto px-6 py-8 max-w-6xl">
+          <div className="container mx-auto px-4 py-4 max-w-7xl">
             {children}
           </div>
         </main>
