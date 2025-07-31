@@ -123,9 +123,9 @@ export default function APIMonitor() {
   const getServiceIcon = (service: string) => {
     switch (service.toLowerCase()) {
       case 'openai': return <Zap className="w-5 h-5" />;
-      case 'writer': return <Zap className="w-5 h-5" />;
+      case 'writer api': return <TrendingUp className="w-5 h-5" />;
       case 'pinecone': return <Database className="w-5 h-5" />;
-      case 'internal': return <Globe className="w-5 h-5" />;
+      case 'internal api': return <Globe className="w-5 h-5" />;
       default: return <Activity className="w-5 h-5" />;
     }
   };

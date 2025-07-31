@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LLMResponse } from '@/types';
 
@@ -21,16 +22,23 @@ export default function StrategicAnalysis() {
   const [prompt, setPrompt] = useState('');
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<'openai' | 'writer'>('writer');
   const { llmProvider } = useVelocitiStore();
   const { toast } = useToast();
 
   const analysisMutation = useMutation({
-    mutationFn: (promptText: string) => api.queryLLM(promptText, 'strategic'),
+    mutationFn: (promptText: string) => {
+      if (selectedProvider === 'writer') {
+        return writerAnalysisMutation.mutateAsync(promptText);
+      } else {
+        return api.queryLLM(promptText, 'strategic');
+      }
+    },
     onSuccess: (result, promptText) => {
       const newAnalysis: AnalysisResult = {
         id: Date.now().toString(),
         prompt: promptText,
-        result,
+        result: selectedProvider === 'writer' ? { analysis: result.analysis, confidence: 0.95, recommendations: [] } : result,
         timestamp: new Date().toISOString(),
       };
       setAnalyses(prev => [newAnalysis, ...prev.slice(0, 9)]); // Keep last 10 analyses
@@ -39,16 +47,28 @@ export default function StrategicAnalysis() {
       
       toast({
         title: "Analysis Complete",
-        description: "Strategic analysis generated successfully",
+        description: `Strategic analysis generated successfully using ${selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}`,
       });
     },
     onError: (error) => {
       toast({
         title: "Analysis Failed",
-        description: "Failed to generate strategic analysis. Please try again.",
+        description: `Failed to generate strategic analysis using ${selectedProvider === 'writer' ? 'Writer API' : 'OpenAI'}. Please try again.`,
         variant: "destructive",
       });
     },
+  });
+
+  const writerAnalysisMutation = useMutation({
+    mutationFn: async (promptText: string) => {
+      const response = await fetch('/api/writer/strategic-analysis', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: promptText })
+      });
+      if (!response.ok) throw new Error('Writer API request failed');
+      return response.json();
+    }
   });
 
   const handleSubmit = () => {
@@ -115,9 +135,30 @@ export default function StrategicAnalysis() {
                 <Brain className="text-aviation-500 mr-2" />
                 Strategic Analysis
               </CardTitle>
-              <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40">
-                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
-              </Badge>
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40">
+                  {selectedProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
+                </Badge>
+                <Select value={selectedProvider} onValueChange={(value: 'openai' | 'writer') => setSelectedProvider(value)}>
+                  <SelectTrigger className="w-8 h-8 p-0 bg-dark-800 border-dark-700">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-dark-800 border-dark-700">
+                    <SelectItem value="writer" className="text-dark-50 focus:bg-dark-700">
+                      <div className="flex items-center">
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Writer Palmyra X5
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="openai" className="text-dark-50 focus:bg-dark-700">
+                      <div className="flex items-center">
+                        <Zap className="w-4 h-4 mr-2" />
+                        OpenAI GPT-4o
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">

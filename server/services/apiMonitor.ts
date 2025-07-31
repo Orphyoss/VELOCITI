@@ -36,6 +36,7 @@ export class APIMonitorService {
     const services = [
       { service: 'OpenAI', endpoint: 'https://api.openai.com/v1/models' },
       { service: 'Pinecone', endpoint: 'https://api.pinecone.io/actions/whoami' },
+      { service: 'Writer API', endpoint: 'https://api.writer.com/v1/models' },
       { service: 'Internal API', endpoint: 'http://localhost:5000/api/agents' }
     ];
 
@@ -74,6 +75,8 @@ export class APIMonitorService {
           response = await this.checkOpenAI();
         } else if (serviceName === 'Pinecone') {
           response = await this.checkPinecone();
+        } else if (serviceName === 'Writer API') {
+          response = await this.checkWriterAPI();
         } else if (serviceName === 'Internal API') {
           response = await this.checkInternalAPI();
         }
@@ -130,6 +133,26 @@ export class APIMonitorService {
       const response = await fetch('https://api.pinecone.io/actions/whoami', {
         headers: {
           'Api-Key': process.env.PINECONE_API_KEY!,
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      return { ok: response.ok, error: response.ok ? undefined : `HTTP ${response.status}` };
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  private async checkWriterAPI(): Promise<{ ok: boolean; error?: string }> {
+    try {
+      if (!process.env.WRITER_API_KEY) {
+        return { ok: false, error: 'Writer API key not configured' };
+      }
+
+      const response = await fetch('https://api.writer.com/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${process.env.WRITER_API_KEY}`,
+          'Content-Type': 'application/json'
         },
         signal: AbortSignal.timeout(10000)
       });

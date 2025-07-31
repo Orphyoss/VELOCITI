@@ -8,6 +8,7 @@ import { pineconeService } from "./services/pinecone";
 import { documentProcessor } from "./services/documentProcessor";
 import { apiMonitor, type PerformanceMetric } from "./services/apiMonitor";
 import { WebSocketService } from "./services/websocket";
+import { writerService } from "./services/writerService";
 import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -238,6 +239,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Set LLM provider error:', error);
       res.status(500).json({ error: 'Failed to set provider' });
+    }
+  });
+
+  // Writer API endpoints
+  app.post("/api/writer/strategic-analysis", async (req, res) => {
+    try {
+      const { prompt, context } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+      }
+      
+      const analysis = await writerService.generateStrategicAnalysis(prompt, context);
+      res.json({ analysis });
+    } catch (error) {
+      console.error('Writer strategic analysis error:', error);
+      res.status(500).json({ error: 'Failed to generate strategic analysis' });
+    }
+  });
+
+  app.post("/api/writer/competitive-intelligence", async (req, res) => {
+    try {
+      const { routeData, competitorData } = req.body;
+      
+      const analysis = await writerService.generateCompetitiveIntelligence(routeData, competitorData);
+      res.json({ analysis });
+    } catch (error) {
+      console.error('Writer competitive intelligence error:', error);
+      res.status(500).json({ error: 'Failed to generate competitive intelligence' });
+    }
+  });
+
+  app.get("/api/writer/health", async (req, res) => {
+    try {
+      const health = await writerService.healthCheck();
+      res.json(health);
+    } catch (error) {
+      console.error('Writer health check error:', error);
+      res.status(500).json({ error: 'Failed to check Writer API health' });
     }
   });
 
