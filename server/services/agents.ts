@@ -134,6 +134,7 @@ export class AgentService {
     // Example: Significant price drop detected
     if (Math.random() > 0.7) { // 30% chance for demo
       alerts.push({
+        type: 'competitive',
         title: 'Ryanair 25% Price Drop - LGW→BCN',
         description: 'Competitor reduced prices by 25% on London Gatwick to Barcelona route. Estimated revenue impact: £87,500 weekly.',
         priority: 'critical' as const,
@@ -161,6 +162,7 @@ export class AgentService {
     // Example: Demand surge detected
     if (Math.random() > 0.6) { // 40% chance for demo
       alerts.push({
+        type: 'performance',
         title: 'Demand Surge - STN→AMS',
         description: '20% booking increase detected overnight on Stansted to Amsterdam. Current load factor: 89%.',
         priority: 'high' as const,
@@ -186,6 +188,7 @@ export class AgentService {
     
     if (Math.random() > 0.8) { // 20% chance for demo
       alerts.push({
+        type: 'network',
         title: 'Capacity Reallocation Opportunity',
         description: 'Network analysis suggests reallocating capacity from underperforming LGW→MAD to high-demand STN→BCN.',
         priority: 'medium' as const,
