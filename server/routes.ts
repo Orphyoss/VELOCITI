@@ -133,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const feedbackData = {
         ...insertFeedbackSchema.parse(req.body),
         agentId,
-        userId: req.body.userId || 'dev-user' // Development mode
+        userId: req.body.userId || '550e8400-e29b-41d4-a716-446655440000' // Development UUID
       };
       
       await agentService.processFeedback(feedbackData);

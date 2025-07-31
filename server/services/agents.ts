@@ -32,7 +32,7 @@ export class AgentService {
             type: 'alert',
             title: 'Competitive Alert Generated',
             description: `Competitive Agent detected: ${alert.title}`,
-            agentId: 'competitive',
+            agent_id: 'competitive',
           });
           
           console.log(`[Competitive Agent] Successfully inserted alert: ${alert.title}`);
@@ -71,7 +71,7 @@ export class AgentService {
             type: 'analysis',
             title: 'Performance Analysis Complete',
             description: `Performance Agent analyzed route: ${alert.route}`,
-            agentId: 'performance',
+            agent_id: 'performance',
           });
           
           console.log(`[Performance Agent] Successfully inserted alert: ${alert.title}`);
@@ -109,7 +109,7 @@ export class AgentService {
             type: 'analysis',
             title: 'Network Analysis Complete',
             description: `Network Agent identified: ${alert.title}`,
-            agentId: 'network',
+            agent_id: 'network',
           });
           
           console.log(`[Network Agent] Successfully inserted alert: ${alert.title}`);
@@ -139,9 +139,9 @@ export class AgentService {
         priority: 'critical' as const,
         category: 'competitive' as const,
         route: 'LGW→BCN',
-        impact: 87500,
+        impact_score: 87500,
         confidence: 0.95,
-        agentId: 'competitive',
+        agent_id: 'competitive',
         metadata: {
           competitor: 'Ryanair',
           priceChange: -25,
@@ -166,9 +166,9 @@ export class AgentService {
         priority: 'high' as const,
         category: 'performance' as const,
         route: 'STN→AMS',
-        impact: 45000,
+        impact_score: 45000,
         confidence: 0.87,
-        agentId: 'performance',
+        agent_id: 'performance',
         metadata: {
           demandIncrease: 20,
           loadFactor: 89,
@@ -191,9 +191,9 @@ export class AgentService {
         priority: 'medium' as const,
         category: 'network' as const,
         route: 'Multiple',
-        impact: 125000,
+        impact_score: 125000,
         confidence: 0.82,
-        agentId: 'network',
+        agent_id: 'network',
         metadata: {
           fromRoute: 'LGW→MAD',
           toRoute: 'STN→BCN',
@@ -229,8 +229,22 @@ export class AgentService {
     actionTaken: boolean;
     impactRealized?: number;
   }) {
+    console.log('[AgentService] Processing feedback:', feedbackData);
+    
+    // Map to database column names
+    const dbFeedback = {
+      alert_id: feedbackData.alertId,
+      agent_id: feedbackData.agentId,
+      user_id: feedbackData.userId,
+      rating: feedbackData.rating,
+      comment: feedbackData.comment,
+      action_taken: feedbackData.actionTaken,
+      impact_realized: feedbackData.impactRealized
+    };
+    
     // Store feedback
-    await db.insert(feedback).values(feedbackData);
+    await db.insert(feedback).values(dbFeedback);
+    console.log('[AgentService] Feedback stored successfully');
     
     // Update agent accuracy based on feedback
     await this.updateAgentAccuracy(feedbackData.agentId, feedbackData.rating);
@@ -240,8 +254,7 @@ export class AgentService {
       type: 'feedback',
       title: 'Learning Update',
       description: `${feedbackData.agentId} Agent improved accuracy based on user feedback`,
-      agentId: feedbackData.agentId,
-      userId: feedbackData.userId,
+      agent_id: feedbackData.agentId,
     });
   }
 

@@ -16,18 +16,23 @@ export const users = pgTable("users", {
 // Alerts and notifications
 export const alerts = pgTable("alerts", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type"),
+  priority: text("priority").notNull(), // critical, high, medium, low
   title: text("title").notNull(),
   description: text("description").notNull(),
-  priority: text("priority").notNull(), // critical, high, medium, low
-  category: text("category").notNull(), // competitive, performance, network
   route: text("route"),
-  impact: decimal("impact", { precision: 10, scale: 2 }),
-  confidence: decimal("confidence", { precision: 3, scale: 2 }),
-  agentId: text("agent_id").notNull(),
-  status: text("status").notNull().default("active"), // active, dismissed, escalated
+  route_name: text("route_name"),
+  metric_value: decimal("metric_value"),
+  threshold_value: decimal("threshold_value"),
+  impact_score: decimal("impact_score"),
+  confidence: decimal("confidence"),
+  agent_id: text("agent_id").notNull(),
   metadata: jsonb("metadata").default({}),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  status: text("status").notNull().default("active"), // active, dismissed, escalated
+  created_at: timestamp("created_at").defaultNow(),
+  acknowledged_at: timestamp("acknowledged_at"),
+  resolved_at: timestamp("resolved_at"),
+  category: text("category").notNull(), // competitive, performance, network
 });
 
 // Agent performance and learning
@@ -46,14 +51,14 @@ export const agents = pgTable("agents", {
 // Feedback for agent learning
 export const feedback = pgTable("feedback", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  alertId: uuid("alert_id").references(() => alerts.id),
-  agentId: text("agent_id").references(() => agents.id),
-  userId: uuid("user_id").references(() => users.id),
+  alert_id: uuid("alert_id").references(() => alerts.id),
+  agent_id: text("agent_id").references(() => agents.id),
+  user_id: uuid("user_id").references(() => users.id),
   rating: integer("rating").notNull(), // 1-5 or thumbs up/down (-1, 1)
   comment: text("comment"),
-  actionTaken: boolean("action_taken").default(false),
-  impactRealized: decimal("impact_realized", { precision: 10, scale: 2 }),
-  createdAt: timestamp("created_at").defaultNow(),
+  action_taken: boolean("action_taken").default(false),
+  impact_realized: decimal("impact_realized", { precision: 10, scale: 2 }),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Route performance data
