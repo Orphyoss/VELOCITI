@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+
 import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { LLMResponse } from '@/types';
@@ -203,18 +203,20 @@ export default function StrategicAnalysis() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4 text-xs text-dark-400">
                 <span>Press Ctrl+Enter to analyze</span>
-                <div className="flex items-center space-x-2">
-                  <Database className="w-4 h-4" />
-                  <span>RAG Context:</span>
-                  <Switch 
-                    checked={useRAG} 
-                    onCheckedChange={setUseRAG}
-                    className="scale-75"
-                  />
-                  <span className={useRAG ? 'text-green-400' : 'text-dark-500'}>
-                    {useRAG ? 'Enabled' : 'Disabled'}
-                  </span>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setUseRAG(!useRAG)}
+                  className={`h-7 px-3 transition-all duration-200 ${
+                    useRAG 
+                      ? 'bg-green-600/20 border-green-600/40 text-green-400 hover:bg-green-600/30' 
+                      : 'bg-dark-800 border-dark-600 text-dark-400 hover:bg-dark-700'
+                  }`}
+                >
+                  <Database className="w-3 h-3 mr-1.5" />
+                  RAG Context
+                  <div className={`ml-2 w-2 h-2 rounded-full ${useRAG ? 'bg-green-400' : 'bg-dark-500'}`} />
+                </Button>
               </div>
               <Button 
                 onClick={handleSubmit}
