@@ -26,13 +26,13 @@ export class AgentService {
             priority: alert.priority
           });
           
-          await db.insert(alerts).values(alert);
+          await db.insert(alerts).values([alert]);
           
           await db.insert(activities).values({
             type: 'alert',
             title: 'Competitive Alert Generated',
             description: `Competitive Agent detected: ${alert.title}`,
-            agent_id: 'competitive',
+            agentId: 'competitive',
           });
           
           console.log(`[Competitive Agent] Successfully inserted alert: ${alert.title}`);
@@ -65,13 +65,13 @@ export class AgentService {
             priority: alert.priority
           });
           
-          await db.insert(alerts).values(alert);
+          await db.insert(alerts).values([alert]);
           
           await db.insert(activities).values({
             type: 'analysis',
             title: 'Performance Analysis Complete',
             description: `Performance Agent analyzed route: ${alert.route}`,
-            agent_id: 'performance',
+            agentId: 'performance',
           });
           
           console.log(`[Performance Agent] Successfully inserted alert: ${alert.title}`);
@@ -103,13 +103,13 @@ export class AgentService {
             priority: alert.priority
           });
           
-          await db.insert(alerts).values(alert);
+          await db.insert(alerts).values([alert]);
           
           await db.insert(activities).values({
             type: 'analysis',
             title: 'Network Analysis Complete',
             description: `Network Agent identified: ${alert.title}`,
-            agent_id: 'network',
+            agentId: 'network',
           });
           
           console.log(`[Network Agent] Successfully inserted alert: ${alert.title}`);
@@ -140,8 +140,8 @@ export class AgentService {
         priority: 'critical' as const,
         category: 'competitive' as const,
         route: 'LGW→BCN',
-        impact_score: 87500,
-        confidence: 0.95,
+        impact_score: "87500.00",
+        confidence: "0.9500",
         agent_id: 'competitive',
         metadata: {
           competitor: 'Ryanair',
@@ -168,8 +168,8 @@ export class AgentService {
         priority: 'high' as const,
         category: 'performance' as const,
         route: 'STN→AMS',
-        impact_score: 45000,
-        confidence: 0.87,
+        impact_score: "45000.00",
+        confidence: "0.8700",
         agent_id: 'performance',
         metadata: {
           demandIncrease: 20,
@@ -194,8 +194,8 @@ export class AgentService {
         priority: 'medium' as const,
         category: 'network' as const,
         route: 'Multiple',
-        impact_score: 125000,
-        confidence: 0.82,
+        impact_score: "125000.00",
+        confidence: "0.8200",
         agent_id: 'network',
         metadata: {
           fromRoute: 'LGW→MAD',
@@ -215,7 +215,7 @@ export class AgentService {
       const currentAgent = agent[0];
       await db.update(agents)
         .set({
-          totalAnalyses: currentAgent.totalAnalyses + 1,
+          totalAnalyses: (currentAgent.totalAnalyses || 0) + 1,
           lastActive: new Date(),
           updatedAt: new Date()
         })
@@ -242,11 +242,11 @@ export class AgentService {
       rating: feedbackData.rating,
       comment: feedbackData.comment,
       action_taken: feedbackData.actionTaken,
-      impact_realized: feedbackData.impactRealized
+      impact_realized: feedbackData.impactRealized?.toString()
     };
     
     // Store feedback
-    await db.insert(feedback).values(dbFeedback);
+    await db.insert(feedback).values([dbFeedback]);
     console.log('[AgentService] Feedback stored successfully');
     
     // Update agent accuracy based on feedback
@@ -257,7 +257,7 @@ export class AgentService {
       type: 'feedback',
       title: 'Learning Update',
       description: `${feedbackData.agentId} Agent improved accuracy based on user feedback`,
-      agent_id: feedbackData.agentId,
+      agentId: feedbackData.agentId,
     });
   }
 
@@ -266,8 +266,8 @@ export class AgentService {
     const recentFeedback = await db.select()
       .from(feedback)
       .where(and(
-        eq(feedback.agentId, agentId),
-        gte(feedback.createdAt, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // Last 30 days
+        eq(feedback.agent_id, agentId),
+        gte(feedback.created_at, new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)) // Last 30 days
       ));
 
     if (recentFeedback.length > 0) {
