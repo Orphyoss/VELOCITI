@@ -22,10 +22,10 @@ export const alerts = pgTable("alerts", {
   description: text("description").notNull(),
   route: text("route"),
   route_name: text("route_name"),
-  metric_value: decimal("metric_value"),
-  threshold_value: decimal("threshold_value"),
-  impact_score: decimal("impact_score"),
-  confidence: decimal("confidence"),
+  metric_value: decimal("metric_value", { precision: 12, scale: 4 }),
+  threshold_value: decimal("threshold_value", { precision: 12, scale: 4 }),
+  impact_score: decimal("impact_score", { precision: 12, scale: 2 }),
+  confidence: decimal("confidence", { precision: 5, scale: 4 }),
   agent_id: text("agent_id").notNull(),
   metadata: jsonb("metadata").default({}),
   status: text("status").notNull().default("active"), // active, dismissed, escalated
@@ -117,8 +117,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
 
 export const insertAlertSchema = createInsertSchema(alerts).omit({
   id: true,
-  createdAt: true,
-  updatedAt: true,
+  created_at: true,
+  acknowledged_at: true,
+  resolved_at: true,
 });
 
 export const insertAgentSchema = createInsertSchema(agents).omit({
@@ -128,7 +129,7 @@ export const insertAgentSchema = createInsertSchema(agents).omit({
 
 export const insertFeedbackSchema = createInsertSchema(feedback).omit({
   id: true,
-  createdAt: true,
+  created_at: true,
 });
 
 export const insertRoutePerformanceSchema = createInsertSchema(routePerformance).omit({
