@@ -144,10 +144,5 @@ Each agent operates autonomously, generating alerts based on configurable thresh
   - Advanced analytics views for competitive positioning and route performance
   - 72K+ synthetic pricing records, 3K+ capacity records, comprehensive market events and economic indicators
   - Real-time intelligence insights generation with confidence scoring and agent attribution
-- **NightShift Analytics Framework (August 1, 2025)**: Created comprehensive metrics monitoring system
-  - Implemented full Telos metrics registry with 15+ core performance indicators
-  - Real-time calculation of system performance, AI accuracy, business impact, and user adoption metrics
-  - Five-tab analytics interface: Overview, Performance, Quality, Business Impact, and Recommendations
-  - Integration with existing intelligence insights for actual data-driven calculations instead of mock data
 
 The system is designed for high availability with automatic failover capabilities, real-time data synchronization, and scalable architecture to handle EasyJet's operational demands.
