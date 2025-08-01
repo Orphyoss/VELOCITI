@@ -93,26 +93,62 @@ interface BusinessRecommendation {
   timeline: string;
 }
 
+interface RevenueOpportunity {
+  id: string;
+  route: string;
+  currentPrice: number;
+  recommendedPrice: number;
+  expectedRevenueLift: number;
+  confidence: number;
+  rationale: string;
+  urgency: 'immediate' | 'today' | 'this_week';
+  competitorAnalysis: {
+    airline: string;
+    price: number;
+    loadFactor: number;
+  }[];
+}
+
+interface MarketAlert {
+  id: string;
+  route: string;
+  alertType: 'price_drop' | 'demand_surge' | 'capacity_change' | 'new_competition';
+  impact: 'high' | 'medium' | 'low';
+  description: string;
+  recommendedAction: string;
+  potentialRevenueLoss: number;
+  timeToAct: string;
+}
+
+interface PerformanceInsight {
+  route: string;
+  vsForcast: number; // percentage
+  vsSameDay: number; // percentage
+  trendAnalysis: string;
+  keyDrivers: string[];
+  actionRequired: boolean;
+}
+
 export default function NightShift() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState('24h');
+  const [selectedTimeRange, setSelectedTimeRange] = useState('today');
   const queryClient = useQueryClient();
 
-  // Fetch comprehensive NightShift metrics
-  const { data: metrics, isLoading: metricsLoading } = useQuery<NightShiftMetrics>({
-    queryKey: ['/api/nightshift/metrics', selectedTimeRange],
-    refetchInterval: 60000, // Refresh every minute
-  });
-
-  // Fetch recent processing jobs
-  const { data: processingJobs, isLoading: jobsLoading } = useQuery<ProcessingJob[]>({
-    queryKey: ['/api/nightshift/jobs', selectedTimeRange],
-    refetchInterval: 30000,
-  });
-
-  // Fetch business recommendations
-  const { data: recommendations, isLoading: recsLoading } = useQuery<BusinessRecommendation[]>({
-    queryKey: ['/api/nightshift/recommendations'],
+  // Revenue opportunities discovered overnight
+  const { data: opportunities, isLoading: opportunitiesLoading } = useQuery<RevenueOpportunity[]>({
+    queryKey: ['/api/nightshift/opportunities', selectedTimeRange],
     refetchInterval: 300000, // Refresh every 5 minutes
+  });
+
+  // Critical market alerts
+  const { data: marketAlerts, isLoading: alertsLoading } = useQuery<MarketAlert[]>({
+    queryKey: ['/api/nightshift/alerts', selectedTimeRange],
+    refetchInterval: 60000,
+  });
+
+  // Performance vs forecast analysis
+  const { data: performanceInsights, isLoading: performanceLoading } = useQuery<PerformanceInsight[]>({
+    queryKey: ['/api/nightshift/performance', selectedTimeRange],
+    refetchInterval: 300000,
   });
 
   // Manual refresh mutation
@@ -175,9 +211,9 @@ export default function NightShift() {
         <div className="flex items-center gap-3">
           <Moon className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">NightShift Analytics</h1>
+            <h1 className="text-3xl font-bold tracking-tight">NightShift Revenue Intelligence</h1>
             <p className="text-muted-foreground">
-              Comprehensive overnight processing metrics and business impact analysis
+              Overnight market analysis and revenue optimization opportunities
             </p>
           </div>
         </div>
@@ -187,9 +223,9 @@ export default function NightShift() {
             onChange={(e) => setSelectedTimeRange(e.target.value)}
             className="border rounded px-3 py-2 bg-background"
           >
-            <option value="24h">Last 24 Hours</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
+            <option value="today">Today's Opportunities</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
           </select>
           <Button
             onClick={() => refreshMutation.mutate()}
@@ -206,87 +242,76 @@ export default function NightShift() {
         </div>
       </div>
 
-      {/* Key Performance Indicators */}
+      {/* Revenue Impact Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processing Time</CardTitle>
-            <Timer className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Revenue Opportunities</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {metrics ? formatDuration(metrics.processingTime.current) : '--'}
-              </div>
-              {metrics && getTrendIcon(metrics.processingTime.trend)}
-            </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full ${getStatusColor(metrics?.processingTime.status || 'unknown')}`} />
-              <p className="text-xs text-muted-foreground">
-                Target: {metrics ? formatDuration(metrics.processingTime.target) : '--'}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">AI Accuracy</CardTitle>
-            <Brain className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {metrics ? `${metrics.aiAccuracy.insightAccuracy.toFixed(1)}%` : '--'}
+            <div className="text-2xl font-bold text-green-600">
+              {opportunities ? formatCurrency(opportunities.reduce((sum, opp) => sum + opp.expectedRevenueLift, 0)) : '--'}
             </div>
             <p className="text-xs text-muted-foreground">
-              Insight accuracy rate
-            </p>
-            <Progress 
-              value={metrics?.aiAccuracy.insightAccuracy || 0} 
-              className="mt-2" 
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Revenue Impact</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {metrics ? formatCurrency(metrics.businessImpact.revenueImpact) : '--'}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Monthly impact from AI decisions
+              {opportunities ? `${opportunities.length} opportunities identified` : 'Loading...'}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">User Satisfaction</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Market Alerts</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {metrics ? `${metrics.userAdoption.satisfactionScore}` : '--'}
+            <div className="text-2xl font-bold text-red-600">
+              {marketAlerts ? marketAlerts.filter(alert => alert.impact === 'high').length : '--'}
             </div>
             <p className="text-xs text-muted-foreground">
-              Net Promoter Score
+              {marketAlerts ? `${marketAlerts.length} total alerts` : 'Loading...'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Routes Needing Action</CardTitle>
+            <Target className="h-4 w-4 text-yellow-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">
+              {performanceInsights ? performanceInsights.filter(insight => insight.actionRequired).length : '--'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {performanceInsights ? `${performanceInsights.length} routes analyzed` : 'Loading...'}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Potential Revenue Loss</CardTitle>
+            <TrendingDown className="h-4 w-4 text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">
+              {marketAlerts ? formatCurrency(marketAlerts.reduce((sum, alert) => sum + alert.potentialRevenueLoss, 0)) : '--'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              If no action taken
             </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="quality">Quality</TabsTrigger>
-          <TabsTrigger value="impact">Business Impact</TabsTrigger>
-          <TabsTrigger value="recommendations">Recommendations</TabsTrigger>
+      <Tabs defaultValue="opportunities" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="opportunities">Revenue Opportunities</TabsTrigger>
+          <TabsTrigger value="alerts">Market Alerts</TabsTrigger>
+          <TabsTrigger value="performance">Route Performance</TabsTrigger>
+          <TabsTrigger value="analysis">Competitive Analysis</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
