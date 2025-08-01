@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { 
   Plane, 
   TrendingUp, 
@@ -15,7 +16,14 @@ import {
   Calendar,
   BarChart3,
   Activity,
-  RefreshCw
+  RefreshCw,
+  Timer,
+  Zap,
+  Eye,
+  Shield,
+  Clock,
+  PoundSterling,
+  Gauge
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
@@ -62,9 +70,83 @@ interface IntelligenceSummary {
   marketEvents: any[];
 }
 
+interface RMMetrics {
+  revenueImpact: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+    trend: number;
+  };
+  yieldOptimization: {
+    currentYield: number;
+    targetYield: number;
+    improvement: number;
+    topRoutes: Array<{route: string; yield: number; change: number}>;
+  };
+  competitiveIntelligence: {
+    priceAdvantageRoutes: number;
+    priceDisadvantageRoutes: number;
+    responseTime: number;
+    marketShare: number;
+  };
+  operationalEfficiency: {
+    loadFactorVariance: number;
+    demandPredictionAccuracy: number;
+    bookingPaceVariance: number;
+    capacityUtilization: number;
+  };
+  riskMetrics: {
+    routesAtRisk: number;
+    volatilityIndex: number;
+    competitorThreats: number;
+    seasonalRisks: number;
+  };
+}
+
 export default function TelosIntelligence() {
   const [selectedRoute, setSelectedRoute] = useState<string>('');
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
   const queryClient = useQueryClient();
+
+  // Mock RM metrics data based on the comprehensive framework
+  const rmMetrics: RMMetrics = {
+    revenueImpact: {
+      daily: 2847500,
+      weekly: 19532500,
+      monthly: 82450000,
+      trend: 8.3
+    },
+    yieldOptimization: {
+      currentYield: 127.45,
+      targetYield: 135.20,
+      improvement: 6.1,
+      topRoutes: [
+        { route: 'LGW→BCN', yield: 142.30, change: 12.4 },
+        { route: 'LTN→AMS', yield: 138.75, change: 9.8 },
+        { route: 'STN→DUB', yield: 135.90, change: 7.2 },
+        { route: 'LGW→MAD', yield: 133.45, change: 5.6 },
+        { route: 'LTN→FCO', yield: 131.20, change: 4.3 }
+      ]
+    },
+    competitiveIntelligence: {
+      priceAdvantageRoutes: 142,
+      priceDisadvantageRoutes: 89,
+      responseTime: 3.2,
+      marketShare: 24.7
+    },
+    operationalEfficiency: {
+      loadFactorVariance: 4.2,
+      demandPredictionAccuracy: 91.3,
+      bookingPaceVariance: 12.8,
+      capacityUtilization: 87.9
+    },
+    riskMetrics: {
+      routesAtRisk: 23,
+      volatilityIndex: 15.7,
+      competitorThreats: 7,
+      seasonalRisks: 12
+    }
+  };
 
   // Fetch intelligence summary
   const { data: summary, isLoading: summaryLoading } = useQuery<IntelligenceSummary>({
@@ -132,6 +214,18 @@ export default function TelosIntelligence() {
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
+  const getStatusColor = (value: number, target: number, warning: number) => {
+    if (value >= target) return 'text-green-500';
+    if (value >= warning) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+
+  const getRiskLevel = (value: number) => {
+    if (value <= 10) return { level: 'Low', color: 'text-green-500' };
+    if (value <= 20) return { level: 'Medium', color: 'text-yellow-500' };
+    return { level: 'High', color: 'text-red-500' };
+  };
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -156,61 +250,670 @@ export default function TelosIntelligence() {
         </Button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+      {/* Revenue Management KPIs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Routes Monitored</CardTitle>
-            <Plane className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Daily Revenue Impact</CardTitle>
+            <PoundSterling className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary?.totalRoutes || 0}</div>
-            <p className="text-xs text-muted-foreground">Across European network</p>
+            <div className="text-2xl font-bold">{formatCurrency(rmMetrics.revenueImpact.daily)}</div>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <span>Monthly: {formatCurrency(rmMetrics.revenueImpact.monthly)}</span>
+              <Badge variant="default" className="bg-green-100 text-green-800">
+                {formatPercentage(rmMetrics.revenueImpact.trend)}
+              </Badge>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Competitive Positions</CardTitle>
+            <CardTitle className="text-sm font-medium">Network Yield</CardTitle>
+            <Gauge className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+            <div className="flex items-center space-x-1 text-xs">
+              <span className="text-muted-foreground">Target: £{rmMetrics.yieldOptimization.targetYield}</span>
+              <TrendingUp className="h-3 w-3 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Competitive Edge</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary?.competitivePositions || 0}</div>
-            <p className="text-xs text-muted-foreground">Price comparisons available</p>
+            <div className="text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
+            <div className="text-xs text-muted-foreground">
+              vs {rmMetrics.competitiveIntelligence.priceDisadvantageRoutes} disadvantaged
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{alerts?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Requiring attention</p>
+            <div className="text-2xl font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</div>
+            <div className="text-xs text-muted-foreground">Average to competitor moves</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Intelligence Insights</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Prediction Accuracy</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary?.insights?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Generated today</p>
+            <div className="text-2xl font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
+            <div className="text-xs text-muted-foreground">Demand forecasting</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="alerts" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="alerts">Intelligence Alerts</TabsTrigger>
-          <TabsTrigger value="competitive">Competitive Analysis</TabsTrigger>
-          <TabsTrigger value="performance">Route Performance</TabsTrigger>
-          <TabsTrigger value="insights">Strategic Insights</TabsTrigger>
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="dashboard">RM Dashboard</TabsTrigger>
+          <TabsTrigger value="yield">Yield Optimization</TabsTrigger>
+          <TabsTrigger value="competitive">Competitive Intel</TabsTrigger>
+          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="risk">Risk Management</TabsTrigger>
+          <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
+
+        {/* RM Dashboard Tab */}
+        <TabsContent value="dashboard" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Revenue Performance Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PoundSterling className="h-5 w-5" />
+                  Revenue Performance
+                </CardTitle>
+                <CardDescription>Real-time revenue and yield metrics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">Current Yield</div>
+                    <div className="text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+                    <Progress value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} className="h-2" />
+                    <div className="text-xs text-muted-foreground">
+                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">Load Factor</div>
+                    <div className="text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
+                    <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
+                    <div className="text-xs text-muted-foreground">Network average</div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <h4 className="text-sm font-medium mb-3">Top Performing Routes</h4>
+                  <div className="space-y-2">
+                    {rmMetrics.yieldOptimization.topRoutes.slice(0, 3).map((route, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded">
+                        <span className="font-medium">{route.route}</span>
+                        <div className="text-right">
+                          <div className="font-bold">£{route.yield}</div>
+                          <div className="text-xs text-green-600">{formatPercentage(route.change)}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Competitive Intelligence Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5" />
+                  Competitive Position
+                </CardTitle>
+                <CardDescription>Market positioning and competitive dynamics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
+                    <div className="text-sm text-muted-foreground">Price Advantage Routes</div>
+                  </div>
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{rmMetrics.competitiveIntelligence.priceDisadvantageRoutes}</div>
+                    <div className="text-sm text-muted-foreground">Price Disadvantage Routes</div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Market Share</span>
+                    <span className="text-lg font-bold">{rmMetrics.competitiveIntelligence.marketShare}%</span>
+                  </div>
+                  <Progress value={rmMetrics.competitiveIntelligence.marketShare} className="h-2" />
+                  
+                  <div className="flex items-center justify-between mt-4 mb-2">
+                    <span className="text-sm font-medium">Avg Response Time</span>
+                    <span className="text-lg font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Target: &lt; 4 hours | Excellent performance
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Risk Management Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  Risk Management
+                </CardTitle>
+                <CardDescription>Route risk assessment and mitigation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Routes at Risk</span>
+                        <span className="font-bold text-red-600">{rmMetrics.riskMetrics.routesAtRisk}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Volatility Index</span>
+                        <span className={`font-bold ${getRiskLevel(rmMetrics.riskMetrics.volatilityIndex).color}`}>
+                          {rmMetrics.riskMetrics.volatilityIndex}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Competitor Threats</span>
+                        <span className="font-bold text-orange-600">{rmMetrics.riskMetrics.competitorThreats}</span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Seasonal Risks</span>
+                        <span className="font-bold text-yellow-600">{rmMetrics.riskMetrics.seasonalRisks}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-2">Risk Level Distribution</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">High Risk</span>
+                      <div className="flex items-center space-x-2">
+                        <Progress value={15} className="w-20 h-2" />
+                        <span className="text-xs font-medium">15%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">Medium Risk</span>
+                      <div className="flex items-center space-x-2">
+                        <Progress value={35} className="w-20 h-2" />
+                        <span className="text-xs font-medium">35%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs">Low Risk</span>
+                      <div className="flex items-center space-x-2">
+                        <Progress value={50} className="w-20 h-2" />
+                        <span className="text-xs font-medium">50%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Operational Efficiency */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Operational Efficiency
+                </CardTitle>
+                <CardDescription>System performance and prediction accuracy</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Demand Prediction Accuracy</span>
+                    <div className="text-right">
+                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
+                      <div className="text-xs text-muted-foreground">Target: &gt;90%</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Load Factor Variance</span>
+                    <div className="text-right">
+                      <div className="font-bold text-blue-600">{rmMetrics.operationalEfficiency.loadFactorVariance}%</div>
+                      <div className="text-xs text-muted-foreground">Lower is better</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Booking Pace Variance</span>
+                    <div className="text-right">
+                      <div className="font-bold text-yellow-600">{rmMetrics.operationalEfficiency.bookingPaceVariance}%</div>
+                      <div className="text-xs text-muted-foreground">Weekly average</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">Capacity Utilization</span>
+                    <div className="text-right">
+                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
+                      <div className="text-xs text-muted-foreground">Network wide</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-2">Efficiency Score</div>
+                  <Progress value={88} className="h-3 mb-2" />
+                  <div className="text-xs text-muted-foreground">
+                    88/100 - Excellent performance across all metrics
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Yield Optimization Tab */}
+        <TabsContent value="yield" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Route Yield Performance</CardTitle>
+                <CardDescription>Yield optimization across top-performing routes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {rmMetrics.yieldOptimization.topRoutes.map((route, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="space-y-1">
+                        <div className="font-semibold">{route.route}</div>
+                        <div className="text-sm text-muted-foreground">Current yield performance</div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="text-xl font-bold">£{route.yield}</div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={route.change > 10 ? 'default' : route.change > 5 ? 'secondary' : 'outline'}>
+                            {formatPercentage(route.change)}
+                          </Badge>
+                          {route.change > 5 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Yield Targets</CardTitle>
+                <CardDescription>Progress toward revenue targets</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+                  <div className="text-muted-foreground">Current Network Yield</div>
+                  <div className="mt-2">
+                    <Progress 
+                      value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} 
+                      className="h-3" 
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £{rmMetrics.yieldOptimization.targetYield} target
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-3">Optimization Opportunities</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Price optimization</span>
+                      <span className="text-green-600">+£2.3M</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Capacity reallocation</span>
+                      <span className="text-green-600">+£1.8M</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dynamic pricing</span>
+                      <span className="text-green-600">+£1.2M</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Competitive Intelligence Tab */}
+        <TabsContent value="competitive" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Competitive Positioning Analysis</CardTitle>
+                <CardDescription>EasyJet vs competitors across key routes</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {competitiveLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="animate-pulse bg-muted h-16 rounded" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {competitive?.slice(0, 6).map((comp, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <div className="font-medium">{comp.routeId}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(comp.observationDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <div className="font-bold">
+                            EasyJet: £{comp.easyjetAvgPrice?.toFixed(0) || 'N/A'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            vs Ryanair: £{comp.ryanairAvgPrice?.toFixed(0) || 'N/A'}
+                          </div>
+                          <Badge variant={comp.marketPosition === 'Competitive' ? 'default' : 
+                                       comp.marketPosition === 'Premium' ? 'secondary' : 'destructive'}>
+                            {comp.marketPosition}
+                          </Badge>
+                        </div>
+                      </div>
+                    )) || (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No competitive data available
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Market Response Metrics</CardTitle>
+                <CardDescription>Speed and effectiveness of competitive responses</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Average Response Time</span>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</div>
+                      <div className="text-xs text-muted-foreground">Industry leader</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Market Share</span>
+                    <div className="text-right">
+                      <div className="text-xl font-bold">{rmMetrics.competitiveIntelligence.marketShare}%</div>
+                      <Progress value={rmMetrics.competitiveIntelligence.marketShare} className="w-20 h-2 mt-1" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Price Optimization Rate</span>
+                    <div className="text-right">
+                      <div className="text-xl font-bold text-green-600">94.2%</div>
+                      <div className="text-xs text-muted-foreground">Successfully optimized</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-3">Competitive Threats</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Ryanair aggressive pricing</span>
+                      <Badge variant="destructive">High</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Wizz Air capacity expansion</span>
+                      <Badge variant="secondary">Medium</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span>New LCC entrants</span>
+                      <Badge variant="outline">Low</Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Performance Tab */}
+        <TabsContent value="performance" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Route Performance Analysis</CardTitle>
+                <CardDescription>Load factor and revenue performance vs forecast</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {performanceLoading ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="animate-pulse bg-muted h-16 rounded" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {performance?.slice(0, 8).map((perf, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                        <div className="space-y-1">
+                          <div className="font-medium">{perf.routeId}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(perf.flightDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">Load Factor</div>
+                            <div className="font-bold">{(perf.loadFactor * 100).toFixed(1)}%</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">Revenue</div>
+                            <div className="font-bold">{formatCurrency(perf.revenueTotal)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm text-muted-foreground">vs Forecast</div>
+                            <div className="flex items-center gap-1">
+                              {getPerformanceIcon(perf.performanceVsForecast)}
+                              <span className="text-sm">{perf.performanceVsForecast}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )) || (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No performance data available
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Performance Summary</CardTitle>
+                <CardDescription>Network-wide performance indicators</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm">Network Load Factor</span>
+                      <span className="font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</span>
+                    </div>
+                    <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm">Revenue vs Target</span>
+                      <span className="font-bold text-green-600">103.2%</span>
+                    </div>
+                    <Progress value={103.2} className="h-2" />
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm">On-time Performance</span>
+                      <span className="font-bold">89.7%</span>
+                    </div>
+                    <Progress value={89.7} className="h-2" />
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-3">Route Categories</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Above Forecast</span>
+                      <span className="text-green-600 font-medium">127 routes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>On Target</span>
+                      <span className="text-blue-600 font-medium">89 routes</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Below Forecast</span>
+                      <span className="text-red-600 font-medium">32 routes</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Risk Management Tab */}
+        <TabsContent value="risk" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Route Risk Assessment</CardTitle>
+                <CardDescription>Routes requiring immediate attention and monitoring</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    { route: 'LGW→AGP', risk: 'High', reason: 'Competitor capacity increase', impact: '€2.3M' },
+                    { route: 'STN→BVA', risk: 'High', reason: 'Demand volatility', impact: '€1.8M' },
+                    { route: 'LTN→PMI', risk: 'Medium', reason: 'Seasonal demand shift', impact: '€1.2M' },
+                    { route: 'LGW→FCO', risk: 'Medium', reason: 'Price pressure', impact: '€0.9M' },
+                    { route: 'STN→BCN', risk: 'Medium', reason: 'Yield optimization needed', impact: '€0.7M' },
+                    { route: 'LTN→MAD', risk: 'Low', reason: 'Monitoring required', impact: '€0.3M' }
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div className="space-y-1">
+                        <div className="font-medium">{item.route}</div>
+                        <div className="text-sm text-muted-foreground">{item.reason}</div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <Badge variant={item.risk === 'High' ? 'destructive' : 
+                                     item.risk === 'Medium' ? 'secondary' : 'outline'}>
+                          {item.risk} Risk
+                        </Badge>
+                        <div className="text-sm font-medium">{item.impact}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Risk Mitigation Dashboard</CardTitle>
+                <CardDescription>Proactive risk management tools and insights</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <div className="text-2xl font-bold text-red-600">{rmMetrics.riskMetrics.routesAtRisk}</div>
+                    <div className="text-sm text-muted-foreground">High Risk Routes</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 border rounded-lg">
+                      <div className="text-lg font-bold text-orange-600">{rmMetrics.riskMetrics.competitorThreats}</div>
+                      <div className="text-xs text-muted-foreground">Competitor Threats</div>
+                    </div>
+                    <div className="text-center p-3 border rounded-lg">
+                      <div className="text-lg font-bold text-yellow-600">{rmMetrics.riskMetrics.seasonalRisks}</div>
+                      <div className="text-xs text-muted-foreground">Seasonal Risks</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-3">Risk Mitigation Actions</div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>Price adjustments</span>
+                      <Badge variant="outline">12 routes</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Capacity reallocation</span>
+                      <Badge variant="outline">8 routes</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Enhanced monitoring</span>
+                      <Badge variant="outline">23 routes</Badge>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <div className="text-sm font-medium mb-2">Overall Risk Score</div>
+                  <Progress value={72} className="h-3 mb-2" />
+                  <div className="text-xs text-muted-foreground">
+                    72/100 - Moderate risk level, actively managed
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         {/* Intelligence Alerts Tab */}
         <TabsContent value="alerts" className="space-y-4">

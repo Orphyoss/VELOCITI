@@ -1,0 +1,1869 @@
+"""
+Telos Intelligence Platform - Comprehensive Metrics & Analytics Framework
+Designed to monitor, measure, and optimize AI-driven airline intelligence
+
+Think of this as the "mission control dashboard" for your AI agents - providing
+real-time visibility into system performance, business impact, and ROI validation.
+"""
+
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta, date
+from typing import Dict, List, Optional, Union, Any, Tuple
+import json
+import logging
+from dataclasses import dataclass
+from enum import Enum
+import asyncio
+from scipy import stats
+import plotly.graph_objects as go
+import plotly.express as px
+from plotly.subplots import make_subplots
+import warnings
+warnings.filterwarnings('ignore')
+
+# ============================================================================
+# METRICS TAXONOMY AND DEFINITIONS
+# ============================================================================
+
+class MetricCategory(str, Enum):
+    SYSTEM_PERFORMANCE = "System Performance"
+    AI_ACCURACY = "AI Accuracy & Quality"
+    BUSINESS_IMPACT = "Business Impact & ROI"
+    USER_ADOPTION = "User Adoption & Satisfaction"
+    DATA_QUALITY = "Data Quality & Reliability"
+    OPERATIONAL_EFFICIENCY = "Operational Efficiency"
+
+class MetricFrequency(str, Enum):
+    REAL_TIME = "Real-time"
+    HOURLY = "Hourly"
+    DAILY = "Daily"
+    WEEKLY = "Weekly"
+    MONTHLY = "Monthly"
+    QUARTERLY = "Quarterly"
+
+@dataclass
+class MetricDefinition:
+    """Standard metric definition with business context and measurement methodology"""
+    metric_name: str
+    category: MetricCategory
+    frequency: MetricFrequency
+    description: str
+    calculation_method: str
+    target_value: Union[float, str]
+    threshold_warning: Union[float, str]
+    threshold_critical: Union[float, str]
+    business_impact: str
+    data_sources: List[str]
+
+# ============================================================================
+# CORE METRICS REGISTRY
+# ============================================================================
+
+class TelosMetricsRegistry:
+    """Central registry of all Telos platform metrics with business context"""
+    
+    def __init__(self):
+        self.metrics = self._initialize_metrics_catalog()
+        
+    def _initialize_metrics_catalog(self) -> Dict[str, MetricDefinition]:
+        """Initialize comprehensive metrics catalog"""
+        
+        return {
+            # ================================================================
+            # SYSTEM PERFORMANCE METRICS
+            # ================================================================
+            "nightshift_processing_time": MetricDefinition(
+                metric_name="NightShift Processing Time",
+                category=MetricCategory.SYSTEM_PERFORMANCE,
+                frequency=MetricFrequency.DAILY,
+                description="Total time for overnight intelligence processing to complete",
+                calculation_method="processing_end_time - processing_start_time",
+                target_value="< 45 minutes",
+                threshold_warning="60 minutes",
+                threshold_critical="90 minutes",
+                business_impact="Longer processing delays morning briefings and reduces analyst productivity",
+                data_sources=["nightshift_processing", "system_logs"]
+            ),
+            
+            "system_availability": MetricDefinition(
+                metric_name="System Availability",
+                category=MetricCategory.SYSTEM_PERFORMANCE,
+                frequency=MetricFrequency.REAL_TIME,
+                description="Percentage of time system is operational and accessible",
+                calculation_method="(uptime_seconds / total_seconds) * 100",
+                target_value="> 99.9%",
+                threshold_warning="99.5%",
+                threshold_critical="99.0%",
+                business_impact="System downtime directly impacts analyst productivity and decision-making capability",
+                data_sources=["system_health_checks", "error_logs", "databricks_metrics"]
+            ),
+            
+            "data_freshness": MetricDefinition(
+                metric_name="Data Freshness",
+                category=MetricCategory.DATA_QUALITY,
+                frequency=MetricFrequency.HOURLY,
+                description="Time elapsed since last successful data update from external sources",
+                calculation_method="current_time - last_successful_update",
+                target_value="< 2 hours",
+                threshold_warning="4 hours",
+                threshold_critical="8 hours",
+                business_impact="Stale data leads to outdated insights and poor decision-making",
+                data_sources=["data_ingestion_logs", "infare_api", "oag_feeds"]
+            ),
+            
+            # ================================================================
+            # AI ACCURACY & QUALITY METRICS
+            # ================================================================
+            "insight_accuracy_rate": MetricDefinition(
+                metric_name="AI Insight Accuracy Rate",
+                category=MetricCategory.AI_ACCURACY,
+                frequency=MetricFrequency.WEEKLY,
+                description="Percentage of AI-generated insights validated as accurate by analysts",
+                calculation_method="(accurate_insights / total_insights_validated) * 100",
+                target_value="> 85%",
+                threshold_warning="80%",
+                threshold_critical="75%",
+                business_impact="Low accuracy erodes analyst trust and reduces system adoption",
+                data_sources=["analyst_interactions", "insight_feedback", "validation_tracking"]
+            ),
+            
+            "competitive_alert_precision": MetricDefinition(
+                metric_name="Competitive Alert Precision",
+                category=MetricCategory.AI_ACCURACY,
+                frequency=MetricFrequency.DAILY,
+                description="Percentage of competitive alerts that are actionable and accurate",
+                calculation_method="(actionable_competitive_alerts / total_competitive_alerts) * 100",
+                target_value="> 80%",
+                threshold_warning="70%",
+                threshold_critical="60%",
+                business_impact="False competitive alerts waste analyst time and create alert fatigue",
+                data_sources=["intelligence_insights", "competitive_pricing", "analyst_feedback"]
+            ),
+            
+            "prediction_confidence_distribution": MetricDefinition(
+                metric_name="AI Prediction Confidence Distribution",
+                category=MetricCategory.AI_ACCURACY,
+                frequency=MetricFrequency.WEEKLY,
+                description="Distribution of confidence scores across all AI predictions",
+                calculation_method="histogram(confidence_scores, bins=[0.7, 0.8, 0.85, 0.9, 0.95, 1.0])",
+                target_value="> 70% of predictions with confidence > 0.8",
+                threshold_warning="< 60% high confidence",
+                threshold_critical="< 50% high confidence",
+                business_impact="Low confidence predictions indicate model uncertainty and require human validation",
+                data_sources=["intelligence_insights", "ml_model_outputs"]
+            ),
+            
+            # ================================================================
+            # BUSINESS IMPACT & ROI METRICS
+            # ================================================================
+            "analyst_time_savings": MetricDefinition(
+                metric_name="Analyst Time Savings per Day",
+                category=MetricCategory.BUSINESS_IMPACT,
+                frequency=MetricFrequency.DAILY,
+                description="Minutes saved per analyst through automated intelligence vs manual analysis",
+                calculation_method="baseline_analysis_time - current_analysis_time",
+                target_value="> 60 minutes/day",
+                threshold_warning="< 45 minutes/day",
+                threshold_critical="< 30 minutes/day",
+                business_impact="Time savings directly correlate to productivity gains and ROI",
+                data_sources=["analyst_interactions", "time_tracking", "productivity_surveys"]
+            ),
+            
+            "revenue_impact_tracking": MetricDefinition(
+                metric_name="Revenue Impact from AI Decisions",
+                category=MetricCategory.BUSINESS_IMPACT,
+                frequency=MetricFrequency.MONTHLY,
+                description="Estimated revenue impact from decisions driven by AI insights",
+                calculation_method="sum(revenue_uplift_from_ai_driven_decisions)",
+                target_value="> €500K/month",
+                threshold_warning="< €300K/month",
+                threshold_critical="< €200K/month",
+                business_impact="Revenue impact validates ROI and justifies platform investment",
+                data_sources=["flight_performance", "pricing_actions", "load_factor_improvements"]
+            ),
+            
+            "competitive_response_speed": MetricDefinition(
+                metric_name="Competitive Response Speed",
+                category=MetricCategory.BUSINESS_IMPACT,
+                frequency=MetricFrequency.WEEKLY,
+                description="Average time from competitor price change to EasyJet response action",
+                calculation_method="avg(easyjet_action_time - competitor_price_change_time)",
+                target_value="< 4 hours",
+                threshold_warning="> 8 hours",
+                threshold_critical="> 24 hours",
+                business_impact="Faster competitive response protects market share and revenue",
+                data_sources=["competitive_pricing", "rm_pricing_actions", "intelligence_insights"]
+            ),
+            
+            # ================================================================
+            # USER ADOPTION & SATISFACTION METRICS
+            # ================================================================
+            "daily_active_users": MetricDefinition(
+                metric_name="Daily Active Users",
+                category=MetricCategory.USER_ADOPTION,
+                frequency=MetricFrequency.DAILY,
+                description="Number of unique analysts using the system daily",
+                calculation_method="count(distinct(analyst_id)) where login_date = current_date",
+                target_value="> 90% of target analysts",
+                threshold_warning="< 80%",
+                threshold_critical="< 70%",
+                business_impact="Low adoption reduces ROI and indicates user experience issues",
+                data_sources=["analyst_interactions", "system_access_logs"]
+            ),
+            
+            "user_satisfaction_score": MetricDefinition(
+                metric_name="User Satisfaction Score (NPS)",
+                category=MetricCategory.USER_ADOPTION,
+                frequency=MetricFrequency.MONTHLY,
+                description="Net Promoter Score based on analyst feedback surveys",
+                calculation_method="(promoters - detractors) / total_responses * 100",
+                target_value="> 50 NPS",
+                threshold_warning="< 30 NPS",
+                threshold_critical="< 10 NPS",
+                business_impact="User satisfaction drives adoption and long-term success",
+                data_sources=["user_surveys", "feedback_forms", "satisfaction_ratings"]
+            ),
+            
+            "insight_action_rate": MetricDefinition(
+                metric_name="Insight Action Rate",
+                category=MetricCategory.USER_ADOPTION,
+                frequency=MetricFrequency.WEEKLY,
+                description="Percentage of AI insights that result in analyst action",
+                calculation_method="(insights_acted_upon / total_insights_presented) * 100",
+                target_value="> 60%",
+                threshold_warning="< 50%",
+                threshold_critical="< 40%",
+                business_impact="Low action rate indicates insights are not valuable or actionable",
+                data_sources=["intelligence_insights", "analyst_interactions", "action_tracking"]
+            ),
+            
+            # ================================================================
+            # DATA QUALITY & RELIABILITY METRICS
+            # ================================================================
+            "data_completeness_rate": MetricDefinition(
+                metric_name="Data Completeness Rate",
+                category=MetricCategory.DATA_QUALITY,
+                frequency=MetricFrequency.DAILY,
+                description="Percentage of expected data records received from external sources",
+                calculation_method="(records_received / records_expected) * 100",
+                target_value="> 95%",
+                threshold_warning="< 90%",
+                threshold_critical="< 85%",
+                business_impact="Incomplete data leads to biased insights and missed opportunities",
+                data_sources=["data_ingestion_logs", "infare_feeds", "oag_data", "search_data"]
+            ),
+            
+            "data_accuracy_score": MetricDefinition(
+                metric_name="External Data Accuracy Score",
+                category=MetricCategory.DATA_QUALITY,
+                frequency=MetricFrequency.WEEKLY,
+                description="Accuracy of external data validated against known benchmarks",
+                calculation_method="(validated_accurate_records / total_validated_records) * 100",
+                target_value="> 98%",
+                threshold_warning="< 95%",
+                threshold_critical="< 92%",
+                business_impact="Inaccurate source data propagates errors through all AI insights",
+                data_sources=["data_validation_checks", "competitive_pricing", "benchmark_comparisons"]
+            ),
+            
+            # ================================================================
+            # OPERATIONAL EFFICIENCY METRICS
+            # ================================================================
+            "alert_fatigue_index": MetricDefinition(
+                metric_name="Alert Fatigue Index",
+                category=MetricCategory.OPERATIONAL_EFFICIENCY,
+                frequency=MetricFrequency.WEEKLY,
+                description="Ratio of actionable alerts to total alerts generated",
+                calculation_method="total_alerts / actionable_alerts",
+                target_value="< 1.5",
+                threshold_warning="> 2.0",
+                threshold_critical="> 3.0",
+                business_impact="Too many alerts create fatigue and reduce analyst responsiveness",
+                data_sources=["intelligence_insights", "alert_management", "analyst_feedback"]
+            ),
+            
+            "insight_generation_cost": MetricDefinition(
+                metric_name="Cost per Insight Generated",
+                category=MetricCategory.OPERATIONAL_EFFICIENCY,
+                frequency=MetricFrequency.MONTHLY,
+                description="Total system cost divided by number of insights generated",
+                calculation_method="(compute_costs + api_costs + storage_costs) / total_insights",
+                target_value="< €5 per insight",
+                threshold_warning="> €8 per insight",
+                threshold_critical="> €12 per insight",
+                business_impact="High cost per insight reduces platform profitability and scalability",
+                data_sources=["billing_data", "usage_metrics", "intelligence_insights"]
+            )
+        }
+    
+    def get_metric(self, metric_name: str) -> Optional[MetricDefinition]:
+        """Retrieve metric definition by name"""
+        return self.metrics.get(metric_name)
+    
+    def get_metrics_by_category(self, category: MetricCategory) -> List[MetricDefinition]:
+        """Get all metrics in a specific category"""
+        return [metric for metric in self.metrics.values() if metric.category == category]
+
+# ============================================================================
+# METRICS CALCULATION ENGINE
+# ============================================================================
+
+class TelosMetricsCalculator:
+    """Core engine for calculating and tracking Telos platform metrics"""
+    
+    def __init__(self, databricks_connection, logger=None):
+        self.db_connection = databricks_connection
+        self.logger = logger or logging.getLogger(__name__)
+        self.registry = TelosMetricsRegistry()
+        
+    async def calculate_system_performance_metrics(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Calculate all system performance metrics for given date range"""
+        start_date, end_date = date_range
+        
+        # NightShift Processing Time
+        processing_times = await self._query_database(f"""
+            SELECT 
+                processing_date,
+                TIMESTAMPDIFF(MINUTE, processing_start, processing_end) as processing_minutes,
+                processing_status
+            FROM nightshift_processing 
+            WHERE processing_date BETWEEN '{start_date}' AND '{end_date}'
+            ORDER BY processing_date DESC
+        """)
+        
+        # System Availability  
+        availability_data = await self._query_database(f"""
+            SELECT 
+                check_date,
+                check_hour,
+                SUM(CASE WHEN status = 'UP' THEN 1 ELSE 0 END) as uptime_checks,
+                COUNT(*) as total_checks
+            FROM system_health_checks 
+            WHERE check_date BETWEEN '{start_date}' AND '{end_date}'
+            GROUP BY check_date, check_hour
+        """)
+        
+        # Data Freshness
+        freshness_data = await self._query_database(f"""
+            SELECT 
+                data_source,
+                MAX(last_update_time) as latest_update,
+                TIMESTAMPDIFF(HOUR, MAX(last_update_time), NOW()) as hours_since_update
+            FROM data_ingestion_status
+            WHERE DATE(last_update_time) BETWEEN '{start_date}' AND '{end_date}'
+            GROUP BY data_source
+        """)
+        
+        return {
+            "nightshift_processing_time": {
+                "avg_minutes": processing_times['processing_minutes'].mean(),
+                "max_minutes": processing_times['processing_minutes'].max(),
+                "success_rate": (processing_times['processing_status'] == 'Completed').mean() * 100,
+                "trend": self._calculate_trend(processing_times, 'processing_minutes', 'processing_date')
+            },
+            "system_availability": {
+                "availability_percent": (availability_data['uptime_checks'].sum() / availability_data['total_checks'].sum()) * 100,
+                "daily_availability": availability_data.groupby('check_date').apply(
+                    lambda x: (x['uptime_checks'].sum() / x['total_checks'].sum()) * 100
+                ).to_dict()
+            },
+            "data_freshness": {
+                "avg_hours_delay": freshness_data['hours_since_update'].mean(),
+                "max_hours_delay": freshness_data['hours_since_update'].max(),
+                "by_source": freshness_data.set_index('data_source')['hours_since_update'].to_dict()
+            }
+        }
+    
+    async def calculate_ai_accuracy_metrics(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Calculate AI accuracy and quality metrics"""
+        start_date, end_date = date_range
+        
+        # Insight Accuracy Rate
+        accuracy_data = await self._query_database(f"""
+            SELECT 
+                ii.insight_date,
+                ii.insight_type,
+                ii.confidence_score,
+                ai.satisfaction_rating,
+                CASE WHEN ai.satisfaction_rating >= 4 THEN 1 ELSE 0 END as accurate_insight
+            FROM intelligence_insights ii
+            JOIN analyst_interactions ai ON ii.id = ai.insight_id
+            WHERE ii.insight_date BETWEEN '{start_date}' AND '{end_date}'
+            AND ai.interaction_type = 'Feedback'
+        """)
+        
+        # Competitive Alert Precision
+        competitive_alerts = await self._query_database(f"""
+            SELECT 
+                ii.insight_date,
+                ii.priority_level,
+                ai.action_taken,
+                CASE WHEN ai.action_taken = TRUE THEN 1 ELSE 0 END as actionable_alert
+            FROM intelligence_insights ii
+            LEFT JOIN analyst_interactions ai ON ii.id = ai.insight_id
+            WHERE ii.insight_date BETWEEN '{start_date}' AND '{end_date}'
+            AND ii.agent_source = 'Competitive_Intelligence_Agent'
+        """)
+        
+        # Confidence Score Distribution
+        confidence_distribution = await self._query_database(f"""
+            SELECT 
+                confidence_score,
+                COUNT(*) as insight_count,
+                CASE 
+                    WHEN confidence_score >= 0.9 THEN 'Very High'
+                    WHEN confidence_score >= 0.85 THEN 'High'
+                    WHEN confidence_score >= 0.8 THEN 'Medium'
+                    ELSE 'Low'
+                END as confidence_bucket
+            FROM intelligence_insights
+            WHERE insight_date BETWEEN '{start_date}' AND '{end_date}'
+            GROUP BY confidence_score, confidence_bucket
+        """)
+        
+        return {
+            "insight_accuracy_rate": {
+                "overall_accuracy": accuracy_data['accurate_insight'].mean() * 100,
+                "by_insight_type": accuracy_data.groupby('insight_type')['accurate_insight'].mean() * 100,
+                "avg_satisfaction": accuracy_data['satisfaction_rating'].mean(),
+                "trend": self._calculate_trend(accuracy_data, 'accurate_insight', 'insight_date')
+            },
+            "competitive_alert_precision": {
+                "precision_rate": competitive_alerts['actionable_alert'].mean() * 100,
+                "by_priority": competitive_alerts.groupby('priority_level')['actionable_alert'].mean() * 100,
+                "total_alerts": len(competitive_alerts)
+            },
+            "confidence_distribution": {
+                "distribution": confidence_distribution.groupby('confidence_bucket')['insight_count'].sum().to_dict(),
+                "avg_confidence": confidence_distribution['confidence_score'].mean(),
+                "high_confidence_rate": (confidence_distribution['confidence_score'] >= 0.8).mean() * 100
+            }
+        }
+    
+    async def calculate_business_impact_metrics(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Calculate business impact and ROI metrics"""
+        start_date, end_date = date_range
+        
+        # Analyst Time Savings
+        time_savings = await self._query_database(f"""
+            SELECT 
+                interaction_date,
+                analyst_id,
+                SUM(time_saved_minutes) as daily_time_saved
+            FROM analyst_interactions
+            WHERE DATE(interaction_date) BETWEEN '{start_date}' AND '{end_date}'
+            AND time_saved_minutes IS NOT NULL
+            GROUP BY interaction_date, analyst_id
+        """)
+        
+        # Revenue Impact Tracking
+        revenue_impact = await self._query_database(f"""
+            SELECT 
+                rpa.action_date,
+                rpa.route_id,
+                rpa.new_price - rpa.old_price as price_change,
+                fp.revenue_total,
+                fp.load_factor,
+                CASE WHEN rpa.change_reason = 'ai_recommendation' THEN fp.revenue_total ELSE 0 END as ai_driven_revenue
+            FROM rm_pricing_actions rpa
+            JOIN flight_performance fp ON rpa.route_id = fp.route_id 
+                AND rpa.flight_date = fp.flight_date
+            WHERE rpa.action_date BETWEEN '{start_date}' AND '{end_date}'
+        """)
+        
+        # Competitive Response Speed
+        response_speed = await self._query_database(f"""
+            SELECT 
+                cp.observation_date,
+                cp.route_id,
+                cp.airline_code,
+                cp.price_amount,
+                rpa.action_date,
+                TIMESTAMPDIFF(HOUR, cp.observation_date, rpa.action_date) as response_hours
+            FROM competitive_pricing cp
+            JOIN rm_pricing_actions rpa ON cp.route_id = rpa.route_id
+                AND rpa.change_reason = 'competitor_response'
+            WHERE cp.observation_date BETWEEN '{start_date}' AND '{end_date}'
+            AND cp.airline_code = 'RYR'  -- Focus on Ryanair responses
+        """)
+        
+        return {
+            "analyst_time_savings": {
+                "avg_daily_savings_minutes": time_savings['daily_time_saved'].mean(),
+                "total_hours_saved": time_savings['daily_time_saved'].sum() / 60,
+                "by_analyst": time_savings.groupby('analyst_id')['daily_time_saved'].mean().to_dict(),
+                "trend": self._calculate_trend(time_savings, 'daily_time_saved', 'interaction_date')
+            },
+            "revenue_impact": {
+                "total_ai_driven_revenue": revenue_impact['ai_driven_revenue'].sum(),
+                "avg_price_change": revenue_impact['price_change'].mean(),
+                "routes_impacted": revenue_impact['route_id'].nunique(),
+                "load_factor_correlation": revenue_impact[['price_change', 'load_factor']].corr().iloc[0,1]
+            },
+            "competitive_response_speed": {
+                "avg_response_hours": response_speed['response_hours'].mean(),
+                "median_response_hours": response_speed['response_hours'].median(),
+                "responses_under_4h": (response_speed['response_hours'] <= 4).mean() * 100,
+                "by_route": response_speed.groupby('route_id')['response_hours'].mean().to_dict()
+            }
+        }
+    
+    async def calculate_user_adoption_metrics(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Calculate user adoption and satisfaction metrics"""
+        start_date, end_date = date_range
+        
+        # Daily Active Users
+        active_users = await self._query_database(f"""
+            SELECT 
+                DATE(interaction_date) as usage_date,
+                COUNT(DISTINCT analyst_id) as daily_active_users,
+                COUNT(*) as total_interactions
+            FROM analyst_interactions
+            WHERE DATE(interaction_date) BETWEEN '{start_date}' AND '{end_date}'
+            GROUP BY DATE(interaction_date)
+            ORDER BY usage_date
+        """)
+        
+        # User Satisfaction (from feedback)
+        satisfaction_data = await self._query_database(f"""
+            SELECT 
+                DATE(interaction_date) as feedback_date,
+                satisfaction_rating,
+                analyst_id,
+                interaction_type
+            FROM analyst_interactions
+            WHERE DATE(interaction_date) BETWEEN '{start_date}' AND '{end_date}'
+            AND satisfaction_rating IS NOT NULL
+        """)
+        
+        # Insight Action Rate
+        action_rates = await self._query_database(f"""
+            SELECT 
+                ii.insight_date,
+                ii.insight_type,
+                ii.priority_level,
+                COUNT(*) as total_insights,
+                SUM(CASE WHEN ii.action_taken = TRUE THEN 1 ELSE 0 END) as insights_acted_upon
+            FROM intelligence_insights ii
+            WHERE ii.insight_date BETWEEN '{start_date}' AND '{end_date}'
+            GROUP BY ii.insight_date, ii.insight_type, ii.priority_level
+        """)
+        
+        # Calculate NPS from satisfaction ratings
+        nps_score = self._calculate_nps(satisfaction_data['satisfaction_rating'])
+        
+        return {
+            "daily_active_users": {
+                "avg_daily_users": active_users['daily_active_users'].mean(),
+                "peak_daily_users": active_users['daily_active_users'].max(),
+                "user_growth_trend": self._calculate_trend(active_users, 'daily_active_users', 'usage_date'),
+                "engagement_trend": self._calculate_trend(active_users, 'total_interactions', 'usage_date')
+            },
+            "user_satisfaction": {
+                "nps_score": nps_score,
+                "avg_satisfaction": satisfaction_data['satisfaction_rating'].mean(),
+                "satisfaction_distribution": satisfaction_data['satisfaction_rating'].value_counts().to_dict(),
+                "by_analyst": satisfaction_data.groupby('analyst_id')['satisfaction_rating'].mean().to_dict()
+            },
+            "insight_action_rate": {
+                "overall_action_rate": (action_rates['insights_acted_upon'].sum() / action_rates['total_insights'].sum()) * 100,
+                "by_insight_type": (action_rates.groupby('insight_type')['insights_acted_upon'].sum() / 
+                                  action_rates.groupby('insight_type')['total_insights'].sum() * 100).to_dict(),
+                "by_priority": (action_rates.groupby('priority_level')['insights_acted_upon'].sum() / 
+                              action_rates.groupby('priority_level')['total_insights'].sum() * 100).to_dict()
+            }
+        }
+    
+    def _calculate_trend(self, data: pd.DataFrame, value_col: str, date_col: str) -> Dict[str, float]:
+        """Calculate trend analysis (slope, R²) for time series data"""
+        if len(data) < 2:
+            return {"slope": 0, "r_squared": 0, "trend_direction": "insufficient_data"}
+        
+        data_sorted = data.sort_values(date_col)
+        x = np.arange(len(data_sorted))
+        y = data_sorted[value_col].values
+        
+        slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+        
+        trend_direction = "improving" if slope > 0 else "declining" if slope < 0 else "stable"
+        
+        return {
+            "slope": slope,
+            "r_squared": r_value ** 2,
+            "trend_direction": trend_direction,
+            "significance": "significant" if p_value < 0.05 else "not_significant"
+        }
+    
+    def _calculate_nps(self, ratings: pd.Series) -> float:
+        """Calculate Net Promoter Score from satisfaction ratings (1-5 scale)"""
+        if len(ratings) == 0:
+            return 0
+        
+        # Convert 1-5 ratings to NPS categories
+        # 5 = Promoter, 4 = Passive, 1-3 = Detractor
+        promoters = (ratings == 5).sum()
+        detractors = (ratings <= 3).sum()
+        total = len(ratings)
+        
+        nps = ((promoters - detractors) / total) * 100
+        return nps
+    
+    async def _query_database(self, query: str) -> pd.DataFrame:
+        """Execute database query and return DataFrame"""
+        try:
+            cursor = self.db_connection.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            return pd.DataFrame(result, columns=columns)
+        except Exception as e:
+            self.logger.error(f"Database query failed: {e}")
+            return pd.DataFrame()  # Return empty DataFrame on error
+
+# ============================================================================
+# REAL-TIME MONITORING & ALERTING
+# ============================================================================
+
+class TelosMonitoringSystem:
+    """Real-time monitoring system with intelligent alerting"""
+    
+    def __init__(self, metrics_calculator: TelosMetricsCalculator, alert_thresholds: Dict[str, Any]):
+        self.calculator = metrics_calculator
+        self.thresholds = alert_thresholds
+        self.logger = logging.getLogger(__name__)
+        self.active_alerts = {}
+        
+    async def run_continuous_monitoring(self, check_interval_minutes: int = 15):
+        """Run continuous monitoring with intelligent alerting"""
+        while True:
+            try:
+                await self._perform_health_check()
+                await asyncio.sleep(check_interval_minutes * 60)
+            except Exception as e:
+                self.logger.error(f"Monitoring cycle failed: {e}")
+                await asyncio.sleep(60)  # Wait 1 minute before retry
+    
+    async def _perform_health_check(self):
+        """Perform comprehensive system health check"""
+        current_time = datetime.now()
+        
+        # Check critical metrics
+        health_status = await self._check_critical_metrics()
+        
+        # Generate alerts for threshold violations
+        new_alerts = self._evaluate_alert_conditions(health_status)
+        
+        # Process new alerts (send notifications, log, etc.)
+        for alert in new_alerts:
+            await self._process_alert(alert)
+        
+        # Update active alerts
+        self._update_active_alerts(new_alerts)
+        
+        self.logger.info(f"Health check completed at {current_time}. Active alerts: {len(self.active_alerts)}")
+    
+    async def _check_critical_metrics(self) -> Dict[str, Any]:
+        """Check critical system metrics for immediate issues"""
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        
+        # System availability check
+        availability_query = """
+            SELECT 
+                COUNT(*) as total_checks,
+                SUM(CASE WHEN status = 'UP' THEN 1 ELSE 0 END) as successful_checks
+            FROM system_health_checks 
+            WHERE check_time >= NOW() - INTERVAL 1 HOUR
+        """
+        
+        availability_data = await self.calculator._query_database(availability_query)
+        current_availability = (availability_data['successful_checks'].iloc[0] / 
+                              availability_data['total_checks'].iloc[0] * 100) if len(availability_data) > 0 else 0
+        
+        # Data freshness check
+        freshness_query = """
+            SELECT 
+                data_source,
+                TIMESTAMPDIFF(HOUR, MAX(last_update_time), NOW()) as hours_since_update
+            FROM data_ingestion_status
+            GROUP BY data_source
+        """
+        
+        freshness_data = await self.calculator._query_database(freshness_query)
+        max_data_age = freshness_data['hours_since_update'].max() if len(freshness_data) > 0 else 0
+        
+        # NightShift processing check
+        processing_query = f"""
+            SELECT 
+                processing_status,
+                TIMESTAMPDIFF(MINUTE, processing_start, processing_end) as duration_minutes
+            FROM nightshift_processing 
+            WHERE processing_date = '{yesterday}'
+            ORDER BY processing_start DESC 
+            LIMIT 1
+        """
+        
+        processing_data = await self.calculator._query_database(processing_query)
+        last_processing_status = processing_data['processing_status'].iloc[0] if len(processing_data) > 0 else 'Unknown'
+        last_processing_duration = processing_data['duration_minutes'].iloc[0] if len(processing_data) > 0 else 0
+        
+        return {
+            "system_availability": current_availability,
+            "data_freshness_hours": max_data_age,
+            "last_nightshift_status": last_processing_status,
+            "last_nightshift_duration": last_processing_duration,
+            "check_timestamp": current_time
+        }
+    
+    def _evaluate_alert_conditions(self, health_status: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Evaluate health status against alert thresholds"""
+        alerts = []
+        
+        # System availability alerts
+        if health_status["system_availability"] < 99.0:
+            severity = "CRITICAL" if health_status["system_availability"] < 98.0 else "WARNING"
+            alerts.append({
+                "alert_type": "system_availability",
+                "severity": severity,
+                "message": f"System availability dropped to {health_status['system_availability']:.1f}%",
+                "metric_value": health_status["system_availability"],
+                "threshold": 99.0,
+                "timestamp": health_status["check_timestamp"]
+            })
+        
+        # Data freshness alerts
+        if health_status["data_freshness_hours"] > 2:
+            severity = "CRITICAL" if health_status["data_freshness_hours"] > 8 else "WARNING"
+            alerts.append({
+                "alert_type": "data_freshness",
+                "severity": severity,
+                "message": f"Data is {health_status['data_freshness_hours']:.1f} hours old",
+                "metric_value": health_status["data_freshness_hours"],
+                "threshold": 2,
+                "timestamp": health_status["check_timestamp"]
+            })
+        
+        # NightShift processing alerts
+        if health_status["last_nightshift_status"] != "Completed":
+            alerts.append({
+                "alert_type": "nightshift_failure",
+                "severity": "CRITICAL",
+                "message": f"Last NightShift processing failed: {health_status['last_nightshift_status']}",
+                "metric_value": health_status["last_nightshift_status"],
+                "threshold": "Completed",
+                "timestamp": health_status["check_timestamp"]
+            })
+        
+        if health_status["last_nightshift_duration"] > 60:
+            alerts.append({
+                "alert_type": "nightshift_performance",
+                "severity": "WARNING",
+                "message": f"NightShift processing took {health_status['last_nightshift_duration']} minutes",
+                "metric_value": health_status["last_nightshift_duration"],
+                "threshold": 45,
+                "timestamp": health_status["check_timestamp"]
+            })
+        
+        return alerts
+    
+    async def _process_alert(self, alert: Dict[str, Any]):
+        """Process and route alerts based on severity and type"""
+        alert_key = f"{alert['alert_type']}_{alert['severity']}"
+        
+        # Prevent alert spam - only send if not already active
+        if alert_key not in self.active_alerts:
+            # Log alert
+            self.logger.error(f"ALERT [{alert['severity']}]: {alert['message']}")
+            
+            # Send notifications based on severity
+            if alert['severity'] == 'CRITICAL':
+                await self._send_critical_alert(alert)
+            elif alert['severity'] == 'WARNING':
+                await self._send_warning_alert(alert)
+            
+            # Store alert details
+            self.active_alerts[alert_key] = {
+                "alert": alert,
+                "first_occurrence": alert['timestamp'],
+                "occurrence_count": 1
+            }
+        else:
+            # Update existing alert occurrence count
+            self.active_alerts[alert_key]["occurrence_count"] += 1
+    
+    async def _send_critical_alert(self, alert: Dict[str, Any]):
+        """Send critical alert via multiple channels"""
+        # In production, integrate with:
+        # - PagerDuty for on-call notifications
+        # - Slack for team alerts
+        # - Email for stakeholder notifications
+        # - SMS for urgent issues
+        
+        notification_message = {
+            "title": f"🚨 CRITICAL: Telos Intelligence Platform Alert",
+            "message": alert['message'],
+            "severity": alert['severity'],
+            "metric": alert['alert_type'],
+            "value": alert['metric_value'],
+            "threshold": alert['threshold'],
+            "timestamp": alert['timestamp'].isoformat(),
+            "action_required": True
+        }
+        
+        # Placeholder for actual notification service
+        self.logger.critical(f"CRITICAL ALERT: {json.dumps(notification_message, indent=2)}")
+    
+    async def _send_warning_alert(self, alert: Dict[str, Any]):
+        """Send warning alert via standard channels"""
+        notification_message = {
+            "title": f"⚠️ WARNING: Telos Platform Performance Issue",
+            "message": alert['message'],
+            "severity": alert['severity'],
+            "metric": alert['alert_type'],
+            "value": alert['metric_value'],
+            "threshold": alert['threshold'],
+            "timestamp": alert['timestamp'].isoformat()
+        }
+        
+        # Placeholder for actual notification service
+        self.logger.warning(f"WARNING ALERT: {json.dumps(notification_message, indent=2)}")
+    
+    def _update_active_alerts(self, new_alerts: List[Dict[str, Any]]):
+        """Update active alerts list and clear resolved alerts"""
+        current_alert_keys = {f"{alert['alert_type']}_{alert['severity']}" for alert in new_alerts}
+        
+        # Clear resolved alerts
+        resolved_alerts = []
+        for alert_key in list(self.active_alerts.keys()):
+            if alert_key not in current_alert_keys:
+                resolved_alerts.append(alert_key)
+                del self.active_alerts[alert_key]
+        
+        # Log resolved alerts
+        for resolved_key in resolved_alerts:
+            self.logger.info(f"RESOLVED: Alert {resolved_key} has been cleared")
+
+# ============================================================================
+# VISUALIZATION & DASHBOARD FRAMEWORK
+# ============================================================================
+
+class TelosDashboardGenerator:
+    """Generate interactive dashboards and visualizations for Telos metrics"""
+    
+    def __init__(self, metrics_calculator: TelosMetricsCalculator):
+        self.calculator = metrics_calculator
+        self.logger = logging.getLogger(__name__)
+    
+    async def generate_executive_dashboard(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Generate executive-level dashboard with key business metrics"""
+        
+        # Get all metric categories
+        business_metrics = await self.calculator.calculate_business_impact_metrics(date_range)
+        system_metrics = await self.calculator.calculate_system_performance_metrics(date_range)
+        adoption_metrics = await self.calculator.calculate_user_adoption_metrics(date_range)
+        ai_metrics = await self.calculator.calculate_ai_accuracy_metrics(date_range)
+        
+        # Create executive summary
+        executive_summary = {
+            "period": f"{date_range[0]} to {date_range[1]}",
+            "key_metrics": {
+                "analyst_time_saved_hours": business_metrics["analyst_time_savings"]["total_hours_saved"],
+                "revenue_impact_eur": business_metrics["revenue_impact"]["total_ai_driven_revenue"],
+                "system_availability_percent": system_metrics["system_availability"]["availability_percent"],
+                "ai_accuracy_percent": ai_metrics["insight_accuracy_rate"]["overall_accuracy"],
+                "user_satisfaction_nps": adoption_metrics["user_satisfaction"]["nps_score"]
+            },
+            "status_indicators": {
+                "system_health": "GREEN" if system_metrics["system_availability"]["availability_percent"] > 99.5 else "AMBER",
+                "ai_performance": "GREEN" if ai_metrics["insight_accuracy_rate"]["overall_accuracy"] > 85 else "AMBER",
+                "user_adoption": "GREEN" if adoption_metrics["user_satisfaction"]["nps_score"] > 50 else "AMBER",
+                "business_impact": "GREEN" if business_metrics["revenue_impact"]["total_ai_driven_revenue"] > 300000 else "AMBER"
+            }
+        }
+        
+        return {
+            "executive_summary": executive_summary,
+            "detailed_metrics": {
+                "business_impact": business_metrics,
+                "system_performance": system_metrics,
+                "user_adoption": adoption_metrics,
+                "ai_accuracy": ai_metrics
+            },
+            "visualizations": await self._generate_executive_charts(
+                business_metrics, system_metrics, adoption_metrics, ai_metrics
+            )
+        }
+    
+    async def generate_operational_dashboard(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Generate operational dashboard for analysts and system administrators"""
+        
+        # Get detailed operational metrics
+        all_metrics = await asyncio.gather(
+            self.calculator.calculate_system_performance_metrics(date_range),
+            self.calculator.calculate_ai_accuracy_metrics(date_range),
+            self.calculator.calculate_user_adoption_metrics(date_range),
+            self.calculator.calculate_business_impact_metrics(date_range)
+        )
+        
+        system_metrics, ai_metrics, adoption_metrics, business_metrics = all_metrics
+        
+        # Create operational insights
+        operational_insights = {
+            "system_health": {
+                "nightshift_performance": system_metrics["nightshift_processing_time"],
+                "data_pipeline_status": system_metrics["data_freshness"],
+                "availability_trend": system_metrics["system_availability"]["daily_availability"]
+            },
+            "ai_performance": {
+                "accuracy_by_type": ai_metrics["insight_accuracy_rate"]["by_insight_type"],
+                "confidence_distribution": ai_metrics["confidence_distribution"]["distribution"],
+                "competitive_alert_quality": ai_metrics["competitive_alert_precision"]
+            },
+            "user_engagement": {
+                "daily_usage_pattern": adoption_metrics["daily_active_users"],
+                "feature_adoption": adoption_metrics["insight_action_rate"],
+                "satisfaction_feedback": adoption_metrics["user_satisfaction"]
+            }
+        }
+        
+        return {
+            "operational_insights": operational_insights,
+            "detailed_metrics": {
+                "system": system_metrics,
+                "ai": ai_metrics,
+                "adoption": adoption_metrics,
+                "business": business_metrics
+            },
+            "visualizations": await self._generate_operational_charts(
+                system_metrics, ai_metrics, adoption_metrics
+            )
+        }
+    
+    async def _generate_executive_charts(self, business_metrics, system_metrics, adoption_metrics, ai_metrics) -> Dict[str, Any]:
+        """Generate executive-level visualizations"""
+        
+        # ROI Overview Chart
+        roi_fig = go.Figure()
+        roi_fig.add_trace(go.Bar(
+            name='Time Savings Value',
+            x=['This Month'],
+            y=[business_metrics["analyst_time_savings"]["total_hours_saved"] * 75],  # €75/hour analyst cost
+            marker_color='lightblue'
+        ))
+        roi_fig.add_trace(go.Bar(
+            name='Revenue Impact',
+            x=['This Month'],
+            y=[business_metrics["revenue_impact"]["total_ai_driven_revenue"]],
+            marker_color='darkgreen'
+        ))
+        roi_fig.update_layout(
+            title='Business Impact Overview (EUR)',
+            barmode='stack',
+            showlegend=True
+        )
+        
+        # System Health Gauge
+        health_fig = go.Figure(go.Indicator(
+            mode="gauge+number+delta",
+            value=system_metrics["system_availability"]["availability_percent"],
+            domain={'x': [0, 1], 'y': [0, 1]},
+            title={'text': "System Availability"},
+            delta={'reference': 99.9},
+            gauge={
+                'axis': {'range': [None, 100]},
+                'bar': {'color': "darkgreen"},
+                'steps': [
+                    {'range': [0, 99], 'color': "lightgray"},
+                    {'range': [99, 99.5], 'color': "yellow"},
+                    {'range': [99.5, 100], 'color': "green"}
+                ],
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 99.9
+                }
+            }
+        ))
+        
+        # AI Accuracy Trend
+        accuracy_fig = go.Figure()
+        accuracy_fig.add_trace(go.Scatter(
+            x=list(ai_metrics["insight_accuracy_rate"]["by_insight_type"].keys()),
+            y=list(ai_metrics["insight_accuracy_rate"]["by_insight_type"].values()),
+            mode='markers+lines',
+            name='Accuracy by Type',
+            marker=dict(size=10, color='blue')
+        ))
+        accuracy_fig.update_layout(
+            title='AI Accuracy by Insight Type (%)',
+            xaxis_title='Insight Type',
+            yaxis_title='Accuracy (%)',
+            yaxis=dict(range=[0, 100])
+        )
+        
+        return {
+            "roi_overview": roi_fig.to_json(),
+            "system_health_gauge": health_fig.to_json(),
+            "ai_accuracy_trend": accuracy_fig.to_json()
+        }
+    
+    async def _generate_operational_charts(self, system_metrics, ai_metrics, adoption_metrics) -> Dict[str, Any]:
+        """Generate operational-level detailed visualizations"""
+        
+        # NightShift Processing Time Trend
+        processing_trend = go.Figure()
+        processing_trend.add_trace(go.Scatter(
+            x=list(range(len(system_metrics["nightshift_processing_time"]))),
+            y=[system_metrics["nightshift_processing_time"]["avg_minutes"]] * 30,  # Simplified for demo
+            mode='lines+markers',
+            name='Processing Time',
+            line=dict(color='blue', width=2)
+        ))
+        processing_trend.add_hline(
+            y=45, line_dash="dash", line_color="red",
+            annotation_text="Target (45 min)"
+        )
+        processing_trend.update_layout(
+            title='NightShift Processing Time Trend',
+            xaxis_title='Days',
+            yaxis_title='Minutes'
+        )
+        
+        # Confidence Score Distribution
+        confidence_dist = go.Figure()
+        conf_data = ai_metrics["confidence_distribution"]["distribution"]
+        confidence_dist.add_trace(go.Bar(
+            x=list(conf_data.keys()),
+            y=list(conf_data.values()),
+            marker_color=['red', 'orange', 'yellow', 'green']
+        ))
+        confidence_dist.update_layout(
+            title='AI Confidence Score Distribution',
+            xaxis_title='Confidence Level',
+            yaxis_title='Number of Insights'
+        )
+        
+        # User Engagement Heatmap
+        engagement_data = adoption_metrics["daily_active_users"]
+        engagement_fig = go.Figure(data=go.Heatmap(
+            z=[[engagement_data["avg_daily_users"], engagement_data["peak_daily_users"]]],
+            x=['Average', 'Peak'],
+            y=['Daily Active Users'],
+            colorscale='Viridis'
+        ))
+        engagement_fig.update_layout(title='User Engagement Pattern')
+        
+        return {
+            "processing_time_trend": processing_trend.to_json(),
+            "confidence_distribution": confidence_dist.to_json(),
+            "user_engagement_heatmap": engagement_fig.to_json()
+        }
+
+# ============================================================================
+# METRICS REPORTING & EXPORT
+# ============================================================================
+
+class TelosReportingEngine:
+    """Generate automated reports and export metrics data"""
+    
+    def __init__(self, metrics_calculator: TelosMetricsCalculator, dashboard_generator: TelosDashboardGenerator):
+        self.calculator = metrics_calculator
+        self.dashboard = dashboard_generator
+        self.logger = logging.getLogger(__name__)
+    
+    async def generate_weekly_report(self, week_ending: date) -> Dict[str, Any]:
+        """Generate comprehensive weekly report for stakeholders"""
+        week_start = week_ending - timedelta(days=6)
+        date_range = (week_start, week_ending)
+        
+        # Calculate all metrics for the week
+        all_metrics = await asyncio.gather(
+            self.calculator.calculate_system_performance_metrics(date_range),
+            self.calculator.calculate_ai_accuracy_metrics(date_range),
+            self.calculator.calculate_business_impact_metrics(date_range),
+            self.calculator.calculate_user_adoption_metrics(date_range)
+        )
+        
+        system_metrics, ai_metrics, business_metrics, adoption_metrics = all_metrics
+        
+        # Create executive summary
+        executive_summary = self._create_executive_summary(
+            system_metrics, ai_metrics, business_metrics, adoption_metrics
+        )
+        
+        # Generate key insights
+        key_insights = self._generate_key_insights(
+            system_metrics, ai_metrics, business_metrics, adoption_metrics
+        )
+        
+        # Create action items
+        action_items = self._identify_action_items(
+            system_metrics, ai_metrics, business_metrics, adoption_metrics
+        )
+        
+        report = {
+            "report_metadata": {
+                "report_type": "Weekly Performance Report",
+                "period": f"{week_start} to {week_ending}",
+                "generated_at": datetime.now().isoformat(),
+                "report_version": "1.0"
+            },
+            "executive_summary": executive_summary,
+            "key_insights": key_insights,
+            "action_items": action_items,
+            "detailed_metrics": {
+                "system_performance": system_metrics,
+                "ai_accuracy": ai_metrics,
+                "business_impact": business_metrics,
+                "user_adoption": adoption_metrics
+            },
+            "performance_indicators": self._calculate_kpi_status(
+                system_metrics, ai_metrics, business_metrics, adoption_metrics
+            )
+        }
+        
+        return report
+    
+    def _create_executive_summary(self, system_metrics, ai_metrics, business_metrics, adoption_metrics) -> str:
+        """Create executive summary narrative"""
+        
+        availability = system_metrics["system_availability"]["availability_percent"]
+        accuracy = ai_metrics["insight_accuracy_rate"]["overall_accuracy"]
+        time_saved = business_metrics["analyst_time_savings"]["total_hours_saved"]
+        revenue_impact = business_metrics["revenue_impact"]["total_ai_driven_revenue"]
+        nps = adoption_metrics["user_satisfaction"]["nps_score"]
+        
+        summary = f"""
+        TELOS INTELLIGENCE PLATFORM - WEEKLY PERFORMANCE SUMMARY
+        
+        System Health: The platform maintained {availability:.1f}% uptime this week, {'meeting' if availability >= 99.5 else 'falling short of'} our 99.9% SLA target.
+        
+        AI Performance: Our intelligence agents achieved {accuracy:.1f}% accuracy across all insights, {'exceeding' if accuracy >= 85 else 'below'} our 85% target threshold.
+        
+        Business Impact: Analysts saved {time_saved:.0f} hours this week through automated intelligence, with AI-driven decisions contributing €{revenue_impact:,.0f} in revenue impact.
+        
+        User Adoption: User satisfaction remains {'strong' if nps >= 50 else 'moderate'} with an NPS score of {nps:.0f}, indicating {'high' if nps >= 50 else 'room for improvement in'} user engagement.
+        
+        Overall Assessment: The platform is {'performing well' if all([availability >= 99.0, accuracy >= 80, time_saved >= 20, nps >= 30]) else 'requiring attention'} across key metrics.
+        """
+        
+        return summary.strip()
+    
+    def _generate_key_insights(self, system_metrics, ai_metrics, business_metrics, adoption_metrics) -> List[str]:
+        """Generate key insights from metrics analysis"""
+        insights = []
+        
+        # System performance insights
+        if system_metrics["nightshift_processing_time"]["avg_minutes"] > 60:
+            insights.append("🔧 NightShift processing time has increased - investigate data volume or compute resources")
+        
+        # AI accuracy insights
+        accuracy_trend = ai_metrics["insight_accuracy_rate"].get("trend", {})
+        if accuracy_trend.get("trend_direction") == "declining":
+            insights.append("📉 AI accuracy shows declining trend - model retraining may be needed")
+        
+        # Business impact insights
+        response_speed = business_metrics["competitive_response_speed"]["avg_response_hours"]
+        if response_speed < 4:
+            insights.append("⚡ Excellent competitive response speed - maintaining market agility")
+        elif response_speed > 8:
+            insights.append("🐌 Competitive response speed slower than target - review alert prioritization")
+        
+        # User adoption insights
+        action_rate = adoption_metrics["insight_action_rate"]["overall_action_rate"]
+        if action_rate > 70:
+            insights.append("✅ High insight action rate indicates strong analyst engagement and trust")
+        elif action_rate < 50:
+            insights.append("❗ Low insight action rate suggests relevance or trust issues")
+        
+        return insights
+    
+    def _identify_action_items(self, system_metrics, ai_metrics, business_metrics, adoption_metrics) -> List[Dict[str, Any]]:
+        """Identify specific action items based on metrics"""
+        actions = []
+        
+        # System performance actions
+        if system_metrics["system_availability"]["availability_percent"] < 99.5:
+            actions.append({
+                "priority": "HIGH",
+                "category": "System Reliability",
+                "action": "Investigate and resolve availability issues",
+                "owner": "Platform Engineering",
+                "due_date": (date.today() + timedelta(days=3)).isoformat()
+            })
+        
+        # AI accuracy actions
+        if ai_metrics["insight_accuracy_rate"]["overall_accuracy"] < 85:
+            actions.append({
+                "priority": "MEDIUM",
+                "category": "AI Performance",
+                "action": "Review and retrain AI models with recent feedback data",
+                "owner": "Data Science Team",
+                "due_date": (date.today() + timedelta(days=7)).isoformat()
+            })
+        
+        # User adoption actions
+        if adoption_metrics["user_satisfaction"]["nps_score"] < 30:
+            actions.append({
+                "priority": "HIGH",
+                "category": "User Experience",
+                "action": "Conduct user interviews to identify satisfaction pain points",
+                "owner": "Product Team",
+                "due_date": (date.today() + timedelta(days=5)).isoformat()
+            })
+        
+        return actions
+    
+    def _calculate_kpi_status(self, system_metrics, ai_metrics, business_metrics, adoption_metrics) -> Dict[str, str]:
+        """Calculate KPI status indicators (GREEN/AMBER/RED)"""
+        
+        def get_status(value, target, warning_threshold=None):
+            if warning_threshold:
+                if value >= target:
+                    return "GREEN"
+                elif value >= warning_threshold:
+                    return "AMBER"
+                else:
+                    return "RED"
+            else:
+                return "GREEN" if value >= target else "RED"
+        
+        return {
+            "system_availability": get_status(
+                system_metrics["system_availability"]["availability_percent"], 99.9, 99.5
+            ),
+            "ai_accuracy": get_status(
+                ai_metrics["insight_accuracy_rate"]["overall_accuracy"], 85, 80
+            ),
+            "user_satisfaction": get_status(
+                adoption_metrics["user_satisfaction"]["nps_score"], 50, 30
+            ),
+            "business_impact": "GREEN" if business_metrics["revenue_impact"]["total_ai_driven_revenue"] > 300000 else "AMBER"
+        }
+    
+    async def export_metrics_data(self, date_range: Tuple[date, date], format: str = "json") -> str:
+        """Export metrics data in specified format"""
+        
+        # Get all metrics data
+        all_metrics = await asyncio.gather(
+            self.calculator.calculate_system_performance_metrics(date_range),
+            self.calculator.calculate_ai_accuracy_metrics(date_range),
+            self.calculator.calculate_business_impact_metrics(date_range),
+            self.calculator.calculate_user_adoption_metrics(date_range)
+        )
+        
+        export_data = {
+            "export_metadata": {
+                "period": f"{date_range[0]} to {date_range[1]}",
+                "exported_at": datetime.now().isoformat(),
+                "format": format
+            },
+            "metrics": {
+                "system_performance": all_metrics[0],
+                "ai_accuracy": all_metrics[1], 
+                "business_impact": all_metrics[2],
+                "user_adoption": all_metrics[3]
+            }
+        }
+        
+        if format.lower() == "json":
+            return json.dumps(export_data, indent=2, default=str)
+        elif format.lower() == "csv":
+            # Flatten metrics for CSV export
+            flattened_data = self._flatten_metrics_for_csv(export_data["metrics"])
+            df = pd.DataFrame([flattened_data])
+            return df.to_csv(index=False)
+        else:
+            raise ValueError(f"Unsupported export format: {format}")
+    
+    def _flatten_metrics_for_csv(self, metrics_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Flatten nested metrics data for CSV export"""
+        flattened = {}
+        
+        def flatten_dict(d, parent_key='', sep='_'):
+            for k, v in d.items():
+                new_key = f"{parent_key}{sep}{k}" if parent_key else k
+                if isinstance(v, dict):
+                    flattened.update(flatten_dict(v, new_key, sep=sep))
+                else:
+                    flattened[new_key] = v
+        
+        flatten_dict(metrics_data)
+        return flattened
+
+# ============================================================================
+# MAIN ORCHESTRATION CLASS
+# ============================================================================
+
+class TelosMetricsPlatform:
+    """Main orchestration class for Telos metrics and monitoring system"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.calculator = TelosMetricsCalculator(
+            databricks_connection=config['databricks_connection'],
+            logger=logging.getLogger(__name__)
+        )
+        self.dashboard = TelosDashboardGenerator(self.calculator)
+        self.reporting = TelosReportingEngine(self.calculator, self.dashboard)
+        self.monitoring = TelosMonitoringSystem(
+            self.calculator, 
+            config.get('alert_thresholds', {})
+        )
+        self.logger = logging.getLogger(__name__)
+    
+    async def start_monitoring(self):
+        """Start continuous monitoring and alerting"""
+        self.logger.info("Starting Telos metrics monitoring system...")
+        await self.monitoring.run_continuous_monitoring(check_interval_minutes=15)
+    
+    async def generate_daily_dashboard(self) -> Dict[str, Any]:
+        """Generate daily operational dashboard"""
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        date_range = (yesterday, today)
+        
+        return await self.dashboard.generate_operational_dashboard(date_range)
+    
+    async def generate_weekly_executive_report(self) -> Dict[str, Any]:
+        """Generate weekly executive report"""
+        week_ending = date.today()
+        return await self.reporting.generate_weekly_report(week_ending)
+    
+    async def get_real_time_health_status(self) -> Dict[str, Any]:
+        """Get current real-time system health status"""
+        return await self.monitoring._check_critical_metrics()
+
+# ============================================================================
+# USAGE EXAMPLE
+# ============================================================================
+
+async def main():
+    """Example usage of the Telos Metrics Platform"""
+    
+    # Configuration
+    config = {
+        "databricks_connection": None,  # Your Databricks connection object
+        "alert_thresholds": {
+            "system_availability_critical": 99.0,
+            "system_availability_warning": 99.5,
+            "data_freshness_critical": 8,
+            "data_freshness_warning": 4,
+            "ai_accuracy_critical": 75,
+            "ai_accuracy_warning": 80
+        }
+    }
+    
+    # Initialize metrics platform
+    metrics_platform = TelosMetricsPlatform(config)
+    
+    # Generate daily dashboard
+    daily_dashboard = await metrics_platform.generate_daily_dashboard()
+    print("=== DAILY OPERATIONAL DASHBOARD ===")
+    print(f"System Health: {daily_dashboard['operational_insights']['system_health']}")
+    print(f"AI Performance: {daily_dashboard['operational_insights']['ai_performance']}")
+    
+    # Generate weekly executive report
+    weekly_report = await metrics_platform.generate_weekly_executive_report()
+    print("\n=== WEEKLY EXECUTIVE REPORT ===")
+    print(weekly_report['executive_summary'])
+    print(f"\nKey Insights: {len(weekly_report['key_insights'])} items")
+    print(f"Action Items: {len(weekly_report['action_items'])} items")
+    
+    # Get real-time health status
+    health_status = await metrics_platform.get_real_time_health_status()
+    print(f"\n=== REAL-TIME HEALTH STATUS ===")
+    print(f"System Availability: {health_status['system_availability']:.1f}%")
+    print(f"Data Freshness: {health_status['data_freshness_hours']:.1f} hours")
+    print(f"Last NightShift: {health_status['last_nightshift_status']}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+# ============================================================================
+# ADVANCED ANALYTICS & PREDICTIVE INSIGHTS
+# ============================================================================
+
+class TelosPredictiveAnalytics:
+    """Advanced analytics for predicting system performance and business outcomes"""
+    
+    def __init__(self, metrics_calculator: TelosMetricsCalculator):
+        self.calculator = metrics_calculator
+        self.logger = logging.getLogger(__name__)
+    
+    async def predict_system_performance(self, prediction_horizon_days: int = 7) -> Dict[str, Any]:
+        """Predict system performance metrics for next N days"""
+        
+        # Get historical data for trend analysis
+        end_date = date.today()
+        start_date = end_date - timedelta(days=30)
+        
+        historical_metrics = await self.calculator.calculate_system_performance_metrics((start_date, end_date))
+        
+        # Simple trend-based prediction (can be enhanced with ML models)
+        processing_time_trend = historical_metrics["nightshift_processing_time"].get("trend", {})
+        availability_trend = historical_metrics["system_availability"].get("trend", {})
+        
+        predictions = {
+            "prediction_horizon_days": prediction_horizon_days,
+            "processing_time_forecast": {
+                "current_avg": historical_metrics["nightshift_processing_time"]["avg_minutes"],
+                "predicted_avg": self._extrapolate_trend(
+                    historical_metrics["nightshift_processing_time"]["avg_minutes"],
+                    processing_time_trend.get("slope", 0),
+                    prediction_horizon_days
+                ),
+                "confidence": "HIGH" if processing_time_trend.get("r_squared", 0) > 0.7 else "MEDIUM"
+            },
+            "availability_forecast": {
+                "current_avg": historical_metrics["system_availability"]["availability_percent"],
+                "predicted_avg": min(100, self._extrapolate_trend(
+                    historical_metrics["system_availability"]["availability_percent"],
+                    availability_trend.get("slope", 0),
+                    prediction_horizon_days
+                )),
+                "confidence": "HIGH" if availability_trend.get("r_squared", 0) > 0.7 else "MEDIUM"
+            },
+            "risk_factors": self._identify_performance_risks(historical_metrics)
+        }
+        
+        return predictions
+    
+    async def predict_business_impact(self, prediction_horizon_days: int = 30) -> Dict[str, Any]:
+        """Predict business impact metrics"""
+        
+        end_date = date.today()
+        start_date = end_date - timedelta(days=60)
+        
+        historical_business = await self.calculator.calculate_business_impact_metrics((start_date, end_date))
+        
+        # Revenue impact prediction
+        current_monthly_impact = historical_business["revenue_impact"]["total_ai_driven_revenue"]
+        time_savings_trend = historical_business["analyst_time_savings"].get("trend", {})
+        
+        predictions = {
+            "revenue_impact_forecast": {
+                "current_monthly": current_monthly_impact,
+                "predicted_monthly": self._extrapolate_trend(
+                    current_monthly_impact,
+                    time_savings_trend.get("slope", 0) * 1000,  # Convert time savings to revenue
+                    30
+                ),
+                "annual_projection": current_monthly_impact * 12,
+                "roi_multiple": self._calculate_roi_projection(current_monthly_impact)
+            },
+            "efficiency_gains": {
+                "current_hours_saved_monthly": historical_business["analyst_time_savings"]["total_hours_saved"],
+                "projected_annual_savings": historical_business["analyst_time_savings"]["total_hours_saved"] * 12,
+                "productivity_multiplier": 1 + (historical_business["analyst_time_savings"]["total_hours_saved"] / 160)  # Assuming 160h/month baseline
+            },
+            "competitive_advantage": {
+                "response_speed_improvement": max(0, 24 - historical_business["competitive_response_speed"]["avg_response_hours"]),
+                "market_agility_score": min(100, (24 / historical_business["competitive_response_speed"]["avg_response_hours"]) * 100)
+            }
+        }
+        
+        return predictions
+    
+    def _extrapolate_trend(self, current_value: float, slope: float, days: int) -> float:
+        """Simple linear trend extrapolation"""
+        return current_value + (slope * days)
+    
+    def _identify_performance_risks(self, metrics: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Identify potential performance risks based on metrics"""
+        risks = []
+        
+        # Processing time risk
+        if metrics["nightshift_processing_time"]["avg_minutes"] > 50:
+            risks.append({
+                "risk_type": "Processing Performance",
+                "severity": "MEDIUM",
+                "description": "NightShift processing time approaching SLA threshold",
+                "probability": "HIGH",
+                "impact": "Delayed morning briefings, reduced analyst productivity"
+            })
+        
+        # Data freshness risk
+        if metrics["data_freshness"]["avg_hours_delay"] > 3:
+            risks.append({
+                "risk_type": "Data Quality",
+                "severity": "HIGH",
+                "description": "Data freshness degrading, may impact insight accuracy",
+                "probability": "MEDIUM",
+                "impact": "Outdated insights, poor decision-making"
+            })
+        
+        return risks
+    
+    def _calculate_roi_projection(self, monthly_impact: float) -> float:
+        """Calculate ROI projection based on current performance"""
+        # Assuming platform cost of €50K/month (simplified)
+        monthly_cost = 50000
+        return monthly_impact / monthly_cost if monthly_cost > 0 else 0
+
+# ============================================================================
+# BENCHMARKING & COMPETITIVE ANALYSIS
+# ============================================================================
+
+class TelosBenchmarkingEngine:
+    """Benchmarking engine for comparing Telos performance against industry standards"""
+    
+    def __init__(self, metrics_calculator: TelosMetricsCalculator):
+        self.calculator = metrics_calculator
+        self.industry_benchmarks = self._load_industry_benchmarks()
+        self.logger = logging.getLogger(__name__)
+    
+    def _load_industry_benchmarks(self) -> Dict[str, Any]:
+        """Load industry benchmark data for comparison"""
+        return {
+            "ai_accuracy": {
+                "industry_average": 78,
+                "top_quartile": 85,
+                "best_in_class": 92
+            },
+            "system_availability": {
+                "industry_average": 99.2,
+                "top_quartile": 99.7,
+                "best_in_class": 99.95
+            },
+            "user_satisfaction": {
+                "industry_average_nps": 35,
+                "top_quartile_nps": 55,
+                "best_in_class_nps": 75
+            },
+            "processing_efficiency": {
+                "industry_avg_processing_time": 90,  # minutes
+                "top_quartile_processing_time": 60,
+                "best_in_class_processing_time": 30
+            },
+            "business_impact": {
+                "avg_analyst_time_savings": 45,  # minutes/day
+                "top_quartile_time_savings": 75,
+                "best_in_class_time_savings": 120
+            }
+        }
+    
+    async def generate_benchmark_report(self, date_range: Tuple[date, date]) -> Dict[str, Any]:
+        """Generate comprehensive benchmark analysis report"""
+        
+        # Get current metrics
+        current_metrics = await asyncio.gather(
+            self.calculator.calculate_ai_accuracy_metrics(date_range),
+            self.calculator.calculate_system_performance_metrics(date_range),
+            self.calculator.calculate_user_adoption_metrics(date_range),
+            self.calculator.calculate_business_impact_metrics(date_range)
+        )
+        
+        ai_metrics, system_metrics, adoption_metrics, business_metrics = current_metrics
+        
+        # Compare against benchmarks
+        benchmark_analysis = {
+            "ai_accuracy_benchmark": self._benchmark_ai_accuracy(ai_metrics),
+            "system_performance_benchmark": self._benchmark_system_performance(system_metrics),
+            "user_satisfaction_benchmark": self._benchmark_user_satisfaction(adoption_metrics),
+            "business_impact_benchmark": self._benchmark_business_impact(business_metrics),
+            "overall_ranking": self._calculate_overall_ranking(ai_metrics, system_metrics, adoption_metrics, business_metrics)
+        }
+        
+        return benchmark_analysis
+    
+    def _benchmark_ai_accuracy(self, ai_metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Benchmark AI accuracy against industry standards"""
+        current_accuracy = ai_metrics["insight_accuracy_rate"]["overall_accuracy"]
+        benchmarks = self.industry_benchmarks["ai_accuracy"]
+        
+        return {
+            "current_value": current_accuracy,
+            "industry_average": benchmarks["industry_average"],
+            "percentile_ranking": self._calculate_percentile(current_accuracy, benchmarks),
+            "gap_to_top_quartile": max(0, benchmarks["top_quartile"] - current_accuracy),
+            "performance_tier": self._determine_performance_tier(current_accuracy, benchmarks),
+            "improvement_potential": benchmarks["best_in_class"] - current_accuracy
+        }
+    
+    def _benchmark_system_performance(self, system_metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Benchmark system performance metrics"""
+        current_availability = system_metrics["system_availability"]["availability_percent"]
+        current_processing_time = system_metrics["nightshift_processing_time"]["avg_minutes"]
+        
+        availability_benchmarks = self.industry_benchmarks["system_availability"]
+        processing_benchmarks = self.industry_benchmarks["processing_efficiency"]
+        
+        return {
+            "availability_benchmark": {
+                "current_value": current_availability,
+                "industry_average": availability_benchmarks["industry_average"],
+                "percentile_ranking": self._calculate_percentile(current_availability, availability_benchmarks),
+                "performance_tier": self._determine_performance_tier(current_availability, availability_benchmarks)
+            },
+            "processing_efficiency_benchmark": {
+                "current_value": current_processing_time,
+                "industry_average": processing_benchmarks["industry_avg_processing_time"],
+                "percentile_ranking": self._calculate_percentile(current_processing_time, processing_benchmarks, reverse=True),
+                "performance_tier": self._determine_performance_tier(current_processing_time, processing_benchmarks, reverse=True)
+            }
+        }
+    
+    def _benchmark_user_satisfaction(self, adoption_metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Benchmark user satisfaction metrics"""
+        current_nps = adoption_metrics["user_satisfaction"]["nps_score"]
+        benchmarks = self.industry_benchmarks["user_satisfaction"]
+        
+        return {
+            "current_nps": current_nps,
+            "industry_average_nps": benchmarks["industry_average_nps"],
+            "percentile_ranking": self._calculate_percentile(current_nps, benchmarks, key_suffix="_nps"),
+            "performance_tier": self._determine_performance_tier(current_nps, benchmarks, key_suffix="_nps"),
+            "satisfaction_category": self._categorize_nps_score(current_nps)
+        }
+    
+    def _benchmark_business_impact(self, business_metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Benchmark business impact metrics"""
+        current_time_savings = business_metrics["analyst_time_savings"]["avg_daily_savings_minutes"]
+        benchmarks = self.industry_benchmarks["business_impact"]
+        
+        return {
+            "time_savings_benchmark": {
+                "current_value": current_time_savings,
+                "industry_average": benchmarks["avg_analyst_time_savings"],
+                "percentile_ranking": self._calculate_percentile(current_time_savings, benchmarks, key_prefix="", key_suffix="_time_savings"),
+                "performance_tier": self._determine_performance_tier(current_time_savings, benchmarks, key_prefix="", key_suffix="_time_savings")
+            },
+            "roi_comparison": {
+                "telos_roi_multiple": business_metrics["revenue_impact"]["total_ai_driven_revenue"] / 50000,  # Assuming €50K monthly cost
+                "industry_typical_roi": 2.5,
+                "roi_performance": "Above Average" if (business_metrics["revenue_impact"]["total_ai_driven_revenue"] / 50000) > 2.5 else "Below Average"
+            }
+        }
+    
+    def _calculate_percentile(self, current_value: float, benchmarks: Dict[str, Any], 
+                            reverse: bool = False, key_prefix: str = "", key_suffix: str = "") -> int:
+        """Calculate percentile ranking against benchmarks"""
+        industry_avg = benchmarks[f"{key_prefix}industry_average{key_suffix}"]
+        top_quartile = benchmarks[f"{key_prefix}top_quartile{key_suffix}"]
+        best_in_class = benchmarks[f"{key_prefix}best_in_class{key_suffix}"]
+        
+        if reverse:  # For metrics where lower is better (e.g., processing time)
+            if current_value <= best_in_class:
+                return 95
+            elif current_value <= top_quartile:
+                return 75
+            elif current_value <= industry_avg:
+                return 50
+            else:
+                return 25
+        else:  # For metrics where higher is better
+            if current_value >= best_in_class:
+                return 95
+            elif current_value >= top_quartile:
+                return 75
+            elif current_value >= industry_avg:
+                return 50
+            else:
+                return 25
+    
+    def _determine_performance_tier(self, current_value: float, benchmarks: Dict[str, Any], 
+                                  reverse: bool = False, key_prefix: str = "", key_suffix: str = "") -> str:
+        """Determine performance tier based on benchmarks"""
+        percentile = self._calculate_percentile(current_value, benchmarks, reverse, key_prefix, key_suffix)
+        
+        if percentile >= 90:
+            return "Best in Class"
+        elif percentile >= 75:
+            return "Top Quartile"
+        elif percentile >= 50:
+            return "Above Average"
+        elif percentile >= 25:
+            return "Below Average"
+        else:
+            return "Needs Improvement"
+    
+    def _categorize_nps_score(self, nps: float) -> str:
+        """Categorize NPS score into standard categories"""
+        if nps >= 70:
+            return "World Class"
+        elif nps >= 50:
+            return "Excellent"
+        elif nps >= 30:
+            return "Good"
+        elif nps >= 0:
+            return "Needs Improvement"
+        else:
+            return "Critical"
+    
+    def _calculate_overall_ranking(self, ai_metrics, system_metrics, adoption_metrics, business_metrics) -> Dict[str, Any]:
+        """Calculate overall performance ranking across all dimensions"""
+        
+        # Calculate individual scores (0-100)
+        ai_score = min(100, (ai_metrics["insight_accuracy_rate"]["overall_accuracy"] / 92) * 100)
+        system_score = min(100, (system_metrics["system_availability"]["availability_percent"] / 99.95) * 100)
+        adoption_score = min(100, max(0, (adoption_metrics["user_satisfaction"]["nps_score"] + 100) / 175 * 100))
+        business_score = min(100, (business_metrics["analyst_time_savings"]["avg_daily_savings_minutes"] / 120) * 100)
+        
+        # Weighted overall score
+        weights = {"ai": 0.3, "system": 0.25, "adoption": 0.25, "business": 0.2}
+        overall_score = (
+            ai_score * weights["ai"] +
+            system_score * weights["system"] +
+            adoption_score * weights["adoption"] +
+            business_score * weights["business"]
+        )
+        
+        return {
+            "overall_score": overall_score,
+            "component_scores": {
+                "ai_accuracy": ai_score,
+                "system_performance": system_score,
+                "user_adoption": adoption_score,
+                "business_impact": business_score
+            },
+            "overall_tier": self._score_to_tier(overall_score),
+            "strengths": self._identify_strengths([ai_score, system_score, adoption_score, business_score]),
+            "improvement_areas": self._identify_improvement_areas([ai_score, system_score, adoption_score, business_score])
+        }
+    
+    def _score_to_tier(self, score: float) -> str:
+        """Convert numeric score to performance tier"""
+        if score >= 90:
+            return "Best in Class"
+        elif score >= 75:
+            return "Top Quartile"
+        elif score >= 60:
+            return "Above Average"
+        elif score >= 40:
+            return "Below Average"
+        else:
+            return "Needs Significant Improvement"
+    
+    def _identify_strengths(self, scores: List[float]) -> List[str]:
+        """Identify strength areas based on scores"""
+        categories = ["AI Accuracy", "System Performance", "User Adoption", "Business Impact"]
+        strengths = []
+        
+        for i, score in enumerate(scores):
+            if score >= 80:
+                strengths.append(categories[i])
+        
+        return strengths
+    
+    def _identify_improvement_areas(self, scores: List[float]) -> List[str]:
+        """Identify improvement areas based on scores"""
+        categories = ["AI Accuracy", "System Performance", "User Adoption", "Business Impact"]
+        improvements = []
+        
+        for i, score in enumerate(scores):
+            if score < 60:
+                improvements.append(categories[i])
+        
+        return improvements
+
+# ============================================================================
+# CONFIGURATION AND INITIALIZATION
+# ============================================================================
+
+def create_telos_metrics_config() -> Dict[str, Any]:
+    """Create standard configuration for Telos metrics platform"""
+    return {
+        "databricks": {
+            "server_hostname": "your-databricks-workspace.databricks.com",
+            "http_path": "/sql/1.0/endpoints/your-sql-endpoint",
+            "access_token": "your-databricks-access-token"
+        },
+        "alert_thresholds": {
+            "system_availability": {
+                "critical": 99.0,
+                "warning": 99.5,
+                "target": 99.9
+            },
+            "ai_accuracy": {
+                "critical": 75.0,
+                "warning": 80.0,
+                "target": 85.0
+            },
+            "data_freshness_hours": {
+                "critical": 8,
+                "warning": 4,
+                "target": 2
+            },
+            "processing_time_minutes": {
+                "critical": 90,
+                "warning": 60,
+                "target": 45
+            },
+            "user_satisfaction_nps": {
+                "critical": 10,
+                "warning": 30,
+                "target": 50
+            }
+        },
+        "reporting": {
+            "daily_dashboard_enabled": True,
+            "weekly_reports_enabled": True,
+            "monthly_benchmarking": True,
+            "real_time_alerts": True
+        },
+        "monitoring": {
+            "check_interval_minutes": 15,
+            "alert_cooldown_minutes": 60,
+            "escalation_enabled": True,
+            "notification_channels": ["email", "slack", "pagerduty"]
+        }
+    }
+
+# ============================================================================
+# SUMMARY AND CONCLUSION
+# ============================================================================
+
+"""
+TELOS METRICS & ANALYTICS FRAMEWORK SUMMARY
+
+This comprehensive framework provides:
+
+1. **Comprehensive Metrics Registry**: 20+ KPIs across 6 categories
+   - System Performance (availability, processing time, data quality)
+   - AI Accuracy & Quality (insight accuracy, confidence distribution)
+   - Business Impact & ROI (time savings, revenue impact, competitive response)
+   - User Adoption & Satisfaction (usage patterns, NPS, engagement)
+   - Data Quality & Reliability (completeness, accuracy)
+   - Operational Efficiency (cost per insight, alert quality)
+
+2. **Real-Time Monitoring & Alerting**: Intelligent threshold-based alerting
+   - Continuous health monitoring
+   - Smart alert routing and escalation
+   - Alert fatigue prevention
+   - Multi-channel notifications
+
+3. **Advanced Analytics & Visualization**: 
+   - Interactive dashboards for executives and operations teams
+   - Trend analysis and predictive insights
+   - Automated report generation
+   - Export capabilities for external analysis
+
+4. **Benchmarking & Competitive Analysis**:
+   - Industry benchmark comparisons
+   - Performance tier classification
+   - Gap analysis and improvement recommendations
+   - ROI validation against market standards
+
+5. **Business Value Demonstration**:
+   - Clear ROI measurement and tracking
+   - Time savings quantification
+   - Revenue impact attribution
+   - Competitive advantage metrics
+
+This framework transforms the Telos platform from a "black box" AI system into a 
+transparent, measurable, and continuously improving intelligence platform that 
+builds trust through clear performance visibility and demonstrated business value.
+
+Key Benefits:
+- Builds stakeholder confidence through transparent metrics
+- Enables data-driven optimization decisions
+- Provides early warning of performance issues
+- Demonstrates clear ROI and business value
+- Supports continuous improvement and scaling decisions
+- Facilitates benchmarking against industry standards
+
+The framework is designed to scale with the platform and provide the metrics 
+foundation needed for successful enterprise AI adoption in the airline industry.
+"""
