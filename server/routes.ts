@@ -13,6 +13,7 @@ import { enhancedLLMService } from "./services/enhancedLlmService";
 import { cacheService } from "./services/cacheService";
 import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
+import { metricsMonitoring } from "./services/metricsMonitoring.js";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -22,6 +23,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize agents
   await agentService.initializeAgents();
+
+  // Initialize metrics monitoring
+  metricsMonitoring.setWebSocketService(wsService);
+  metricsMonitoring.startMonitoring();
 
   // Health check
   app.get("/api/health", (req, res) => {
@@ -734,6 +739,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: 'Failed to fetch competitive position' });
     }
   });
+
+  // Load and register Comprehensive Metrics routes
+  const metricsRoutes = await import('./api/metrics.js');
+  app.use('/api/metrics', metricsRoutes.default);
 
   return httpServer;
 }

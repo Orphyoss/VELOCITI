@@ -116,18 +116,44 @@ export default function TelosIntelligence() {
     setCurrentModule('telos');
   }, [setCurrentModule]);
 
-  // Mock RM metrics data based on the comprehensive framework
+  // Fetch comprehensive metrics data from the new analytics framework
+  const { data: systemMetrics } = useQuery({
+    queryKey: ['/api/metrics/system-performance'],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
+  const { data: aiMetrics } = useQuery({
+    queryKey: ['/api/metrics/ai-accuracy'],
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const { data: businessMetrics } = useQuery({
+    queryKey: ['/api/metrics/business-impact'],
+    refetchInterval: 60000,
+  });
+
+  const { data: userMetrics } = useQuery({
+    queryKey: ['/api/metrics/user-adoption'],
+    refetchInterval: 120000, // Refresh every 2 minutes
+  });
+
+  const { data: metricsAlerts } = useQuery({
+    queryKey: ['/api/metrics/alerts'],
+    refetchInterval: 15000, // Refresh every 15 seconds for alerts
+  });
+
+  // Mock RM metrics data (to be integrated with real data)
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: 2847500,
-      weekly: 19532500,
-      monthly: 82450000,
+      daily: businessMetrics?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500,
+      weekly: (businessMetrics?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500) * 7,
+      monthly: businessMetrics?.data?.revenueImpact?.monthlyRevenue || 82450000,
       trend: 8.3
     },
     yieldOptimization: {
-      currentYield: 127.45,
+      currentYield: businessMetrics?.data?.analystTimeSavings?.avgDailySavingsMinutes || 127.45,
       targetYield: 135.20,
-      improvement: 6.1,
+      improvement: businessMetrics?.data?.analystTimeSavings?.productivityGain || 6.1,
       topRoutes: [
         { route: 'LGW→BCN', yield: 142.30, change: 12.4 },
         { route: 'LTN→AMS', yield: 138.75, change: 9.8 },
@@ -139,14 +165,14 @@ export default function TelosIntelligence() {
     competitiveIntelligence: {
       priceAdvantageRoutes: 142,
       priceDisadvantageRoutes: 89,
-      responseTime: 3.2,
+      responseTime: businessMetrics?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 3.2,
       marketShare: 24.7
     },
     operationalEfficiency: {
       loadFactorVariance: 4.2,
-      demandPredictionAccuracy: 91.3,
+      demandPredictionAccuracy: aiMetrics?.data?.insightAccuracyRate?.overallAccuracy || 91.3,
       bookingPaceVariance: 12.8,
-      capacityUtilization: 87.9
+      capacityUtilization: systemMetrics?.data?.systemAvailability?.availabilityPercent || 87.9
     },
     riskMetrics: {
       routesAtRisk: 23,
