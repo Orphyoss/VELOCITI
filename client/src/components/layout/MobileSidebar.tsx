@@ -21,16 +21,16 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       path: '/'
     },
     {
+      id: 'telos',
+      label: 'Telos Intelligence',
+      icon: Target,
+      path: '/telos'
+    },
+    {
       id: 'workbench',
       label: 'Analyst Workbench',
       icon: ClipboardList,
       path: '/workbench'
-    },
-    {
-      id: 'genie',
-      label: 'Databricks Genie',
-      icon: Database,
-      path: '/genie'
     },
     {
       id: 'strategic',
@@ -39,10 +39,10 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       path: '/strategic'
     },
     {
-      id: 'telos',
-      label: 'Telos Intelligence',
-      icon: Target,
-      path: '/telos'
+      id: 'genie',
+      label: 'Databricks Genie',
+      icon: Database,
+      path: '/genie'
     },
     {
       id: 'agents',
@@ -107,7 +107,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         : 'text-dark-300 hover:text-white hover:bg-dark-800'
                     }`}
                     onClick={() => {
-                      setCurrentModule(item.id);
+                      setCurrentModule(item.id as any);
                       onClose();
                     }}
                   >

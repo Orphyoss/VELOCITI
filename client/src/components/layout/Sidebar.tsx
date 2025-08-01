@@ -15,16 +15,16 @@ export default function Sidebar() {
       path: '/'
     },
     {
+      id: 'telos',
+      label: 'Telos Intelligence',
+      icon: Target,
+      path: '/telos'
+    },
+    {
       id: 'workbench',
       label: 'Analyst Workbench',
       icon: ClipboardList,
       path: '/workbench'
-    },
-    {
-      id: 'genie',
-      label: 'Databricks Genie',
-      icon: Database,
-      path: '/genie'
     },
     {
       id: 'strategic',
@@ -33,10 +33,10 @@ export default function Sidebar() {
       path: '/strategic'
     },
     {
-      id: 'telos',
-      label: 'Telos Intelligence',
-      icon: Target,
-      path: '/telos'
+      id: 'genie',
+      label: 'Databricks Genie',
+      icon: Database,
+      path: '/genie'
     },
     {
       id: 'agents',
