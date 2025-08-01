@@ -27,8 +27,8 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import Sidebar from '@/components/layout/Sidebar';
-import MobileSidebar from '@/components/layout/MobileSidebar';
+import AppShell from '@/components/layout/AppShell';
+import { useVelocitiStore } from '@/stores/useVelocitiStore';
 
 interface CompetitivePosition {
   routeId: string;
@@ -110,6 +110,11 @@ export default function TelosIntelligence() {
   const [selectedRoute, setSelectedRoute] = useState<string>('');
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
   const queryClient = useQueryClient();
+  const { setCurrentModule } = useVelocitiStore();
+
+  useEffect(() => {
+    setCurrentModule('telos');
+  }, [setCurrentModule]);
 
   // Mock RM metrics data based on the comprehensive framework
   const rmMetrics: RMMetrics = {
@@ -230,15 +235,8 @@ export default function TelosIntelligence() {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <Sidebar />
-      <MobileSidebar />
-      
-      {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-auto">
-          <div className="space-y-6 p-6">
+    <AppShell>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1132,9 +1130,7 @@ export default function TelosIntelligence() {
           </Card>
         </TabsContent>
       </Tabs>
-          </div>
-        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
