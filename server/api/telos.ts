@@ -14,18 +14,28 @@ const router = Router();
  * Get competitive positioning analysis
  */
 router.get('/competitive-position', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { routeId, days = 7 } = req.query;
     
+    console.log(`[API] GET /competitive-position - routeId: ${routeId}, days: ${days}`);
+    
     const positions = await telosIntelligence.getCompetitivePosition(
       routeId as string, 
-      parseInt(days as string)
+      parseInt(days as string) || 7
     );
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Competitive position request completed in ${duration}ms, returned ${positions.length} records`);
     
     res.json(positions);
   } catch (error) {
-    console.error('Failed to get competitive position:', error);
-    res.status(500).json({ error: 'Failed to retrieve competitive position data' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get competitive position (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve competitive position data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -34,18 +44,28 @@ router.get('/competitive-position', async (req, res) => {
  * Get route performance metrics
  */
 router.get('/route-performance', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { routeId, days = 14 } = req.query;
     
+    console.log(`[API] GET /route-performance - routeId: ${routeId}, days: ${days}`);
+    
     const performance = await telosIntelligence.getRoutePerformance(
       routeId as string,
-      parseInt(days as string)
+      parseInt(days as string) || 14
     );
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Route performance request completed in ${duration}ms, returned ${performance.length} records`);
     
     res.json(performance);
   } catch (error) {
-    console.error('Failed to get route performance:', error);
-    res.status(500).json({ error: 'Failed to retrieve route performance data' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get route performance (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve route performance data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -54,18 +74,28 @@ router.get('/route-performance', async (req, res) => {
  * Get demand trends and search intelligence
  */
 router.get('/demand-intelligence', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { routeId, days = 30 } = req.query;
     
+    console.log(`[API] GET /demand-intelligence - routeId: ${routeId}, days: ${days}`);
+    
     const demand = await telosIntelligence.getDemandIntelligence(
       routeId as string,
-      parseInt(days as string)
+      parseInt(days as string) || 30
     );
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Demand intelligence request completed in ${duration}ms, returned ${demand.length} records`);
     
     res.json(demand);
   } catch (error) {
-    console.error('Failed to get demand intelligence:', error);
-    res.status(500).json({ error: 'Failed to retrieve demand intelligence data' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get demand intelligence (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve demand intelligence data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -74,18 +104,28 @@ router.get('/demand-intelligence', async (req, res) => {
  * Get active intelligence alerts and insights
  */
 router.get('/intelligence-alerts', async (req, res) => {
+  const startTime = Date.now();
   try {
     const { priority, agentSource } = req.query;
+    
+    console.log(`[API] GET /intelligence-alerts - priority: ${priority}, agentSource: ${agentSource}`);
     
     const alerts = await telosIntelligence.getIntelligenceAlerts(
       priority as string,
       agentSource as string
     );
     
+    const duration = Date.now() - startTime;
+    console.log(`[API] Intelligence alerts request completed in ${duration}ms, returned ${alerts.length} records`);
+    
     res.json(alerts);
   } catch (error) {
-    console.error('Failed to get intelligence alerts:', error);
-    res.status(500).json({ error: 'Failed to retrieve intelligence alerts' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get intelligence alerts (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve intelligence alerts',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -94,12 +134,23 @@ router.get('/intelligence-alerts', async (req, res) => {
  * Get comprehensive daily intelligence dashboard
  */
 router.get('/daily-summary', async (req, res) => {
+  const startTime = Date.now();
   try {
+    console.log('[API] GET /daily-summary - generating comprehensive daily intelligence dashboard');
+    
     const summary = await telosIntelligence.getDailyIntelligenceSummary();
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Daily summary request completed in ${duration}ms`);
+    
     res.json(summary);
   } catch (error) {
-    console.error('Failed to get daily summary:', error);
-    res.status(500).json({ error: 'Failed to retrieve daily intelligence summary' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get daily summary (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve daily intelligence summary',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -124,21 +175,28 @@ router.get('/market-events', async (req, res) => {
  * Trigger Telos intelligence agent analysis
  */
 router.post('/run-analysis', async (req, res) => {
+  const startTime = Date.now();
   try {
-    console.log('Manual Telos intelligence analysis triggered');
+    console.log('[API] POST /run-analysis - Manual Telos intelligence analysis triggered');
     
     const analysis = await telosOrchestrator.runIntelligenceAnalysis();
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Intelligence analysis completed in ${duration}ms`);
     
     res.json({
       success: true,
       message: 'Intelligence analysis completed successfully',
-      results: analysis
+      results: analysis,
+      duration
     });
   } catch (error) {
-    console.error('Failed to run Telos analysis:', error);
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to run Telos analysis (${duration}ms):`, error);
     res.status(500).json({ 
       success: false,
-      error: 'Failed to run intelligence analysis' 
+      error: 'Failed to run intelligence analysis',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -148,15 +206,25 @@ router.post('/run-analysis', async (req, res) => {
  * Get list of available routes for filtering
  */
 router.get('/routes', async (req, res) => {
+  const startTime = Date.now();
   try {
+    console.log('[API] GET /routes - retrieving available route list');
+    
     // Get distinct routes from competitive data
     const positions = await telosIntelligence.getCompetitivePosition(undefined, 30);
-    const routes = [...new Set(positions.map(p => p.routeId))].sort();
+    const routes = Array.from(new Set(positions.map(p => p.routeId))).filter(r => r).sort();
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Routes request completed in ${duration}ms, found ${routes.length} unique routes`);
     
     res.json(routes);
   } catch (error) {
-    console.error('Failed to get routes:', error);
-    res.status(500).json({ error: 'Failed to retrieve route list' });
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get routes (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve route list',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
