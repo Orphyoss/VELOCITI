@@ -156,21 +156,21 @@ export default function TelosIntelligence() {
     }
   };
 
-  // Fetch intelligence summary
-  const { data: summary, isLoading: summaryLoading } = useQuery<IntelligenceSummary>({
-    queryKey: ['/api/telos/summary'],
+  // Fetch intelligence insights
+  const { data: insights, isLoading: insightsLoading } = useQuery<IntelligenceAlert[]>({
+    queryKey: ['/api/telos/insights'],
     refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Fetch competitive positions
-  const { data: competitive, isLoading: competitiveLoading } = useQuery<CompetitivePosition[]>({
-    queryKey: ['/api/telos/competitive', { days: 7 }],
+  // Fetch competitive pricing
+  const { data: competitive, isLoading: competitiveLoading } = useQuery({
+    queryKey: ['/api/telos/competitive-pricing'],
     enabled: true,
   });
 
-  // Fetch route performance
-  const { data: performance, isLoading: performanceLoading } = useQuery<RoutePerformance[]>({
-    queryKey: ['/api/telos/performance', { days: 14 }],
+  // Fetch route dashboard
+  const { data: routeDashboard, isLoading: dashboardLoading } = useQuery({
+    queryKey: ['/api/telos/route-dashboard'],
     enabled: true,
   });
 
