@@ -1,0 +1,375 @@
+-- Telos Airline Intelligence Platform - Database Schema
+-- Designed for EasyJet and European LCC intelligence use cases
+-- Supports NightShift Intelligence Engine and competitive monitoring
+
+-- ============================================================================
+-- CORE REFERENCE TABLES
+-- ============================================================================
+
+-- Airlines and Carriers
+CREATE TABLE airlines (
+    airline_code VARCHAR(10) PRIMARY KEY,
+    airline_name VARCHAR(100) NOT NULL,
+    carrier_type VARCHAR(20) NOT NULL, -- LCC, FSC, ULCC, Hybrid
+    country_code VARCHAR(3),
+    active_flag BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Airports and Cities
+CREATE TABLE airports (
+    airport_code VARCHAR(10) PRIMARY KEY,
+    airport_name VARCHAR(100),
+    city_name VARCHAR(50),
+    country_code VARCHAR(3),
+    region VARCHAR(50),
+    timezone VARCHAR(50),
+    active_flag BOOLEAN DEFAULT TRUE
+);
+
+-- Route Markets (O&D pairs)
+CREATE TABLE routes (
+    route_id VARCHAR(20) PRIMARY KEY, -- Format: LGW-BCN
+    origin_airport VARCHAR(10) REFERENCES airports(airport_code),
+    destination_airport VARCHAR(10) REFERENCES airports(airport_code),
+    market_type VARCHAR(20), -- Domestic, EU, International
+    distance_km INTEGER,
+    is_easyjet_route BOOLEAN DEFAULT FALSE,
+    route_priority VARCHAR(20), -- Core, Secondary, Seasonal
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Aircraft Types
+CREATE TABLE aircraft_types (
+    aircraft_code VARCHAR(10) PRIMARY KEY,
+    aircraft_name VARCHAR(50),
+    typical_seats INTEGER,
+    aircraft_category VARCHAR(20) -- Narrowbody, Widebody, Regional
+);
+
+-- ============================================================================
+-- COMPETITIVE INTELLIGENCE TABLES
+-- ============================================================================
+
+-- Competitive Pricing Data (from Infare)
+CREATE TABLE competitive_pricing (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_comp VARCHAR(50) NOT NULL, -- ALCLGW20250701 format
+    sector VARCHAR(20) NOT NULL, -- ALCLGW format  
+    observation_dt DATE NOT NULL,
+    carriername VARCHAR(50) NOT NULL, -- British Airways, Ryanair, etc.
+    flight_mth VARCHAR(10) NOT NULL, -- Flight month
+    flight_dt DATE NOT NULL,
+    flight_tm TIME, -- Flight time
+    flight_number VARCHAR(20),
+    price_gbp DECIMAL(10,2), -- Price in GBP
+    price_lct DECIMAL(10,2), -- Price in local currency
+    currencycode VARCHAR(3), -- EUR, GBP, etc.
+    route_id VARCHAR(20), -- Derived: LGW-BCN format
+    airline_code VARCHAR(10), -- Standardized: BA, RYR, VY
+    data_source VARCHAR(20) DEFAULT 'INFARE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_comp_pricing_sector_date (sector, observation_dt),
+    INDEX idx_comp_pricing_carrier_date (carriername, observation_dt),
+    INDEX idx_comp_pricing_flight_date (flight_dt),
+    INDEX idx_comp_pricing_route (route_id, observation_dt)
+);
+
+-- Market Capacity Data (from OAG)
+CREATE TABLE market_capacity (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_mcap VARCHAR(50) NOT NULL, --  ALCLGW20250701 format
+    sector VARCHAR(20) NOT NULL, -- ALCLGW format
+    flight_dt DATE NOT NULL,
+    flight_mth VARCHAR(10) NOT NULL,
+    carriername VARCHAR(50) NOT NULL, -- British Airways, Easyjet, etc.
+    carriertype VARCHAR(20), -- FSC, LCC, ULCC
+    num_flights INTEGER, -- Number of flights
+    num_seats INTEGER, -- Total seat capacity
+    aircraft_type VARCHAR(10), -- A320, B737, etc.
+    route_id VARCHAR(20), -- Derived from sector
+    airline_code VARCHAR(10), -- Standardized: BA, EZY, RYR
+    data_source VARCHAR(20) DEFAULT 'OAG',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_capacity_sector_date (sector, flight_dt),
+    INDEX idx_capacity_carrier_date (carriername, flight_dt),
+    INDEX idx_capacity_route_date (route_id, flight_dt)
+);
+
+-- ============================================================================
+-- DEMAND INTELLIGENCE TABLES  
+-- ============================================================================
+
+-- Web Search Data (Google, Skyscanner demand signals)
+CREATE TABLE web_search_data (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_web VARCHAR(50) NOT NULL, -- ALCLGW20250701 format
+    sector VARCHAR(20) NOT NULL, -- ALCLGW format
+    flight_mth VARCHAR(10) NOT NULL,
+    search_dt DATE NOT NULL,
+    web_ty_searches INTEGER, -- This year's searches
+    web_ty_bookings INTEGER, -- This year's bookings  
+    web_ly_searches INTEGER, -- Last year's searches
+    web_ly_bookings INTEGER, -- Last year's bookings
+    conversion_rate DECIMAL(5,4), -- Calculated: bookings/searches
+    route_id VARCHAR(20), -- Derived from sector
+    data_source VARCHAR(20) DEFAULT 'SKYSCANNER',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_web_search_sector_date (sector, search_dt),
+    INDEX idx_web_search_route_date (route_id, search_dt),
+    INDEX idx_web_search_source_date (data_source, search_dt)
+);
+
+-- Booking Channel Performance
+CREATE TABLE booking_channels (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_daily VARCHAR(50) NOT NULL, -- ALCLGW20250701 format
+    sector VARCHAR(20) NOT NULL,
+    flight_dt DATE NOT NULL,
+    flight_mth VARCHAR(10) NOT NULL,
+    change_dt DATE NOT NULL, -- Date when booking was made
+    bookingchannellevel1 VARCHAR(50), -- Direct, Indirect, etc.
+    bookingchannellevel2 VARCHAR(50), -- EtihadsHays, Mobile App, etc.
+    daily_ticket_rev_net DECIMAL(12,2), -- Net ticket revenue
+    daily_ticket_pax_net INTEGER, -- Net passengers
+    daily_ticket_rev_pre DECIMAL(12,2), -- Pre-adjustment revenue
+    daily_ticket_pax_pre INTEGER, -- Pre-adjustment passengers
+    daily_ancillary_rev_net DECIMAL(12,2), -- Net ancillary revenue
+    daily_ancillary_rev_pre DECIMAL(12,2), -- Pre-adjustment ancillary revenue
+    route_id VARCHAR(20), -- Derived from sector
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_booking_channel_sector_date (sector, change_dt),
+    INDEX idx_booking_channel_route_date (route_id, change_dt),
+    INDEX idx_booking_channel_type_date (bookingchannellevel1, change_dt)
+);
+
+-- ============================================================================
+-- REVENUE MANAGEMENT INTELLIGENCE
+-- ============================================================================
+
+-- EasyJet Internal Pricing Actions (Segment Finder data)
+CREATE TABLE rm_pricing_actions (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_price VARCHAR(50) NOT NULL, -- ALCLGW20250701 format
+    sector VARCHAR(20) NOT NULL,
+    flightkey VARCHAR(50), -- Unique flight identifier  
+    flight_dt DATE NOT NULL,
+    flight_mth VARCHAR(10) NOT NULL,
+    observation_dt DATE NOT NULL, -- Date price was observed
+    ty_ticketprice_local DECIMAL(10,2), -- This year ticket price (local currency)
+    ty_ticketprice_gbp DECIMAL(10,2), -- This year ticket price (GBP)
+    ty_ticketprice_currencycode VARCHAR(3), -- Currency code
+    ty_ticketprice_localtopromo DECIMAL(10,2), -- Local to promo price ratio
+    action_type VARCHAR(30), -- price_increase, price_decrease, inventory_adjust
+    change_reason VARCHAR(50), -- system_auto, analyst_manual, competitor_response
+    change_source VARCHAR(30), -- Segment_Finder, Manual, System
+    analyst_id VARCHAR(20),
+    distance_from_profile DECIMAL(8,4), -- EasyJet Segment Finder metric
+    booking_curve_position DECIMAL(5,2),
+    route_id VARCHAR(20), -- Derived from sector
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_rm_actions_sector_date (sector, observation_dt),
+    INDEX idx_rm_actions_flight_date (flight_dt),
+    INDEX idx_rm_actions_route_date (route_id, observation_dt),
+    INDEX idx_rm_actions_change_type (action_type, observation_dt)
+);
+
+-- Flight Performance Metrics
+CREATE TABLE flight_performance (
+    id BIGSERIAL PRIMARY KEY,
+    insert_date TIMESTAMP NOT NULL,
+    performance_date DATE NOT NULL,
+    flight_date DATE NOT NULL,
+    route_id VARCHAR(20) REFERENCES routes(route_id),
+    flight_number VARCHAR(10),
+    aircraft_type VARCHAR(10),
+    total_seats INTEGER,
+    bookings_count INTEGER,
+    load_factor DECIMAL(5,2),
+    revenue_total DECIMAL(12,2),
+    revenue_currency VARCHAR(3),
+    yield_per_pax DECIMAL(10,2),
+    ancillary_revenue DECIMAL(10,2),
+    no_shows INTEGER,
+    denied_boardings INTEGER,
+    days_to_departure INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_flight_perf_route_date (route_id, performance_date),
+    INDEX idx_flight_perf_flight_date (flight_date),
+    INDEX idx_flight_perf_load_factor (load_factor DESC)
+);
+
+-- ============================================================================
+-- EXTERNAL CONTEXT TABLES
+-- ============================================================================
+
+-- Events and Market Disruptions
+CREATE TABLE market_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_date DATE NOT NULL,
+    event_type VARCHAR(30), -- Weather, Strike, Holiday, Sports, Conference
+    event_name VARCHAR(100),
+    affected_airports TEXT, -- JSON array of airport codes
+    affected_routes TEXT, -- JSON array of route IDs  
+    impact_level VARCHAR(20), -- Low, Medium, High, Critical
+    impact_description TEXT,
+    start_date DATE,
+    end_date DATE,
+    data_source VARCHAR(30),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_events_date_type (event_date, event_type),
+    INDEX idx_events_impact (impact_level, event_date)
+);
+
+-- Economic and Industry Data
+CREATE TABLE economic_indicators (
+    id BIGSERIAL PRIMARY KEY,
+    indicator_date DATE NOT NULL,
+    indicator_type VARCHAR(30), -- GDP, Exchange_Rate, Fuel_Price, Consumer_Confidence
+    indicator_name VARCHAR(50),
+    value DECIMAL(15,4),
+    unit VARCHAR(20),
+    region VARCHAR(30), -- EU, UK, Global
+    data_source VARCHAR(30),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_economic_type_date (indicator_type, indicator_date)
+);
+
+-- ============================================================================
+-- INTELLIGENCE PROCESSING TABLES
+-- ============================================================================
+
+-- NightShift Processing Log
+CREATE TABLE nightshift_processing (
+    id BIGSERIAL PRIMARY KEY,
+    processing_date DATE NOT NULL,
+    processing_start TIMESTAMP,
+    processing_end TIMESTAMP,
+    agent_type VARCHAR(30), -- Performance, Competitive, Demand, Network
+    routes_processed INTEGER,
+    insights_generated INTEGER,
+    alerts_created INTEGER,
+    processing_status VARCHAR(20), -- Running, Completed, Failed
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_nightshift_date_agent (processing_date, agent_type)
+);
+
+-- AI-Generated Insights and Alerts
+CREATE TABLE intelligence_insights (
+    id BIGSERIAL PRIMARY KEY,
+    insight_date DATE NOT NULL,
+    insight_type VARCHAR(30), -- Anomaly, Opportunity, Trend, Alert
+    priority_level VARCHAR(20), -- Low, Medium, High, Critical
+    route_id VARCHAR(20) REFERENCES routes(route_id),
+    airline_code VARCHAR(10) REFERENCES airlines(airline_code),
+    title VARCHAR(200),
+    description TEXT,
+    recommendation TEXT,
+    confidence_score DECIMAL(3,2), -- 0.00 to 1.00
+    supporting_data JSON, -- Flexible data structure for evidence
+    analyst_feedback VARCHAR(500),
+    action_taken BOOLEAN DEFAULT FALSE,
+    agent_source VARCHAR(30), -- Which AI agent generated this
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_insights_date_priority (insight_date, priority_level),
+    INDEX idx_insights_route_date (route_id, insight_date),
+    INDEX idx_insights_type_confidence (insight_type, confidence_score DESC)
+);
+
+-- Analyst Interaction Log (HITL feedback)
+CREATE TABLE analyst_interactions (
+    id BIGSERIAL PRIMARY KEY,
+    interaction_date TIMESTAMP NOT NULL,
+    analyst_id VARCHAR(20),
+    interaction_type VARCHAR(30), -- Query, Feedback, Action_Taken, Approval
+    insight_id BIGINT REFERENCES intelligence_insights(id),
+    query_text TEXT,
+    response_text TEXT,
+    satisfaction_rating INTEGER, -- 1-5 scale
+    time_saved_minutes INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_interactions_analyst_date (analyst_id, interaction_date),
+    INDEX idx_interactions_insight (insight_id)
+);
+
+-- Revenue Management System Changes (RMS data)
+CREATE TABLE rms_changes (
+    id BIGSERIAL PRIMARY KEY,
+    insertdttm TIMESTAMP NOT NULL,
+    key_rms VARCHAR(50) NOT NULL, -- ALCLGW20250701 format
+    flightkey VARCHAR(50), -- Unique flight identifier
+    sector VARCHAR(20) NOT NULL,
+    change_dt DATE NOT NULL, -- Date of change
+    flight_dt DATE NOT NULL, -- Flight date
+    flight_mth VARCHAR(10) NOT NULL,
+    change_source VARCHAR(50), -- Name of system/process that made change
+    change_type VARCHAR(50), -- Parameter changed (break point, fare band, etc.)
+    change_value TEXT, -- What the parameter was changed to
+    change_num INTEGER DEFAULT 1, -- Number of changes
+    route_id VARCHAR(20), -- Derived from sector
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    INDEX idx_rms_changes_sector_date (sector, change_dt),
+    INDEX idx_rms_changes_flight_date (flight_dt),
+    INDEX idx_rms_changes_type (change_type, change_dt),
+    INDEX idx_rms_changes_source (change_source, change_dt)
+);
+
+-- EasyJet vs Competitor Performance View
+CREATE VIEW easyjet_competitive_position AS
+SELECT 
+    cp.route_id,
+    cp.observation_date,
+    cp.flight_date,
+    AVG(CASE WHEN cp.airline_code = 'EZY' THEN cp.price_amount END) as easyjet_avg_price,
+    AVG(CASE WHEN cp.airline_code = 'RYR' THEN cp.price_amount END) as ryanair_avg_price,
+    AVG(CASE WHEN cp.airline_code NOT IN ('EZY', 'RYR') THEN cp.price_amount END) as other_avg_price,
+    COUNT(DISTINCT cp.airline_code) as competitor_count
+FROM competitive_pricing cp
+WHERE cp.observation_date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY cp.route_id, cp.observation_date, cp.flight_date;
+
+-- Route Performance Summary View  
+CREATE VIEW route_performance_summary AS
+SELECT 
+    fp.route_id,
+    fp.performance_date,
+    AVG(fp.load_factor) as avg_load_factor,
+    AVG(fp.yield_per_pax) as avg_yield,
+    SUM(fp.revenue_total) as total_revenue,
+    SUM(fp.bookings_count) as total_bookings,
+    COUNT(*) as flight_count
+FROM flight_performance fp
+WHERE fp.performance_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY fp.route_id, fp.performance_date;
+
+-- Daily Intelligence Dashboard View
+CREATE VIEW daily_intelligence_dashboard AS
+SELECT 
+    ii.insight_date,
+    ii.priority_level,
+    COUNT(*) as insight_count,
+    AVG(ii.confidence_score) as avg_confidence,
+    COUNT(CASE WHEN ii.action_taken = TRUE THEN 1 END) as actions_taken
+FROM intelligence_insights ii
+WHERE ii.insight_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY ii.insight_date, ii.priority_level
+ORDER BY ii.insight_date DESC, ii.priority_level;

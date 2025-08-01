@@ -1,414 +1,263 @@
-/**
- * Telos Intelligence Platform - Data Consumption Framework
- * Integrates airline intelligence data into Velociti platform
- * Enhanced with comprehensive logging and error handling
- */
+// Telos Intelligence Platform - Data Service
+// Provides analytics and insights for airline revenue management
 
-import postgres from 'postgres';
+import { db } from './supabase.js';
+import { desc, eq, gte, lte, and, count, avg, sum, sql } from "drizzle-orm";
+import {
+  competitivePricing,
+  marketCapacity,
+  webSearchData,
+  flightPerformance,
+  intelligenceInsights,
+  routes,
+  airlines
+} from "../../shared/schema.js";
 
-// Data Models and Types
-export interface CompetitivePosition {
-  routeId: string;
-  observationDate: string;
-  easyjetAvgPrice: number | null;
-  ryanairAvgPrice: number | null;
-  priceGapPercent: number | null;
-  competitorCount: number;
-  marketPosition: 'Leading' | 'Competitive' | 'Behind';
-}
-
-export interface RoutePerformance {
-  routeId: string;
-  flightDate: string;
-  loadFactor: number;
-  revenueTotal: number;
-  yieldPerPax: number;
-  bookingsCount: number;
-  performanceVsForecast: string;
-}
-
-export interface DemandIntelligence {
-  routeId: string;
-  searchDate: string;
-  searchVolume: number;
-  bookingVolume: number;
-  conversionRate: number;
-  demandTrend: 'Increasing' | 'Stable' | 'Decreasing';
-  trendStrength: number;
-}
-
-export interface IntelligenceAlert {
-  id: string;
-  alertType: 'competitive' | 'performance' | 'demand' | 'external';
-  priority: 'Low' | 'Medium' | 'High' | 'Critical';
-  title: string;
-  description: string;
-  recommendation: string;
-  routeId?: string;
-  airlineCode?: string;
-  confidenceScore: number;
-  agentSource: string;
-  supportingData: Record<string, any>;
-  insertDate: string;
-}
-
-// Database connection
-const connectionString = process.env.DATABASE_URL!;
-const client = postgres(connectionString, {
-  onnotice: () => {}, // Suppress NOTICE messages
-  debug: false
-});
-
-/**
- * Core intelligence data access layer with enhanced error handling
- */
 export class TelosIntelligenceService {
-  
-  /**
-   * Get competitive positioning analysis for EasyJet routes
-   */
-  async getCompetitivePosition(routeId?: string, days: number = 7): Promise<CompetitivePosition[]> {
-    console.log(`[TelosIntelligence] getCompetitivePosition called with routeId: ${routeId}, days: ${days}`);
-    
+  // Get competitive pricing analysis for a route
+  async getCompetitivePricingAnalysis(routeId: string, days: number = 30) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     try {
-      let sqlQuery = `
-        SELECT 
-          route_id,
-          observation_date::text,
-          easyjet_avg_price,
-          ryanair_avg_price,
-          CASE 
-            WHEN easyjet_avg_price IS NOT NULL AND ryanair_avg_price IS NOT NULL AND ryanair_avg_price > 0
-            THEN ROUND(((easyjet_avg_price - ryanair_avg_price) / ryanair_avg_price * 100), 2)
-            ELSE NULL 
-          END as price_gap_percent,
-          competitor_count
-        FROM easyjet_competitive_position
-        WHERE observation_date >= CURRENT_DATE - INTERVAL '${days} days'
-      `;
+      const results = await db
+        .select({
+          airlineCode: competitivePricing.airlineCode,
+          avgPrice: avg(competitivePricing.priceAmount),
+          minPrice: sql<number>`MIN(${competitivePricing.priceAmount})`,
+          maxPrice: sql<number>`MAX(${competitivePricing.priceAmount})`,
+          observationCount: count()
+        })
+        .from(competitivePricing)
+        .where(
+          and(
+            eq(competitivePricing.routeId, routeId),
+            gte(competitivePricing.observationDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        )
+        .groupBy(competitivePricing.airlineCode)
+        .orderBy(desc(sql`AVG(${competitivePricing.priceAmount})`));
 
-      const params: any[] = [];
-      if (routeId && routeId !== 'undefined') {
-        sqlQuery += ` AND route_id = $1`;
-        params.push(routeId);
-      }
-
-      sqlQuery += ` ORDER BY observation_date DESC, route_id LIMIT 1000`;
-
-      console.log(`[TelosIntelligence] Executing SQL query: ${sqlQuery.substring(0, 200)}...`);
-      const results = await client.unsafe(sqlQuery, params);
-
-      console.log(`[TelosIntelligence] Retrieved ${results.length} competitive position records`);
-
-      return results.map((row: any) => ({
-        routeId: row.route_id || '',
-        observationDate: row.observation_date || '',
-        easyjetAvgPrice: this.safeParseFloat(row.easyjet_avg_price),
-        ryanairAvgPrice: this.safeParseFloat(row.ryanair_avg_price),
-        priceGapPercent: this.safeParseFloat(row.price_gap_percent),
-        competitorCount: this.safeParseInt(row.competitor_count),
-        marketPosition: this.determineMarketPosition(this.safeParseFloat(row.price_gap_percent))
-      }));
-
+      return results;
     } catch (error) {
-      console.error('[TelosIntelligence] Failed to get competitive position:', error);
-      // Return empty array instead of throwing to maintain app stability
+      console.error("Error in getCompetitivePricingAnalysis:", error);
       return [];
     }
   }
 
-  /**
-   * Get route performance metrics
-   */
-  async getRoutePerformance(routeId?: string, days: number = 14): Promise<RoutePerformance[]> {
-    console.log(`[TelosIntelligence] getRoutePerformance called with routeId: ${routeId}, days: ${days}`);
-    
+  // Get market capacity analysis for a route
+  async getMarketCapacityAnalysis(routeId: string, days: number = 7) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     try {
-      let sqlQuery = `
-        SELECT 
-          route_id,
-          flight_date::text,
-          load_factor,
-          revenue_total,
-          yield_per_pax, 
-          bookings_count
-        FROM flight_performance
-        WHERE flight_date >= CURRENT_DATE - INTERVAL '${days} days'
-      `;
+      const results = await db
+        .select({
+          airlineCode: marketCapacity.airlineCode,
+          totalFlights: sum(marketCapacity.numFlights),
+          totalSeats: sum(marketCapacity.numSeats),
+          avgFlightsPerDay: sql<number>`${sum(marketCapacity.numFlights)} / ${days}`
+        })
+        .from(marketCapacity)
+        .where(
+          and(
+            eq(marketCapacity.routeId, routeId),
+            gte(marketCapacity.flightDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        )
+        .groupBy(marketCapacity.airlineCode)
+        .orderBy(desc(sql`SUM(${marketCapacity.numSeats})`));
 
-      const params: any[] = [];
-      if (routeId && routeId !== 'undefined') {
-        sqlQuery += ` AND route_id = $1`;
-        params.push(routeId);
-      }
-
-      sqlQuery += ` ORDER BY flight_date DESC LIMIT 1000`;
-
-      console.log(`[TelosIntelligence] Executing performance query: ${sqlQuery.substring(0, 200)}...`);
-      const results = await client.unsafe(sqlQuery, params);
-
-      console.log(`[TelosIntelligence] Retrieved ${results.length} performance records`);
-
-      return results.map((row: any) => ({
-        routeId: row.route_id || '',
-        flightDate: row.flight_date || '',
-        loadFactor: this.safeParseFloat(row.load_factor),
-        revenueTotal: this.safeParseFloat(row.revenue_total),
-        yieldPerPax: this.safeParseFloat(row.yield_per_pax),
-        bookingsCount: this.safeParseInt(row.bookings_count),
-        performanceVsForecast: this.calculatePerformanceVsForecast(this.safeParseFloat(row.load_factor))
-      }));
-
+      return results;
     } catch (error) {
-      console.error('[TelosIntelligence] Failed to get route performance:', error);
-      // Return empty array instead of throwing to maintain app stability
+      console.error("Error in getMarketCapacityAnalysis:", error);
       return [];
     }
   }
 
-  /**
-   * Get demand intelligence and search trends
-   */
-  async getDemandIntelligence(routeId?: string, days: number = 30): Promise<DemandIntelligence[]> {
-    console.log(`[TelosIntelligence] getDemandIntelligence called with routeId: ${routeId}, days: ${days}`);
-    
+  // Get route performance metrics
+  async getRoutePerformanceMetrics(routeId: string, days: number = 30) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     try {
-      let sqlQuery = `
-        SELECT 
-          route_id,
-          search_date::text,
-          search_volume,
-          booking_volume,
-          conversion_rate,
-          search_volume - LAG(search_volume, 7) OVER (
-            PARTITION BY route_id 
-            ORDER BY search_date
-          ) as trend_indicator
-        FROM web_search_data
-        WHERE search_date >= CURRENT_DATE - INTERVAL '${days} days'
-      `;
+      const results = await db
+        .select({
+          routeId: flightPerformance.routeId,
+          avgLoadFactor: avg(flightPerformance.loadFactor),
+          avgYield: avg(flightPerformance.yieldPerPax),
+          totalRevenue: sum(flightPerformance.revenueTotal),
+          totalBookings: sum(flightPerformance.bookingsCount),
+          flightCount: count()
+        })
+        .from(flightPerformance)
+        .where(
+          and(
+            eq(flightPerformance.routeId, routeId),
+            gte(flightPerformance.performanceDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        )
+        .groupBy(flightPerformance.routeId);
 
-      const params: any[] = [];
-      if (routeId && routeId !== 'undefined') {
-        sqlQuery += ` AND route_id = $1`;
-        params.push(routeId);
-      }
-
-      sqlQuery += ` ORDER BY search_date DESC LIMIT 1000`;
-
-      console.log(`[TelosIntelligence] Executing demand query: ${sqlQuery.substring(0, 200)}...`);
-      const results = await client.unsafe(sqlQuery, params);
-
-      console.log(`[TelosIntelligence] Retrieved ${results.length} demand intelligence records`);
-
-      return results.map((row: any) => ({
-        routeId: row.route_id || '',
-        searchDate: row.search_date || '',
-        searchVolume: this.safeParseInt(row.search_volume),
-        bookingVolume: this.safeParseInt(row.booking_volume),
-        conversionRate: this.safeParseFloat(row.conversion_rate),
-        demandTrend: this.determineDemandTrend(this.safeParseFloat(row.trend_indicator)),
-        trendStrength: Math.abs(this.safeParseFloat(row.trend_indicator)) / Math.max(this.safeParseInt(row.search_volume), 1)
-      }));
-
+      return results[0] || null;
     } catch (error) {
-      console.error('[TelosIntelligence] Failed to get demand intelligence:', error);
-      // Return empty array instead of throwing to maintain app stability
+      console.error("Error in getRoutePerformanceMetrics:", error);
+      return null;
+    }
+  }
+
+  // Get active intelligence insights
+  async getActiveInsights(priorityLevel?: string, agentSource?: string) {
+    try {
+      let query = db
+        .select()
+        .from(intelligenceInsights)
+        .where(eq(intelligenceInsights.actionTaken, false))
+        .orderBy(
+          desc(intelligenceInsights.insightDate),
+          desc(intelligenceInsights.confidenceScore)
+        );
+
+      return await query.limit(50);
+    } catch (error) {
+      console.error("Error in getActiveInsights:", error);
       return [];
     }
   }
 
-  /**
-   * Get active intelligence alerts and insights
-   */
-  async getIntelligenceAlerts(priority?: string, agentSource?: string): Promise<IntelligenceAlert[]> {
-    console.log(`[TelosIntelligence] getIntelligenceAlerts called with priority: ${priority}, agentSource: ${agentSource}`);
-    
+  // Get insights by route
+  async getInsightsByRoute(routeId: string, days: number = 30) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     try {
-      let sqlQuery = `
-        SELECT 
-          insight_id::text as id,
-          CASE 
-            WHEN insight_type = 'Alert' THEN 'competitive'
-            WHEN insight_type = 'Opportunity' THEN 'performance'
-            WHEN insight_type = 'Trend' THEN 'demand'
-            ELSE 'external'
-          END as alert_type,
-          priority_level as priority,
-          title,
-          description,
-          recommendation,
-          route_id,
-          airline_code,
-          confidence_score,
-          agent_source,
-          supporting_data,
-          insight_date::text as insert_date
-        FROM intelligence_insights
-        WHERE insight_date >= CURRENT_DATE - INTERVAL '7 days' AND action_taken = false
-      `;
-
-      const params: any[] = [];
-      if (priority) {
-        sqlQuery += ` AND priority_level = $${params.length + 1}`;
-        params.push(priority);
-      }
-      if (agentSource) {
-        sqlQuery += ` AND agent_source = $${params.length + 1}`;
-        params.push(agentSource);
-      }
-
-      sqlQuery += ` ORDER BY insight_date DESC, priority_level DESC LIMIT 100`;
-
-      console.log(`[TelosIntelligence] Executing alerts query: ${sqlQuery.substring(0, 200)}...`);
-      const results = await client.unsafe(sqlQuery, params);
-
-      console.log(`[TelosIntelligence] Retrieved ${results.length} intelligence alerts`);
-
-      return results.map((row: any) => ({
-        id: row.id || '',
-        alertType: row.alert_type || 'external',
-        priority: row.priority || 'Low',
-        title: row.title || '',
-        description: row.description || '',
-        recommendation: row.recommendation || '',
-        routeId: row.route_id,
-        airlineCode: row.airline_code,
-        confidenceScore: this.safeParseFloat(row.confidence_score),
-        agentSource: row.agent_source || '',
-        supportingData: this.safeParseSupportingData(row.supporting_data),
-        insertDate: row.insert_date || ''
-      }));
-
+      return await db
+        .select()
+        .from(intelligenceInsights)
+        .where(
+          and(
+            eq(intelligenceInsights.routeId, routeId),
+            gte(intelligenceInsights.insightDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        )
+        .orderBy(desc(intelligenceInsights.insightDate));
     } catch (error) {
-      console.error('[TelosIntelligence] Failed to get intelligence alerts:', error);
-      // Return empty array instead of throwing to maintain app stability
+      console.error("Error in getInsightsByRoute:", error);
       return [];
     }
   }
 
-  /**
-   * Generate daily intelligence dashboard summary
-   */
-  async getDailyIntelligenceSummary() {
-    console.log('[TelosIntelligence] Generating daily intelligence summary');
-    
+  // Get web search trends
+  async getWebSearchTrends(routeId: string, days: number = 30) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+
     try {
-      const [
-        competitivePositions,
-        performanceMetrics,
-        demandTrends,
-        recentInsights
-      ] = await Promise.all([
-        this.getCompetitivePosition(undefined, 1),
-        this.getRoutePerformance(undefined, 1),
-        this.getDemandIntelligence(undefined, 7),
-        this.getIntelligenceAlerts()
+      return await db
+        .select({
+          searchDate: webSearchData.searchDate,
+          searchVolume: webSearchData.searchVolume,
+          bookingVolume: webSearchData.bookingVolume,
+          conversionRate: webSearchData.conversionRate,
+          avgSearchPrice: webSearchData.avgSearchPrice
+        })
+        .from(webSearchData)
+        .where(
+          and(
+            eq(webSearchData.routeId, routeId),
+            gte(webSearchData.searchDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        )
+        .orderBy(webSearchData.searchDate);
+    } catch (error) {
+      console.error("Error in getWebSearchTrends:", error);
+      return [];
+    }
+  }
+
+  // Get comprehensive route dashboard data
+  async getRouteDashboard(routeId: string) {
+    try {
+      const [pricing, capacity, performance, insights, searchTrends] = await Promise.all([
+        this.getCompetitivePricingAnalysis(routeId, 7),
+        this.getMarketCapacityAnalysis(routeId, 7),
+        this.getRoutePerformanceMetrics(routeId, 7),
+        this.getInsightsByRoute(routeId, 14),
+        this.getWebSearchTrends(routeId, 14)
       ]);
 
-      const uniqueRoutes = new Set([
-        ...competitivePositions.map(a => a.routeId),
-        ...performanceMetrics.map(p => p.routeId)
-      ]);
-
-      const summary = {
-        totalRoutes: uniqueRoutes.size,
-        competitivePositions: competitivePositions.length,
-        performanceMetrics: performanceMetrics.length,
-        demandSignals: demandTrends.length,
-        insights: recentInsights.slice(0, 10), // Top 10 recent insights
-        marketEvents: [] // Placeholder for market events
-      };
-
-      console.log(`[TelosIntelligence] Generated summary with ${summary.totalRoutes} routes`);
-      return summary;
-
-    } catch (error) {
-      console.error('[TelosIntelligence] Failed to generate daily intelligence summary:', error);
-      // Return minimal summary instead of throwing
       return {
-        totalRoutes: 0,
-        competitivePositions: 0,
-        performanceMetrics: 0,
-        demandSignals: 0,
-        insights: [],
-        marketEvents: []
+        routeId,
+        pricing,
+        capacity,
+        performance,
+        insights: {
+          total: insights.length,
+          critical: insights.filter(i => i.priorityLevel === 'Critical').length,
+          opportunities: insights.filter(i => i.insightType === 'Opportunity').length,
+          recent: insights.slice(0, 5) // Most recent 5 insights
+        },
+        searchTrends
+      };
+    } catch (error) {
+      console.error("Error in getRouteDashboard:", error);
+      return {
+        routeId,
+        pricing: [],
+        capacity: [],
+        performance: null,
+        insights: { total: 0, critical: 0, opportunities: 0, recent: [] },
+        searchTrends: []
       };
     }
   }
 
-  /**
-   * Helper methods with enhanced error handling
-   */
-  private determineMarketPosition(priceGapPercent: number | null): 'Leading' | 'Competitive' | 'Behind' {
+  // Generate competitive position summary
+  async getCompetitivePosition(routeId: string) {
     try {
-      if (priceGapPercent === null || isNaN(priceGapPercent)) return 'Competitive';
-      if (priceGapPercent > 10) return 'Behind'; // EasyJet more expensive
-      if (priceGapPercent < -10) return 'Leading'; // EasyJet cheaper
-      return 'Competitive'; // Within 10% range
-    } catch (error) {
-      console.error('[TelosIntelligence] Error determining market position:', error);
-      return 'Competitive';
-    }
-  }
+      const pricing = await this.getCompetitivePricingAnalysis(routeId, 7);
+      const capacity = await this.getMarketCapacityAnalysis(routeId, 7);
+      
+      // Calculate EasyJet's position
+      const easyjetPricing = pricing.find(p => p.airlineCode === 'EZY');
+      const easyjetCapacity = capacity.find(c => c.airlineCode === 'EZY');
+      
+      const totalMarketSeats = capacity.reduce((sum: number, carrier: any) => 
+        sum + (Number(carrier.totalSeats) || 0), 0);
+      
+      const avgCompetitorPrice = pricing
+        .filter(p => p.airlineCode !== 'EZY')
+        .reduce((sum: number, p: any) => sum + (Number(p.avgPrice) || 0), 0) / 
+        Math.max(1, pricing.filter(p => p.airlineCode !== 'EZY').length);
 
-  private calculatePerformanceVsForecast(loadFactor: number): string {
-    try {
-      // Simplified calculation - typically based on historical averages and forecasts
-      if (isNaN(loadFactor) || loadFactor < 0) return 'Below Forecast';
-      if (loadFactor > 0.85) return 'Above Forecast';
-      if (loadFactor < 0.70) return 'Below Forecast';
-      return 'On Forecast';
+      return {
+        route: routeId,
+        pricing: {
+          easyjetPrice: Number(easyjetPricing?.avgPrice || 0),
+          competitorAvgPrice: avgCompetitorPrice,
+          priceAdvantage: Number(easyjetPricing?.avgPrice || 0) - avgCompetitorPrice,
+          priceRank: pricing.findIndex(p => p.airlineCode === 'EZY') + 1
+        },
+        marketShare: {
+          easyjetSeats: Number(easyjetCapacity?.totalSeats || 0),
+          totalMarketSeats,
+          marketSharePct: totalMarketSeats > 0 ? 
+            (Number(easyjetCapacity?.totalSeats || 0) / totalMarketSeats * 100) : 0,
+          capacityRank: capacity.findIndex(c => c.airlineCode === 'EZY') + 1
+        },
+        competitorCount: pricing.length
+      };
     } catch (error) {
-      console.error('[TelosIntelligence] Error calculating performance vs forecast:', error);
-      return 'On Forecast';
-    }
-  }
-
-  private determineDemandTrend(trendIndicator: number | null): 'Increasing' | 'Stable' | 'Decreasing' {
-    try {
-      if (!trendIndicator || isNaN(trendIndicator)) return 'Stable';
-      if (trendIndicator > 1000) return 'Increasing';
-      if (trendIndicator < -1000) return 'Decreasing';
-      return 'Stable';
-    } catch (error) {
-      console.error('[TelosIntelligence] Error determining demand trend:', error);
-      return 'Stable';
-    }
-  }
-
-  private safeParseFloat(value: any): number {
-    try {
-      const parsed = parseFloat(value);
-      return isNaN(parsed) ? 0 : parsed;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  private safeParseInt(value: any): number {
-    try {
-      const parsed = parseInt(value);
-      return isNaN(parsed) ? 0 : parsed;
-    } catch (error) {
-      return 0;
-    }
-  }
-
-  private safeParseSupportingData(value: any): Record<string, any> {
-    try {
-      if (typeof value === 'string') {
-        return JSON.parse(value);
-      }
-      if (typeof value === 'object' && value !== null) {
-        return value;
-      }
-      return {};
-    } catch (error) {
-      return {};
+      console.error("Error in getCompetitivePosition:", error);
+      return {
+        route: routeId,
+        pricing: { easyjetPrice: 0, competitorAvgPrice: 0, priceAdvantage: 0, priceRank: 0 },
+        marketShare: { easyjetSeats: 0, totalMarketSeats: 0, marketSharePct: 0, capacityRank: 0 },
+        competitorCount: 0
+      };
     }
   }
 }
 
 // Export singleton instance
-export const telosIntelligence = new TelosIntelligenceService();
+export const telosIntelligenceService = new TelosIntelligenceService();

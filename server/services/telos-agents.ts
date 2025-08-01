@@ -3,7 +3,7 @@
  * Specialized agents for competitive, performance, and demand analysis
  */
 
-import { telosIntelligence, IntelligenceAlert } from './telos-intelligence.js';
+import { telosIntelligenceService } from './telos-intelligence.js';
 import OpenAI from 'openai';
 
 export interface AgentAnalysisResult {
@@ -27,7 +27,7 @@ export class CompetitiveIntelligenceAgent {
 
     try {
       // Get recent competitive data
-      const competitivePositions = await telosIntelligence.getCompetitivePosition(undefined, 3);
+      const competitivePositions = await telosIntelligenceService.getCompetitivePosition('LGW-BCN');
       
       // Analyze for significant competitive movements
       for (const position of competitivePositions) {

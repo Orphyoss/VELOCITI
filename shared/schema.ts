@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, integer, decimal, boolean, jsonb, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, integer, decimal, boolean, jsonb, uuid, bigserial, date, time, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -61,7 +61,170 @@ export const feedback = pgTable("feedback", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
-// Route performance data
+// ============================================================================
+// TELOS INTELLIGENCE PLATFORM SCHEMA - EXISTING TABLES
+// ============================================================================
+
+// Airlines and Carriers (existing table)
+export const airlines = pgTable("airlines", {
+  airlineCode: varchar("airline_code", { length: 10 }).primaryKey(),
+  airlineName: varchar("airline_name", { length: 100 }).notNull(),
+  carrierType: varchar("carrier_type", { length: 20 }).notNull(), // LCC, FSC, ULCC, Hybrid
+  countryCode: varchar("country_code", { length: 3 }),
+  activeFlag: boolean("active_flag").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Airports and Cities (existing table)
+export const airports = pgTable("airports", {
+  airportCode: varchar("airport_code", { length: 10 }).primaryKey(),
+  airportName: varchar("airport_name", { length: 100 }),
+  cityName: varchar("city_name", { length: 50 }),
+  countryCode: varchar("country_code", { length: 3 }),
+  region: varchar("region", { length: 50 }),
+  timezone: varchar("timezone", { length: 50 }),
+  activeFlag: boolean("active_flag").default(true),
+});
+
+// Route Markets (existing table)
+export const routes = pgTable("routes", {
+  routeId: varchar("route_id", { length: 20 }).primaryKey(), // Format: LGW-BCN
+  originAirport: varchar("origin_airport", { length: 10 }).references(() => airports.airportCode),
+  destinationAirport: varchar("destination_airport", { length: 10 }).references(() => airports.airportCode),
+  marketType: varchar("market_type", { length: 20 }), // Domestic, EU, International
+  distanceKm: integer("distance_km"),
+  isEasyjetRoute: boolean("is_easyjet_route").default(false),
+  routePriority: varchar("route_priority", { length: 20 }), // Core, Secondary, Seasonal
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Aircraft Types (existing table)
+export const aircraftTypes = pgTable("aircraft_types", {
+  aircraftCode: varchar("aircraft_code", { length: 10 }).primaryKey(),
+  aircraftName: varchar("aircraft_name", { length: 50 }),
+  typicalSeats: integer("typical_seats"),
+  aircraftCategory: varchar("aircraft_category", { length: 20 }), // Narrowbody, Widebody, Regional
+});
+
+// Competitive Pricing Data (existing table with correct column names)
+export const competitivePricing = pgTable("competitive_pricing", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  insertDate: timestamp("insert_date").notNull(),
+  observationDate: date("observation_date").notNull(),
+  routeId: varchar("route_id", { length: 20 }),
+  airlineCode: varchar("airline_code", { length: 10 }),
+  flightDate: date("flight_date").notNull(),
+  flightNumber: varchar("flight_number", { length: 20 }),
+  departureTime: time("departure_time"),
+  priceAmount: decimal("price_amount", { precision: 10, scale: 2 }),
+  priceCurrency: varchar("price_currency", { length: 3 }),
+  fareType: varchar("fare_type", { length: 20 }),
+  bookingClass: varchar("booking_class", { length: 10 }),
+  availabilitySeats: integer("availability_seats"),
+  dataSource: varchar("data_source", { length: 20 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Intelligence Insights (existing table with correct column names)
+export const intelligenceInsights = pgTable("intelligence_insights", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  insightDate: date("insight_date").notNull(),
+  insightType: varchar("insight_type", { length: 30 }),
+  priorityLevel: varchar("priority_level", { length: 20 }),
+  routeId: varchar("route_id", { length: 20 }),
+  airlineCode: varchar("airline_code", { length: 10 }),
+  title: varchar("title", { length: 200 }),
+  description: text("description"),
+  recommendation: text("recommendation"),
+  confidenceScore: decimal("confidence_score", { precision: 3, scale: 2 }),
+  supportingData: json("supporting_data"),
+  analystFeedback: varchar("analyst_feedback", { length: 500 }),
+  actionTaken: boolean("action_taken").default(false),
+  agentSource: varchar("agent_source", { length: 30 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Market Capacity Data (existing table)
+export const marketCapacity = pgTable("market_capacity", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  insertDate: timestamp("insert_date").notNull(),
+  flightDate: date("flight_date").notNull(),
+  routeId: varchar("route_id"),
+  airlineCode: varchar("airline_code"),
+  aircraftType: varchar("aircraft_type"),
+  flightNumber: varchar("flight_number"),
+  departureTime: time("departure_time"),
+  numFlights: integer("num_flights"),
+  numSeats: integer("num_seats"),
+  frequencyPattern: varchar("frequency_pattern"),
+  dataSource: varchar("data_source"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Flight Performance Metrics (existing table)  
+export const flightPerformance = pgTable("flight_performance", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  insertDate: timestamp("insert_date").notNull(),
+  performanceDate: date("performance_date").notNull(),
+  flightDate: date("flight_date").notNull(),
+  routeId: varchar("route_id"),
+  flightNumber: varchar("flight_number"),
+  aircraftType: varchar("aircraft_type"),
+  totalSeats: integer("total_seats"),
+  bookingsCount: integer("bookings_count"),
+  loadFactor: decimal("load_factor", { precision: 5, scale: 2 }),
+  revenueTotal: decimal("revenue_total", { precision: 12, scale: 2 }),
+  revenueCurrency: varchar("revenue_currency"),
+  yieldPerPax: decimal("yield_per_pax", { precision: 10, scale: 2 }),
+  ancillaryRevenue: decimal("ancillary_revenue", { precision: 10, scale: 2 }),
+  noShows: integer("no_shows"),
+  deniedBoardings: integer("denied_boardings"),
+  daysToDeparture: integer("days_to_departure"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Web Search Data (existing table)
+export const webSearchData = pgTable("web_search_data", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  insertDate: timestamp("insert_date").notNull(),
+  searchDate: date("search_date").notNull(),
+  routeId: varchar("route_id"),
+  dataSource: varchar("data_source"),
+  searchVolume: integer("search_volume"),
+  bookingVolume: integer("booking_volume"),
+  conversionRate: decimal("conversion_rate", { precision: 5, scale: 4 }),
+  avgSearchPrice: decimal("avg_search_price", { precision: 10, scale: 2 }),
+  priceCurrency: varchar("price_currency"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Other tables exist but need column verification before defining schema
+export const bookingChannels = pgTable("booking_channels", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+export const rmPricingActions = pgTable("rm_pricing_actions", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+export const marketEvents = pgTable("market_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+export const economicIndicators = pgTable("economic_indicators", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+export const nightshiftProcessing = pgTable("nightshift_processing", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+export const analystInteractions = pgTable("analyst_interactions", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+});
+
+// Legacy route performance data (kept for compatibility)
 export const routePerformance = pgTable("route_performance", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
   route: text("route").notNull(), // e.g., "LGW→BCN"
@@ -153,7 +316,49 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
-// Types
+// Insert schemas for Telos Intelligence Platform tables  
+export const insertCompetitivePricingSchema = createInsertSchema(competitivePricing).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMarketCapacitySchema = createInsertSchema(marketCapacity).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFlightPerformanceSchema = createInsertSchema(flightPerformance).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWebSearchDataSchema = createInsertSchema(webSearchData).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertIntelligenceInsightSchema = createInsertSchema(intelligenceInsights).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for Telos Intelligence Platform
+export type InsertCompetitivePricing = z.infer<typeof insertCompetitivePricingSchema>;
+export type CompetitivePricing = typeof competitivePricing.$inferSelect;
+
+export type InsertMarketCapacity = z.infer<typeof insertMarketCapacitySchema>;
+export type MarketCapacity = typeof marketCapacity.$inferSelect;
+
+export type InsertFlightPerformance = z.infer<typeof insertFlightPerformanceSchema>;
+export type FlightPerformanceData = typeof flightPerformance.$inferSelect;
+
+export type InsertWebSearchData = z.infer<typeof insertWebSearchDataSchema>;
+export type WebSearchData = typeof webSearchData.$inferSelect;
+
+export type InsertIntelligenceInsight = z.infer<typeof insertIntelligenceInsightSchema>;
+export type IntelligenceInsight = typeof intelligenceInsights.$inferSelect;
+
+// Legacy types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 

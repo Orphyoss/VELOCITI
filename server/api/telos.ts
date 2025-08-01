@@ -4,7 +4,7 @@
  */
 
 import { Router } from 'express';
-import { telosIntelligence } from '../services/telos-intelligence.js';
+import { telosIntelligenceService } from '../services/telos-intelligence.js';
 import { telosOrchestrator } from '../services/telos-agents.js';
 
 const router = Router();
@@ -20,9 +20,8 @@ router.get('/competitive-position', async (req, res) => {
     
     console.log(`[API] GET /competitive-position - routeId: ${routeId}, days: ${days}`);
     
-    const positions = await telosIntelligence.getCompetitivePosition(
-      routeId as string, 
-      parseInt(days as string) || 7
+    const positions = await telosIntelligenceService.getCompetitivePosition(
+      routeId as string || 'LGW-BCN'
     );
     
     const duration = Date.now() - startTime;
@@ -50,8 +49,8 @@ router.get('/route-performance', async (req, res) => {
     
     console.log(`[API] GET /route-performance - routeId: ${routeId}, days: ${days}`);
     
-    const performance = await telosIntelligence.getRoutePerformance(
-      routeId as string,
+    const performance = await telosIntelligenceService.getRoutePerformanceMetrics(
+      routeId as string || 'LGW-BCN',
       parseInt(days as string) || 14
     );
     
@@ -80,8 +79,8 @@ router.get('/demand-intelligence', async (req, res) => {
     
     console.log(`[API] GET /demand-intelligence - routeId: ${routeId}, days: ${days}`);
     
-    const demand = await telosIntelligence.getDemandIntelligence(
-      routeId as string,
+    const demand = await telosIntelligenceService.getWebSearchTrends(
+      routeId as string || 'LGW-BCN',
       parseInt(days as string) || 30
     );
     
@@ -110,7 +109,7 @@ router.get('/intelligence-alerts', async (req, res) => {
     
     console.log(`[API] GET /intelligence-alerts - priority: ${priority}, agentSource: ${agentSource}`);
     
-    const alerts = await telosIntelligence.getIntelligenceAlerts(
+    const alerts = await telosIntelligenceService.getActiveInsights(
       priority as string,
       agentSource as string
     );
@@ -138,7 +137,7 @@ router.get('/daily-summary', async (req, res) => {
   try {
     console.log('[API] GET /daily-summary - generating comprehensive daily intelligence dashboard');
     
-    const summary = await telosIntelligence.getDailyIntelligenceSummary();
+    const summary = await telosIntelligenceService.getRouteDashboard('LGW-BCN');
     
     const duration = Date.now() - startTime;
     console.log(`[API] Daily summary request completed in ${duration}ms`);

@@ -1,0 +1,885 @@
+-- Telos Airline Intelligence Platform - Synthetic Data Generator
+-- Creates realistic test data matching EasyJet use cases and competitive scenarios
+
+-- ============================================================================
+-- REFERENCE DATA SETUP
+-- ============================================================================
+
+-- Insert Airlines
+INSERT INTO airlines (airline_code, airline_name, carrier_type, country_code) VALUES
+('EZY', 'EasyJet', 'LCC', 'GBR'),
+('RYR', 'Ryanair', 'ULCC', 'IRL'),
+('BA', 'British Airways', 'FSC', 'GBR'),
+('VY', 'Vueling Airlines', 'LCC', 'ESP'),
+('TUI', 'TUI Airways', 'LCC', 'GBR'),
+('W6', 'Wizz Air', 'ULCC', 'HUN'),
+('FR', 'Ryanair', 'ULCC', 'IRL'),
+('U2', 'EasyJet Europe', 'LCC', 'AUT');
+
+-- Insert Key European Airports
+INSERT INTO airports (airport_code, airport_name, city_name, country_code, region) VALUES
+('LGW', 'London Gatwick', 'London', 'GBR', 'Western Europe'),
+('STN', 'London Stansted', 'London', 'GBR', 'Western Europe'),
+('LTN', 'London Luton', 'London', 'GBR', 'Western Europe'),
+('BCN', 'Barcelona El Prat', 'Barcelona', 'ESP', 'Western Europe'),
+('MAD', 'Madrid Barajas', 'Madrid', 'ESP', 'Western Europe'),
+('CDG', 'Paris Charles de Gaulle', 'Paris', 'FRA', 'Western Europe'),
+('ORY', 'Paris Orly', 'Paris', 'FRA', 'Western Europe'),
+('FCO', 'Rome Fiumicino', 'Rome', 'ITA', 'Western Europe'),
+('MXP', 'Milan Malpensa', 'Milan', 'ITA', 'Western Europe'),
+('AMS', 'Amsterdam Schiphol', 'Amsterdam', 'NLD', 'Western Europe'),
+('BER', 'Berlin Brandenburg', 'Berlin', 'DEU', 'Western Europe'),
+('VIE', 'Vienna International', 'Vienna', 'AUT', 'Western Europe'),
+('ZUR', 'Zurich Airport', 'Zurich', 'CHE', 'Western Europe'),
+('AGP', 'Malaga Airport', 'Malaga', 'ESP', 'Western Europe'),
+('PMI', 'Palma de Mallorca', 'Palma', 'ESP', 'Western Europe');
+
+-- Insert Routes (EasyJet focus)
+INSERT INTO routes (route_id, origin_airport, destination_airport, market_type, distance_km, is_easyjet_route, route_priority) VALUES
+('LGW-BCN', 'LGW', 'BCN', 'EU', 1146, TRUE, 'Core'),
+('LGW-MAD', 'LGW', 'MAD', 'EU', 1263, TRUE, 'Core'),
+('LGW-CDG', 'LGW', 'CDG', 'EU', 344, TRUE, 'Core'),
+('LGW-FCO', 'LGW', 'FCO', 'EU', 1434, TRUE, 'Core'),
+('LGW-AMS', 'LGW', 'AMS', 'EU', 358, TRUE, 'Core'),
+('STN-BCN', 'STN', 'BCN', 'EU', 1172, FALSE, 'Competitive'),
+('LTN-BCN', 'LTN', 'BCN', 'EU', 1154, FALSE, 'Competitive'),
+('LGW-PMI', 'LGW', 'PMI', 'EU', 1239, TRUE, 'Seasonal'),
+('LGW-AGP', 'LGW', 'AGP', 'EU', 1417, TRUE, 'Secondary'),
+('BCN-ORY', 'BCN', 'ORY', 'EU', 831, TRUE, 'Core');
+
+-- Insert Aircraft Types
+INSERT INTO aircraft_types (aircraft_code, aircraft_name, typical_seats, aircraft_category) VALUES
+('A319', 'Airbus A319', 156, 'Narrowbody'),
+('A320', 'Airbus A320', 180, 'Narrowbody'),
+('A321', 'Airbus A321', 232, 'Narrowbody'),
+('B737', 'Boeing 737-800', 189, 'Narrowbody');
+
+-- ============================================================================
+-- SYNTHETIC COMPETITIVE PRICING DATA (Matching actual structure)
+-- ============================================================================
+
+-- Generate competitive pricing data matching the Infare format from your images
+WITH date_series AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 30) AS obs_date
+),
+flight_dates AS (
+  SELECT CURRENT_DATE + INTERVAL '1 day' * generate_series(1, 90) AS flight_date
+),
+carriers AS (
+  SELECT unnest(ARRAY[
+    'British Airways', 'Ryanair', 'Vueling Airlines', 'EasyJet', 'TUI Airways'
+  ]) as carriername,
+  unnest(ARRAY['BA', 'RYR', 'VY', 'EZY', 'TUI']) as airline_code,
+  unnest(ARRAY['FSC', 'ULCC', 'LCC', 'LCC', 'LCC']) as carrier_type
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+)
+
+INSERT INTO competitive_pricing (
+  insertdttm, key_comp, sector, observation_dt, carriername, 
+  flight_mth, flight_dt, flight_tm, flight_number, 
+  price_gbp, price_lct, currencycode, route_id, airline_code
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(ds.obs_date, 'YYYYMMDD') as key_comp,
+  s.sector,
+  ds.obs_date,
+  c.carriername,
+  TO_CHAR(fd.flight_date, 'MM/YY') as flight_mth,
+  fd.flight_date,
+  TIME '08:00' + (RANDOM() * INTERVAL '14 hours') as flight_tm,
+  c.airline_code || LPAD((ABS(HASHTEXT(s.route_id || c.airline_code)) % 9999)::text, 4, '0') as flight_number,
+  -- Realistic pricing based on carrier type and route
+  CASE 
+    WHEN c.carriername = 'British Airways' THEN 
+      150 + (fd.flight_date - ds.obs_date) * -0.4 + RANDOM() * 60 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 40 ELSE 0 END
+    WHEN c.carriername = 'Ryanair' THEN 
+      55 + (fd.flight_date - ds.obs_date) * -0.15 + RANDOM() * 30 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 15 ELSE 0 END
+    WHEN c.carriername = 'EasyJet' THEN 
+      85 + (fd.flight_date - ds.obs_date) * -0.25 + RANDOM() * 40 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 25 ELSE 0 END
+    WHEN c.carriername = 'Vueling Airlines' THEN 
+      75 + (fd.flight_date - ds.obs_date) * -0.2 + RANDOM() * 35 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 20 ELSE 0 END
+    ELSE 
+      90 + (fd.flight_date - ds.obs_date) * -0.3 + RANDOM() * 45
+  END AS price_gbp,
+  -- EUR pricing (slightly different due to exchange rates)
+  CASE 
+    WHEN c.carriername = 'British Airways' THEN 
+      (150 + (fd.flight_date - ds.obs_date) * -0.4 + RANDOM() * 60) * 1.17
+    WHEN c.carriername = 'Ryanair' THEN 
+      (55 + (fd.flight_date - ds.obs_date) * -0.15 + RANDOM() * 30) * 1.17
+    WHEN c.carriername = 'EasyJet' THEN 
+      (85 + (fd.flight_date - ds.obs_date) * -0.25 + RANDOM() * 40) * 1.17
+    WHEN c.carriername = 'Vueling Airlines' THEN 
+      (75 + (fd.flight_date - ds.obs_date) * -0.2 + RANDOM() * 35) * 1.17
+    ELSE 
+      (90 + (fd.flight_date - ds.obs_date) * -0.3 + RANDOM() * 45) * 1.17
+  END AS price_lct,
+  'EUR' as currencycode,
+  s.route_id,
+  c.airline_code
+FROM date_series ds
+CROSS JOIN flight_dates fd
+CROSS JOIN carriers c
+CROSS JOIN sectors s
+WHERE fd.flight_date > ds.obs_date 
+  AND fd.flight_date <= ds.obs_date + INTERVAL '60 days'
+  AND RANDOM() < 0.75; -- 75% data availability
+
+-- ============================================================================
+-- SYNTHETIC MARKET CAPACITY DATA  
+-- ============================================================================
+
+INSERT INTO market_capacity (
+  insert_date, flight_date, route_id, airline_code, aircraft_type,
+  flight_number, departure_time, num_flights, num_seats
+)
+WITH capacity_data AS (
+  SELECT 
+    r.route_id,
+    a.airline_code,
+    CURRENT_DATE + INTERVAL '1 day' * generate_series(1, 60) AS flight_date,
+    CASE 
+      WHEN a.airline_code = 'EZY' THEN 'A320'
+      WHEN a.airline_code = 'RYR' THEN 'B737'  
+      WHEN a.airline_code = 'BA' THEN 'A321'
+      ELSE 'A319'
+    END as aircraft_type,
+    CASE 
+      WHEN a.airline_code = 'EZY' AND r.route_priority = 'Core' THEN 2
+      WHEN a.airline_code = 'RYR' THEN 3
+      WHEN a.airline_code = 'BA' THEN 1
+      ELSE 1
+    END as daily_flights
+  FROM routes r
+  CROSS JOIN airlines a  
+  WHERE r.is_easyjet_route = TRUE
+    AND a.airline_code IN ('EZY', 'RYR', 'BA', 'VY')
+)
+SELECT 
+  NOW() as insert_date,
+  cd.flight_date,
+  cd.route_id,
+  cd.airline_code,
+  cd.aircraft_type,
+  cd.airline_code || LPAD((RANDOM() * 9999)::INTEGER::text, 4, '0') as flight_number,
+  ('08:00'::TIME + (RANDOM() * INTERVAL '12 hours'))::TIME as departure_time,
+  cd.daily_flights,
+  CASE 
+    WHEN cd.aircraft_type = 'A320' THEN 180
+    WHEN cd.aircraft_type = 'B737' THEN 189  
+    WHEN cd.aircraft_type = 'A321' THEN 232
+    ELSE 156
+  END as num_seats
+FROM capacity_data cd;
+
+-- ============================================================================
+-- SYNTHETIC WEB SEARCH & DEMAND DATA (Matching actual structure)
+-- ============================================================================
+
+INSERT INTO web_search_data (
+  insertdttm, key_web, sector, flight_mth, search_dt,
+  web_ty_searches, web_ty_bookings, web_ly_searches, web_ly_bookings,
+  conversion_rate, route_id
+)
+WITH search_dates AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 60) AS search_date
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(sd.search_date, 'YYYYMMDD') as key_web,
+  s.sector,
+  TO_CHAR(sd.search_date + INTERVAL '30 days', 'MM/YY') as flight_mth, -- Target travel month
+  sd.search_date,
+  -- This year searches (with seasonal patterns)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN -- Core route gets more searches
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (3,4,5,9,10) THEN 800 + (RANDOM() * 400)::INTEGER
+           WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN 1200 + (RANDOM() * 600)::INTEGER
+           ELSE 500 + (RANDOM() * 300)::INTEGER END
+    ELSE 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (3,4,5,9,10) THEN 400 + (RANDOM() * 200)::INTEGER
+           WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN 600 + (RANDOM() * 300)::INTEGER
+           ELSE 250 + (RANDOM() * 150)::INTEGER END
+  END as web_ty_searches,
+  -- This year bookings (conversion rate varies by season)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN (1200 + (RANDOM() * 600)::INTEGER) * 0.15
+           ELSE (700 + (RANDOM() * 350)::INTEGER) * 0.12 END
+    ELSE 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN (600 + (RANDOM() * 300)::INTEGER) * 0.13
+           ELSE (350 + (RANDOM() * 175)::INTEGER) * 0.10 END
+  END::INTEGER as web_ty_bookings,
+  -- Last year searches (slightly lower for comparison)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (3,4,5,9,10) THEN 750 + (RANDOM() * 350)::INTEGER
+           WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN 1100 + (RANDOM() * 550)::INTEGER
+           ELSE 450 + (RANDOM() * 250)::INTEGER END
+    ELSE 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (3,4,5,9,10) THEN 380 + (RANDOM() * 180)::INTEGER
+           WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN 570 + (RANDOM() * 280)::INTEGER
+           ELSE 230 + (RANDOM() * 130)::INTEGER END
+  END as web_ly_searches,
+  -- Last year bookings
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN (1100 + (RANDOM() * 550)::INTEGER) * 0.14
+           ELSE (650 + (RANDOM() * 300)::INTEGER) * 0.11 END
+    ELSE 
+      CASE WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN (570 + (RANDOM() * 280)::INTEGER) * 0.12
+           ELSE (320 + (RANDOM() * 160)::INTEGER) * 0.09 END
+  END::INTEGER as web_ly_bookings,
+  -- Conversion rate calculation
+  CASE 
+    WHEN EXTRACT(MONTH FROM sd.search_date) IN (6,7,8) THEN 0.13 + (RANDOM() * 0.04) -- Higher summer conversion
+    ELSE 0.09 + (RANDOM() * 0.04) -- Lower off-season conversion
+  END as conversion_rate,
+  s.route_id
+FROM search_dates sd
+CROSS JOIN sectors s
+WHERE RANDOM() < 0.85; -- 85% data availability
+-- ============================================================================
+-- SYNTHETIC BOOKING CHANNEL DATA (Matching actual structure)
+-- ============================================================================
+
+INSERT INTO booking_channels (
+  insertdttm, key_daily, sector, flight_dt, flight_mth, change_dt,
+  bookingchannellevel1, bookingchannellevel2, daily_ticket_rev_net,
+  daily_ticket_pax_net, daily_ticket_rev_pre, daily_ticket_pax_pre,
+  daily_ancillary_rev_net, daily_ancillary_rev_pre, route_id
+)
+WITH booking_dates AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(1, 14) AS change_date
+),
+flight_dates AS (
+  SELECT CURRENT_DATE + INTERVAL '1 day' * generate_series(7, 45) AS flight_date
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+),
+channels AS (
+  SELECT unnest(ARRAY[
+    'Direct', 'Direct', 'Direct', 'Indirect', 'Indirect'
+  ]) as level1,
+  unnest(ARRAY[
+    'EtihadsHays', 'Mobile App', 'Web', 'Aggregator', 'Call Centre'
+  ]) as level2,
+  unnest(ARRAY[0.45, 0.30, 0.15, 0.08, 0.02]) as market_share
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(bd.change_date, 'YYYYMMDD') as key_daily,
+  s.sector,
+  fd.flight_date,
+  TO_CHAR(fd.flight_date, 'MM/YY') as flight_mth,
+  bd.change_date,
+  ch.level1,
+  ch.level2,
+  -- Net ticket revenue (varies by channel and route)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN -- Premium route
+      (ch.market_share * 100 * (85 + RANDOM() * 35))::INTEGER * 
+      CASE WHEN ch.level1 = 'Direct' THEN 1.0 ELSE 0.85 END -- Direct gets full revenue
+    ELSE 
+      (ch.market_share * 80 * (75 + RANDOM() * 25))::INTEGER *
+      CASE WHEN ch.level1 = 'Direct' THEN 1.0 ELSE 0.85 END
+  END as daily_ticket_rev_net,
+  -- Net passengers
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN (ch.market_share * 100)::INTEGER
+    ELSE (ch.market_share * 80)::INTEGER
+  END as daily_ticket_pax_net,
+  -- Pre-adjustment revenue (slightly higher)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN 
+      (ch.market_share * 100 * (85 + RANDOM() * 35))::INTEGER * 1.05
+    ELSE 
+      (ch.market_share * 80 * (75 + RANDOM() * 25))::INTEGER * 1.05
+  END as daily_ticket_rev_pre,
+  -- Pre-adjustment passengers  
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN (ch.market_share * 105)::INTEGER
+    ELSE (ch.market_share * 85)::INTEGER
+  END as daily_ticket_pax_pre,
+  -- Net ancillary revenue (varies significantly by channel)
+  CASE 
+    WHEN ch.level2 = 'Mobile App' THEN 
+      (ch.market_share * 100)::INTEGER * (25 + RANDOM() * 15) -- Mobile users buy more ancillaries
+    WHEN ch.level1 = 'Direct' THEN 
+      (ch.market_share * 100)::INTEGER * (20 + RANDOM() * 10)
+    ELSE 
+      (ch.market_share * 100)::INTEGER * (12 + RANDOM() * 8) -- OTAs buy fewer ancillaries
+  END as daily_ancillary_rev_net,
+  -- Pre-adjustment ancillary revenue
+  CASE 
+    WHEN ch.level2 = 'Mobile App' THEN 
+      (ch.market_share * 100)::INTEGER * (25 + RANDOM() * 15) * 1.03
+    WHEN ch.level1 = 'Direct' THEN 
+      (ch.market_share * 100)::INTEGER * (20 + RANDOM() * 10) * 1.03
+    ELSE 
+      (ch.market_share * 100)::INTEGER * (12 + RANDOM() * 8) * 1.03
+  END as daily_ancillary_rev_pre,
+  s.route_id
+FROM booking_dates bd
+CROSS JOIN flight_dates fd
+CROSS JOIN sectors s
+CROSS JOIN channels ch
+WHERE RANDOM() < 0.9; -- 90% data availability
+
+-- ============================================================================
+-- SYNTHETIC RM PRICING ACTIONS (Matching actual structure)
+-- ============================================================================
+
+INSERT INTO rm_pricing_actions (
+  insertdttm, key_price, sector, flightkey, flight_dt, flight_mth,
+  observation_dt, ty_ticketprice_local, ty_ticketprice_gbp, 
+  ty_ticketprice_currencycode, ty_ticketprice_localtopromo,
+  action_type, change_reason, change_source, route_id
+)
+WITH pricing_dates AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 14) AS obs_date
+),
+flight_dates AS (
+  SELECT CURRENT_DATE + INTERVAL '1 day' * generate_series(10, 60) AS flight_date
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(pd.obs_date, 'YYYYMMDD') as key_price,
+  s.sector,
+  s.sector || TO_CHAR(fd.flight_date, 'YYYYMMDD') || 'EZY' as flightkey,
+  fd.flight_date,
+  TO_CHAR(fd.flight_date, 'MM/YY') as flight_mth,
+  pd.obs_date,
+  -- This year ticket price in EUR (base pricing with booking curve)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN -- Premium route
+      95 + (fd.flight_date - pd.obs_date) * -0.4 + RANDOM() * 25 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 30 ELSE 0 END
+    ELSE 
+      85 + (fd.flight_date - pd.obs_date) * -0.3 + RANDOM() * 20 +
+      CASE WHEN EXTRACT(MONTH FROM fd.flight_date) IN (6,7,8) THEN 25 ELSE 0 END
+  END as ty_ticketprice_local,
+  -- GBP price (converted)
+  CASE 
+    WHEN s.sector = 'ALCLGW' THEN 
+      (95 + (fd.flight_date - pd.obs_date) * -0.4 + RANDOM() * 25) / 1.17
+    ELSE 
+      (85 + (fd.flight_date - pd.obs_date) * -0.3 + RANDOM() * 20) / 1.17
+  END as ty_ticketprice_gbp,
+  'EUR' as ty_ticketprice_currencycode,
+  -- Local to promo ratio (promotional discount factor)
+  CASE 
+    WHEN RANDOM() < 0.2 THEN 0.85 + RANDOM() * 0.10 -- 20% chance of promo pricing
+    ELSE 1.0 -- Regular pricing
+  END as ty_ticketprice_localtopromo,
+  -- Action type based on various factors
+  CASE 
+    WHEN RANDOM() < 0.4 THEN 'price_increase'
+    WHEN RANDOM() < 0.7 THEN 'price_decrease'
+    ELSE 'inventory_adjust'
+  END as action_type,
+  -- Change reason
+  CASE 
+    WHEN RANDOM() < 0.3 THEN 'system_auto'
+    WHEN RANDOM() < 0.6 THEN 'competitor_response'
+    WHEN RANDOM() < 0.8 THEN 'demand_adjustment'
+    ELSE 'analyst_manual'
+  END as change_reason,
+  -- Change source
+  CASE 
+    WHEN RANDOM() < 0.5 THEN 'Segment_Finder'
+    WHEN RANDOM() < 0.8 THEN 'Elysium'
+    ELSE 'Manual'
+  END as change_source,
+  s.route_id
+FROM pricing_dates pd
+CROSS JOIN flight_dates fd
+CROSS JOIN sectors s
+WHERE RANDOM() < 0.4; -- 40% of route/date combinations have pricing actions
+
+-- ============================================================================
+-- SYNTHETIC MARKET CAPACITY DATA (Matching actual structure)  
+-- ============================================================================
+
+INSERT INTO market_capacity (
+  insertdttm, key_mcap, sector, flight_dt, flight_mth, carriername,
+  carriertype, num_flights, num_seats, aircraft_type, route_id, airline_code
+)
+WITH capacity_dates AS (
+  SELECT CURRENT_DATE + INTERVAL '1 day' * generate_series(1, 45) AS flight_date
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+),
+carriers AS (
+  SELECT unnest(ARRAY[
+    'British Airways', 'Easyjet', 'Ryanair', 'Vueling Airlines', 'TUI Airways'
+  ]) as carriername,
+  unnest(ARRAY['BA', 'EZY', 'RYR', 'VY', 'TUI']) as airline_code,
+  unnest(ARRAY['FSC', 'LCC', 'ULCC', 'LCC', 'LCC']) as carriertype,
+  unnest(ARRAY['A321', 'A320', 'B737', 'A320', 'B737']) as aircraft_type,
+  unnest(ARRAY[220, 180, 189, 180, 189]) as typical_seats
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(cd.flight_date, 'YYYYMMDD') as key_mcap,
+  s.sector,
+  cd.flight_date,
+  TO_CHAR(cd.flight_date, 'MM/YY') as flight_mth,
+  c.carriername,
+  c.carriertype,
+  -- Number of flights varies by carrier and route
+  CASE 
+    WHEN c.carriername = 'British Airways' AND s.sector = 'ALCLGW' THEN 4 + (RANDOM() * 2)::INTEGER
+    WHEN c.carriername = 'Easyjet' THEN 
+      CASE WHEN s.sector = 'ALCLGW' THEN 6 + (RANDOM() * 3)::INTEGER
+           ELSE 3 + (RANDOM() * 2)::INTEGER END
+    WHEN c.carriername = 'Ryanair' THEN 2 + (RANDOM() * 2)::INTEGER
+    ELSE 1 + (RANDOM() * 2)::INTEGER
+  END as num_flights,
+  -- Total seats = flights * aircraft capacity
+  CASE 
+    WHEN c.carriername = 'British Airways' AND s.sector = 'ALCLGW' THEN (4 + (RANDOM() * 2)::INTEGER) * c.typical_seats
+    WHEN c.carriername = 'Easyjet' THEN 
+      CASE WHEN s.sector = 'ALCLGW' THEN (6 + (RANDOM() * 3)::INTEGER) * c.typical_seats
+           ELSE (3 + (RANDOM() * 2)::INTEGER) * c.typical_seats END
+    WHEN c.carriername = 'Ryanair' THEN (2 + (RANDOM() * 2)::INTEGER) * c.typical_seats
+    ELSE (1 + (RANDOM() * 2)::INTEGER) * c.typical_seats
+  END as num_seats,
+  c.aircraft_type,
+  s.route_id,
+  c.airline_code
+FROM capacity_dates cd
+CROSS JOIN sectors s
+CROSS JOIN carriers c
+WHERE RANDOM() < 0.8; -- 80% data availability
+
+-- ============================================================================
+-- SYNTHETIC RMS CHANGES DATA (New table based on your structure)
+-- ============================================================================
+
+INSERT INTO rms_changes (
+  insertdttm, key_rms, flightkey, sector, change_dt, flight_dt,
+  flight_mth, change_source, change_type, change_value, route_id
+)
+WITH change_dates AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 7) AS change_date
+),
+flight_dates AS (
+  SELECT CURRENT_DATE + INTERVAL '1 day' * generate_series(14, 45) AS flight_date
+),
+sectors AS (
+  SELECT unnest(ARRAY[
+    'ALCLGW', 'LGWBCN', 'LGWMAD', 'LGWCDG', 'LGWFCO', 'LGWAMS'
+  ]) as sector,
+  unnest(ARRAY[
+    'LGW-BCN', 'LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS'
+  ]) as route_id
+),
+change_types AS (
+  SELECT unnest(ARRAY[
+    'Fare Band', 'Breakpoint', 'ML', 'BrkPt629'
+  ]) as change_type,
+  unnest(ARRAY[
+    'CONFIDENTIAL', 'CONFIDENTIAL', 'ML', 'BrkPt629'
+  ]) as change_value
+)
+SELECT 
+  NOW() as insertdttm,
+  s.sector || TO_CHAR(cd.change_date, 'YYYYMMDD') as key_rms,
+  s.sector || TO_CHAR(fd.flight_date, 'YYYYMMDD') || 'EZY' as flightkey,
+  s.sector,
+  cd.change_date,
+  fd.flight_date,
+  TO_CHAR(fd.flight_date, 'MM/YY') as flight_mth,
+  -- Change source (system that made the change)
+  CASE 
+    WHEN RANDOM() < 0.6 THEN 'Segment_Finder_Auto'
+    WHEN RANDOM() < 0.8 THEN 'Revenue_Management_System'
+    ELSE 'Analyst_Manual'
+  END as change_source,
+  ct.change_type,
+  ct.change_value,
+  s.route_id
+FROM change_dates cd
+CROSS JOIN flight_dates fd
+CROSS JOIN sectors s
+CROSS JOIN change_types ct
+WHERE RANDOM() < 0.2; -- 20% of flights have RMS changes
+
+-- ============================================================================
+-- SYNTHETIC RM PRICING ACTIONS (EasyJet Internal)
+-- ============================================================================
+
+INSERT INTO rm_pricing_actions (
+  insert_date, action_date, flight_date, route_id, flight_number,
+  fare_class, action_type, old_price, new_price, price_currency,
+  change_reason, change_source, distance_from_profile, booking_curve_position
+)
+WITH rm_actions AS (
+  SELECT 
+    r.route_id,
+    CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 7) AS action_date,
+    CURRENT_DATE + INTERVAL '1 day' * generate_series(15, 45) AS flight_date
+  FROM routes r 
+  WHERE r.is_easyjet_route = TRUE
+)
+SELECT 
+  NOW() as insert_date,
+  ra.action_date,
+  ra.flight_date,
+  ra.route_id,
+  'EZY' || LPAD((ABS(HASHTEXT(ra.route_id || ra.action_date::text)) % 9999)::text, 4, '0') as flight_number,
+  CASE WHEN RANDOM() < 0.7 THEN 'Y' ELSE 'W' END as fare_class,
+  CASE 
+    WHEN RANDOM() < 0.4 THEN 'price_increase'
+    WHEN RANDOM() < 0.7 THEN 'price_decrease'  
+    ELSE 'inventory_adjust'
+  END as action_type,
+  80 + RANDOM() * 50 as old_price,
+  CASE 
+    WHEN RANDOM() < 0.4 THEN (80 + RANDOM() * 50) * 1.05 -- increase
+    ELSE (80 + RANDOM() * 50) * 0.95 -- decrease
+  END as new_price,
+  'EUR' as price_currency,
+  CASE 
+    WHEN RANDOM() < 0.5 THEN 'system_auto'
+    WHEN RANDOM() < 0.8 THEN 'competitor_response'
+    ELSE 'analyst_manual'
+  END as change_reason,
+  CASE 
+    WHEN RANDOM() < 0.6 THEN 'Elysium'
+    WHEN RANDOM() < 0.9 THEN 'Segment_Finder'
+    ELSE 'Manual'
+  END as change_source,
+  -0.15 + RANDOM() * 0.30 as distance_from_profile, -- -15% to +15%
+  30 + RANDOM() * 40 as booking_curve_position -- 30-70 days out
+FROM rm_actions ra
+WHERE RANDOM() < 0.3; -- 30% of route/date combinations have actions
+
+-- ============================================================================
+-- SYNTHETIC FLIGHT PERFORMANCE DATA
+-- ============================================================================
+
+INSERT INTO flight_performance (
+  insert_date, performance_date, flight_date, route_id, flight_number,
+  aircraft_type, total_seats, bookings_count, load_factor, 
+  revenue_total, revenue_currency, yield_per_pax, ancillary_revenue
+)
+WITH performance_data AS (
+  SELECT 
+    r.route_id,
+    CURRENT_DATE - INTERVAL '1 day' * generate_series(1, 14) AS performance_date,
+    CURRENT_DATE - INTERVAL '1 day' * generate_series(1, 14) AS flight_date,
+    'A320' as aircraft_type,
+    180 as total_seats
+  FROM routes r 
+  WHERE r.is_easyjet_route = TRUE
+)
+SELECT 
+  NOW() as insert_date,
+  pd.performance_date,
+  pd.flight_date,
+  pd.route_id,
+  'EZY' || LPAD((ABS(HASHTEXT(pd.route_id || pd.performance_date::text)) % 9999)::text, 4, '0') as flight_number,
+  pd.aircraft_type,
+  pd.total_seats,
+  -- Realistic booking patterns: higher load factors for core routes
+  CASE 
+    WHEN pd.route_id IN ('LGW-BCN', 'LGW-MAD', 'LGW-CDG') THEN 
+      GREATEST(120, LEAST(pd.total_seats, (pd.total_seats * (0.75 + RANDOM() * 0.20))::INTEGER))
+    ELSE 
+      GREATEST(90, LEAST(pd.total_seats, (pd.total_seats * (0.65 + RANDOM() * 0.25))::INTEGER))
+  END as bookings_count,
+  -- Load factor calculation
+  CASE 
+    WHEN pd.route_id IN ('LGW-BCN', 'LGW-MAD', 'LGW-CDG') THEN 
+      75 + RANDOM() * 20 -- 75-95% for core routes
+    ELSE 
+      65 + RANDOM() * 25 -- 65-90% for others
+  END as load_factor,
+  -- Revenue calculation based on load factor and route
+  CASE 
+    WHEN pd.route_id IN ('LGW-BCN', 'LGW-MAD', 'LGW-CDG') THEN 
+      (120 + RANDOM() * 60) * (75 + RANDOM() * 20) * 0.01 * pd.total_seats
+    ELSE 
+      (100 + RANDOM() * 50) * (65 + RANDOM() * 25) * 0.01 * pd.total_seats
+  END as revenue_total,
+  'EUR' as revenue_currency,
+  85 + RANDOM() * 35 as yield_per_pax, -- EUR 85-120 yield per passenger
+  -- Ancillary revenue: bags, seats, food
+  (20 + RANDOM() * 15) * GREATEST(90, LEAST(pd.total_seats, (pd.total_seats * (0.70 + RANDOM() * 0.20))::INTEGER)) as ancillary_revenue
+FROM performance_data pd;
+
+-- ============================================================================
+-- SYNTHETIC BOOKING CHANNEL DATA
+-- ============================================================================
+
+INSERT INTO booking_channels (
+  insert_date, booking_date, route_id, channel_type, channel_name,
+  booking_count, total_revenue, revenue_currency, avg_fare, cancellation_rate
+)
+WITH channel_data AS (
+  SELECT 
+    r.route_id,
+    CURRENT_DATE - INTERVAL '1 day' * generate_series(1, 7) AS booking_date,
+    unnest(ARRAY['Direct', 'Mobile App', 'Aggregator', 'Call Centre']) as channel_type
+  FROM routes r 
+  WHERE r.is_easyjet_route = TRUE
+)
+SELECT 
+  NOW() as insert_date,
+  cd.booking_date,
+  cd.route_id,
+  cd.channel_type,
+  CASE 
+    WHEN cd.channel_type = 'Direct' THEN 'EasyJet.com'
+    WHEN cd.channel_type = 'Mobile App' THEN 'EasyJet Mobile App'
+    WHEN cd.channel_type = 'Aggregator' THEN 
+      CASE WHEN RANDOM() < 0.5 THEN 'Expedia' ELSE 'Booking.com' END
+    ELSE 'EasyJet Call Centre'
+  END as channel_name,
+  -- Channel distribution: Direct 45%, Mobile 30%, Aggregator 20%, Call Centre 5%
+  CASE 
+    WHEN cd.channel_type = 'Direct' THEN (50 + RANDOM() * 30)::INTEGER
+    WHEN cd.channel_type = 'Mobile App' THEN (35 + RANDOM() * 25)::INTEGER  
+    WHEN cd.channel_type = 'Aggregator' THEN (15 + RANDOM() * 20)::INTEGER
+    ELSE (3 + RANDOM() * 7)::INTEGER
+  END as booking_count,
+  -- Revenue varies by channel (aggregators pay commission)
+  CASE 
+    WHEN cd.channel_type = 'Direct' THEN (50 + RANDOM() * 30) * (95 + RANDOM() * 30)
+    WHEN cd.channel_type = 'Mobile App' THEN (35 + RANDOM() * 25) * (90 + RANDOM() * 30)
+    WHEN cd.channel_type = 'Aggregator' THEN (15 + RANDOM() * 20) * (85 + RANDOM() * 25) -- Lower due to commission
+    ELSE (3 + RANDOM() * 7) * (110 + RANDOM() * 40) -- Higher due to service fee
+  END as total_revenue,
+  'EUR' as revenue_currency,
+  CASE 
+    WHEN cd.channel_type = 'Direct' THEN 95 + RANDOM() * 30
+    WHEN cd.channel_type = 'Mobile App' THEN 90 + RANDOM() * 30
+    WHEN cd.channel_type = 'Aggregator' THEN 85 + RANDOM() * 25
+    ELSE 110 + RANDOM() * 40
+  END as avg_fare,
+  -- Cancellation rates vary by channel
+  CASE 
+    WHEN cd.channel_type = 'Direct' THEN 0.05 + RANDOM() * 0.03
+    WHEN cd.channel_type = 'Mobile App' THEN 0.04 + RANDOM() * 0.02
+    WHEN cd.channel_type = 'Aggregator' THEN 0.08 + RANDOM() * 0.04
+    ELSE 0.03 + RANDOM() * 0.02
+  END as cancellation_rate
+FROM channel_data cd;
+
+-- ============================================================================
+-- SYNTHETIC MARKET EVENTS AND EXTERNAL CONTEXT
+-- ============================================================================
+
+INSERT INTO market_events (
+  event_date, event_type, event_name, affected_airports, affected_routes,
+  impact_level, impact_description, start_date, end_date, data_source
+) VALUES
+-- Weather events
+(CURRENT_DATE - INTERVAL '3 days', 'Weather', 'Storm Eunice affecting UK airports', 
+ '["LGW", "STN", "LTN"]', '["LGW-BCN", "LGW-MAD", "LGW-CDG"]', 
+ 'High', 'Severe winds causing flight delays and cancellations across London airports', 
+ CURRENT_DATE - INTERVAL '4 days', CURRENT_DATE - INTERVAL '2 days', 'Met Office'),
+
+-- Strike events  
+(CURRENT_DATE - INTERVAL '5 days', 'Strike', 'French ATC Strike', 
+ '["CDG", "ORY"]', '["LGW-CDG", "BCN-ORY"]', 
+ 'Medium', 'Air traffic control strike affecting flights to/from French airports',
+ CURRENT_DATE - INTERVAL '6 days', CURRENT_DATE - INTERVAL '5 days', 'EUROCONTROL'),
+
+-- Holiday periods
+(CURRENT_DATE + INTERVAL '30 days', 'Holiday', 'Summer Holiday Peak', 
+ '["LGW", "BCN", "PMI", "AGP"]', '["LGW-BCN", "LGW-PMI", "LGW-AGP"]', 
+ 'High', 'Peak summer holiday period with increased leisure travel demand',
+ CURRENT_DATE + INTERVAL '25 days', CURRENT_DATE + INTERVAL '40 days', 'Industry Calendar'),
+
+-- Competitive events
+(CURRENT_DATE - INTERVAL '1 day', 'Competitive', 'Ryanair Flash Sale', 
+ '["STN", "BCN", "MAD"]', '["STN-BCN", "STN-MAD"]', 
+ 'Medium', 'Ryanair launched 48-hour flash sale with 20% discount on selected routes',
+ CURRENT_DATE - INTERVAL '2 days', CURRENT_DATE, 'Competitive Intelligence');
+
+-- ============================================================================
+-- SYNTHETIC ECONOMIC INDICATORS
+-- ============================================================================
+
+INSERT INTO economic_indicators (
+  indicator_date, indicator_type, indicator_name, value, unit, region, data_source
+)
+WITH indicator_dates AS (
+  SELECT CURRENT_DATE - INTERVAL '1 day' * generate_series(0, 30) AS ind_date
+)
+SELECT 
+  id.ind_date,
+  'Exchange_Rate' as indicator_type,
+  'GBP_EUR' as indicator_name,
+  1.15 + (RANDOM() - 0.5) * 0.1 as value, -- GBP/EUR around 1.15 +/- 5%
+  'Rate' as unit,
+  'EU' as region,
+  'ECB' as data_source
+FROM indicator_dates id
+UNION ALL
+SELECT 
+  id.ind_date,
+  'Fuel_Price' as indicator_type,
+  'Jet_Fuel_EUR_Per_Tonne' as indicator_name,
+  750 + (RANDOM() - 0.5) * 100 as value, -- Jet fuel around EUR 750/tonne +/- EUR 50
+  'EUR/Tonne' as unit,
+  'EU' as region,
+  'Platts' as data_source  
+FROM indicator_dates id;
+
+-- ============================================================================
+-- SYNTHETIC AI INSIGHTS AND ALERTS
+-- ============================================================================
+
+INSERT INTO intelligence_insights (
+  insight_date, insight_type, priority_level, route_id, airline_code,
+  title, description, recommendation, confidence_score, agent_source
+) VALUES
+-- Competitive pricing alerts
+(CURRENT_DATE, 'Alert', 'High', 'LGW-BCN', 'RYR',
+ 'Ryanair Aggressive Pricing on LGW-BCN Route',
+ 'Ryanair has dropped prices by 15% below normal levels on LGW-BCN for flights departing in 14-21 days. This represents a significant deviation from their typical pricing curve.',
+ 'Monitor booking pace impact on EasyJet LGW-BCN flights. Consider selective price matching on peak travel days if load factors decline below 75%.',
+ 0.92, 'Competitive_Intelligence_Agent'),
+
+-- Performance anomalies
+(CURRENT_DATE, 'Anomaly', 'Medium', 'LGW-MAD', 'EZY',
+ 'Load Factor Decline on LGW-MAD Route',  
+ 'Load factors on LGW-MAD have dropped 8% below forecast over the past 7 days. Booking pace is 12% behind the same period last year.',
+ 'Investigate demand drivers. Consider promotional pricing or capacity adjustment if trend continues for 3+ more days.',
+ 0.87, 'Performance_Intelligence_Agent'),
+
+-- Opportunity identification
+(CURRENT_DATE, 'Opportunity', 'Medium', 'LGW-PMI', 'EZY',
+ 'High Demand Period Approaching for Palma Route',
+ 'Search volume for LGW-PMI has increased 35% in past 5 days. Seasonal demand pattern suggests optimal pricing window opening.',
+ 'Consider price increases of 8-12% for flights departing in 21-35 days to capture demand surge while maintaining competitive position.',
+ 0.84, 'Demand_Intelligence_Agent'),
+
+-- External event impact
+(CURRENT_DATE - INTERVAL '3 days', 'Alert', 'Critical', 'LGW-CDG', NULL,
+ 'French ATC Strike Impact on London-Paris Routes',
+ 'Ongoing French ATC strike is disrupting 60% of LGW-CDG flights. Passenger rebooking requests increased 400%.',
+ 'Activate irregular operations procedures. Consider temporary capacity shift to London-Amsterdam to capture rerouted demand.',
+ 0.95, 'External_Context_Agent');
+
+-- ============================================================================
+-- SYNTHETIC NIGHTSHIFT PROCESSING LOGS
+-- ============================================================================
+
+INSERT INTO nightshift_processing (
+  processing_date, processing_start, processing_end, agent_type,
+  routes_processed, insights_generated, alerts_created, processing_status
+) VALUES
+(CURRENT_DATE, CURRENT_DATE + INTERVAL '02:00', CURRENT_DATE + INTERVAL '02:45', 
+ 'Performance', 10, 15, 3, 'Completed'),
+(CURRENT_DATE, CURRENT_DATE + INTERVAL '02:45', CURRENT_DATE + INTERVAL '03:15', 
+ 'Competitive', 10, 8, 2, 'Completed'),
+(CURRENT_DATE, CURRENT_DATE + INTERVAL '03:15', CURRENT_DATE + INTERVAL '03:30', 
+ 'Demand', 10, 5, 1, 'Completed'),
+(CURRENT_DATE, CURRENT_DATE + INTERVAL '03:30', CURRENT_DATE + INTERVAL '03:45', 
+ 'Network', 10, 12, 4, 'Completed');
+
+-- ============================================================================
+-- SYNTHETIC ANALYST INTERACTION DATA
+-- ============================================================================
+
+INSERT INTO analyst_interactions (
+  interaction_date, analyst_id, interaction_type, insight_id,
+  query_text, response_text, satisfaction_rating, time_saved_minutes
+)
+SELECT 
+  CURRENT_DATE - INTERVAL '12 hours',
+  'melissa.s' as analyst_id,
+  'Query' as interaction_type,
+  ii.id as insight_id,
+  'What caused the load factor decline on LGW-MAD?' as query_text,
+  'Analysis shows competitive pressure from Vueling (12% price decrease) combined with reduced business travel demand (15% drop in weekday bookings). Weather delays in Madrid also contributed to passenger rebooking.' as response_text,
+  CASE WHEN RANDOM() < 0.8 THEN 4 + (RANDOM())::INTEGER ELSE 3 END as satisfaction_rating,
+  15 + (RANDOM() * 25)::INTEGER as time_saved_minutes
+FROM intelligence_insights ii
+WHERE ii.insight_type = 'Anomaly'
+LIMIT 3;
+
+-- ============================================================================
+-- DATA VALIDATION QUERIES
+-- ============================================================================
+
+-- Verify data distribution
+SELECT 'competitive_pricing' as table_name, COUNT(*) as record_count FROM competitive_pricing
+UNION ALL
+SELECT 'market_capacity', COUNT(*) FROM market_capacity  
+UNION ALL
+SELECT 'web_search_data', COUNT(*) FROM web_search_data
+UNION ALL
+SELECT 'flight_performance', COUNT(*) FROM flight_performance
+UNION ALL
+SELECT 'rm_pricing_actions', COUNT(*) FROM rm_pricing_actions
+UNION ALL
+SELECT 'intelligence_insights', COUNT(*) FROM intelligence_insights;
+
+-- Sample competitive pricing analysis
+SELECT 
+  route_id,
+  observation_date,
+  airline_code,
+  AVG(price_amount) as avg_price,
+  COUNT(*) as price_points
+FROM competitive_pricing 
+WHERE observation_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY route_id, observation_date, airline_code
+ORDER BY route_id, observation_date, avg_price;
+
+-- Sample intelligence dashboard data
+SELECT 
+  insight_date,
+  priority_level,
+  insight_type,
+  COUNT(*) as insight_count,
+  AVG(confidence_score) as avg_confidence
+FROM intelligence_insights
+GROUP BY insight_date, priority_level, insight_type
+ORDER BY insight_date DESC, priority_level, insight_type;

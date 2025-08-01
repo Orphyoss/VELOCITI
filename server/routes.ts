@@ -688,7 +688,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Telos Intelligence Platform endpoints
-  app.use("/api/telos", (await import("./api/telos")).default);
+  app.get('/api/telos/insights', async (req, res) => {
+    try {
+      const { telosIntelligenceService } = await import('./services/telos-intelligence.js');
+      const insights = await telosIntelligenceService.getActiveInsights();
+      res.json(insights);
+    } catch (error) {
+      console.error('Error fetching Telos insights:', error);
+      res.status(500).json({ error: 'Failed to fetch insights' });
+    }
+  });
+
+  app.get('/api/telos/competitive-pricing', async (req, res) => {
+    try {
+      const { telosIntelligenceService } = await import('./services/telos-intelligence.js');
+      const { route = 'LGW-BCN' } = req.query;
+      const pricing = await telosIntelligenceService.getCompetitivePricingAnalysis(route as string, 7);
+      res.json(pricing);
+    } catch (error) {
+      console.error('Error fetching competitive pricing:', error);
+      res.status(500).json({ error: 'Failed to fetch competitive pricing' });
+    }
+  });
+
+  app.get('/api/telos/route-dashboard', async (req, res) => {
+    try {
+      const { telosIntelligenceService } = await import('./services/telos-intelligence.js');
+      const { route = 'LGW-BCN' } = req.query;
+      const dashboard = await telosIntelligenceService.getRouteDashboard(route as string);
+      res.json(dashboard);
+    } catch (error) {
+      console.error('Error fetching route dashboard:', error);
+      res.status(500).json({ error: 'Failed to fetch route dashboard' });
+    }
+  });
+
+  app.get('/api/telos/competitive-position', async (req, res) => {
+    try {
+      const { telosIntelligenceService } = await import('./services/telos-intelligence.js');
+      const { route = 'LGW-BCN' } = req.query;
+      const position = await telosIntelligenceService.getCompetitivePosition(route as string);
+      res.json(position);
+    } catch (error) {
+      console.error('Error fetching competitive position:', error);
+      res.status(500).json({ error: 'Failed to fetch competitive position' });
+    }
+  });
 
   return httpServer;
 }
