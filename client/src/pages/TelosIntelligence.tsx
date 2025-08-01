@@ -27,10 +27,13 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import Sidebar from '@/components/layout/Sidebar';
+import MobileSidebar from '@/components/layout/MobileSidebar';
 
 interface CompetitivePosition {
   routeId: string;
   pricingDate: string;
+  observationDate: string;
   easyjetAvgPrice: number;
   ryanairAvgPrice: number;
   priceGapPercent: number;
@@ -227,7 +230,15 @@ export default function TelosIntelligence() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar />
+      <MobileSidebar />
+      
+      {/* Main content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -1121,6 +1132,9 @@ export default function TelosIntelligence() {
           </Card>
         </TabsContent>
       </Tabs>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
