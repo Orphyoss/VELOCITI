@@ -174,11 +174,7 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
-  // Fetch intelligence alerts
-  const { data: alerts, isLoading: alertsLoading } = useQuery<IntelligenceAlert[]>({
-    queryKey: ['/api/telos/alerts'],
-    refetchInterval: 60000, // Refresh every minute
-  });
+
 
   // Fetch available routes
   const { data: routes } = useQuery<string[]>({
@@ -329,13 +325,12 @@ export default function TelosIntelligence() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="dashboard">RM Dashboard</TabsTrigger>
           <TabsTrigger value="yield">Yield Optimization</TabsTrigger>
           <TabsTrigger value="competitive">Competitive Intel</TabsTrigger>
           <TabsTrigger value="performance">Performance</TabsTrigger>
           <TabsTrigger value="risk">Risk Management</TabsTrigger>
-          <TabsTrigger value="alerts">Alerts</TabsTrigger>
         </TabsList>
 
         {/* RM Dashboard Tab */}
@@ -924,60 +919,7 @@ export default function TelosIntelligence() {
           </div>
         </TabsContent>
 
-        {/* Intelligence Alerts Tab */}
-        <TabsContent value="alerts" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Active Intelligence Alerts</CardTitle>
-              <CardDescription>
-                Real-time alerts from Telos AI agents monitoring competitive dynamics
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {alertsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
-                </div>
-              ) : alerts && alerts.length > 0 ? (
-                <div className="space-y-4">
-                  {alerts.map((alert) => (
-                    <Alert key={alert.id} className="border-l-4 border-l-blue-500">
-                      <AlertTriangle className="h-4 w-4" />
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold">{alert.title}</h4>
-                            <Badge variant={getPriorityColor(alert.priority)}>
-                              {alert.priority}
-                            </Badge>
-                            <Badge variant="outline">{alert.alertType}</Badge>
-                          </div>
-                          <AlertDescription className="text-sm">
-                            {alert.description}
-                          </AlertDescription>
-                          <div className="text-xs text-muted-foreground flex items-center gap-4">
-                            <span>Agent: {alert.agentSource}</span>
-                            <span>Confidence: {(alert.confidenceScore * 100).toFixed(0)}%</span>
-                            <span>Route: {alert.routeId || 'Network-wide'}</span>
-                          </div>
-                          {alert.recommendation && (
-                            <div className="text-sm bg-blue-50 dark:bg-blue-950/20 p-2 rounded mt-2">
-                              <strong>Recommendation:</strong> {alert.recommendation}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Alert>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No active alerts at this time
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+
 
         {/* Competitive Analysis Tab */}
         <TabsContent value="competitive" className="space-y-4">
