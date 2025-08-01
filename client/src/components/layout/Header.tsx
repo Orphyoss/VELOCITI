@@ -50,21 +50,21 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
   };
 
   return (
-    <header className="bg-dark-900 border-b border-dark-800 px-3 sm:px-6 py-3 sm:py-4">
+    <header className="bg-dark-900 border-b border-dark-800 px-2 sm:px-6 py-2 sm:py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           {/* Mobile Menu Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden text-dark-400 hover:text-white"
+            className="lg:hidden text-dark-400 hover:text-white p-1"
             onClick={onMobileMenuToggle}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
           
           <div>
-            <h2 className="text-lg sm:text-2xl font-bold text-dark-50">{getModuleTitle()}</h2>
+            <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-dark-50">{getModuleTitle()}</h2>
             <p className="text-xs sm:text-sm text-dark-400 hidden sm:block">
               {formatTime(currentTime)} • Last updated 2 minutes ago
             </p>

@@ -234,39 +234,40 @@ export default function TelosIntelligence() {
     <AppShell>
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Telos Intelligence Platform</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Telos Intelligence Platform</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             AI-powered competitive intelligence and market analysis for EasyJet
           </p>
         </div>
         <Button
           onClick={() => runAnalysisMutation.mutate()}
           disabled={runAnalysisMutation.isPending}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+          size="sm"
         >
           {runAnalysisMutation.isPending ? (
             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
           ) : (
             <Activity className="h-4 w-4 mr-2" />
           )}
-          Run Analysis
+          <span className="sm:inline">Run Analysis</span>
         </Button>
       </div>
 
       {/* Revenue Management KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <Card className="sm:col-span-2 lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Daily Revenue Impact</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Daily Revenue Impact</CardTitle>
             <PoundSterling className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(rmMetrics.revenueImpact.daily)}</div>
-            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-              <span>Monthly: {formatCurrency(rmMetrics.revenueImpact.monthly)}</span>
-              <Badge variant="default" className="bg-green-100 text-green-800">
+            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(rmMetrics.revenueImpact.daily)}</div>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs text-muted-foreground">
+              <span className="mb-1 sm:mb-0">Monthly: {formatCurrency(rmMetrics.revenueImpact.monthly)}</span>
+              <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
                 {formatPercentage(rmMetrics.revenueImpact.trend)}
               </Badge>
             </div>
@@ -275,11 +276,11 @@ export default function TelosIntelligence() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Network Yield</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Network Yield</CardTitle>
             <Gauge className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+            <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
             <div className="flex items-center space-x-1 text-xs">
               <span className="text-muted-foreground">Target: £{rmMetrics.yieldOptimization.targetYield}</span>
               <TrendingUp className="h-3 w-3 text-green-500" />
@@ -289,11 +290,11 @@ export default function TelosIntelligence() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Competitive Edge</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Competitive Edge</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
             <div className="text-xs text-muted-foreground">
               vs {rmMetrics.competitiveIntelligence.priceDisadvantageRoutes} disadvantaged
             </div>
@@ -302,22 +303,22 @@ export default function TelosIntelligence() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Response Time</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Response Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</div>
+            <div className="text-xl sm:text-2xl font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</div>
             <div className="text-xs text-muted-foreground">Average to competitor moves</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prediction Accuracy</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Prediction Accuracy</CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
             <div className="text-xs text-muted-foreground">Demand forecasting</div>
           </CardContent>
         </Card>
@@ -325,17 +326,17 @@ export default function TelosIntelligence() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="dashboard">RM Dashboard</TabsTrigger>
-          <TabsTrigger value="yield">Yield Optimization</TabsTrigger>
-          <TabsTrigger value="competitive">Competitive Intel</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="risk">Risk Management</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+          <TabsTrigger value="dashboard" className="text-xs sm:text-sm">RM Dashboard</TabsTrigger>
+          <TabsTrigger value="yield" className="text-xs sm:text-sm">Yield Opt.</TabsTrigger>
+          <TabsTrigger value="competitive" className="text-xs sm:text-sm">Competitive</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs sm:text-sm">Risk Mgmt</TabsTrigger>
         </TabsList>
 
         {/* RM Dashboard Tab */}
-        <TabsContent value="dashboard" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <TabsContent value="dashboard" className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
             {/* Revenue Performance Overview */}
             <Card>
               <CardHeader>
@@ -346,10 +347,10 @@ export default function TelosIntelligence() {
                 <CardDescription>Real-time revenue and yield metrics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="text-sm text-muted-foreground">Current Yield</div>
-                    <div className="text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+                    <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
                     <Progress value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} className="h-2" />
                     <div className="text-xs text-muted-foreground">
                       {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target
@@ -357,7 +358,7 @@ export default function TelosIntelligence() {
                   </div>
                   <div className="space-y-2">
                     <div className="text-sm text-muted-foreground">Load Factor</div>
-                    <div className="text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
+                    <div className="text-xl sm:text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
                     <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
                     <div className="text-xs text-muted-foreground">Network average</div>
                   </div>
@@ -390,14 +391,14 @@ export default function TelosIntelligence() {
                 <CardDescription>Market positioning and competitive dynamics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
-                    <div className="text-sm text-muted-foreground">Price Advantage Routes</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="text-center p-3 sm:p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-green-600">{rmMetrics.competitiveIntelligence.priceAdvantageRoutes}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Price Advantage Routes</div>
                   </div>
-                  <div className="text-center p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">{rmMetrics.competitiveIntelligence.priceDisadvantageRoutes}</div>
-                    <div className="text-sm text-muted-foreground">Price Disadvantage Routes</div>
+                  <div className="text-center p-3 sm:p-4 bg-red-50 dark:bg-red-950/20 rounded-lg">
+                    <div className="text-xl sm:text-2xl font-bold text-red-600">{rmMetrics.competitiveIntelligence.priceDisadvantageRoutes}</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground">Price Disadvantage Routes</div>
                   </div>
                 </div>
 
@@ -429,17 +430,17 @@ export default function TelosIntelligence() {
                 <CardDescription>Route risk assessment and mitigation</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Routes at Risk</span>
+                        <span className="text-xs sm:text-sm">Routes at Risk</span>
                         <span className="font-bold text-red-600">{rmMetrics.riskMetrics.routesAtRisk}</span>
                       </div>
                     </div>
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Volatility Index</span>
+                        <span className="text-xs sm:text-sm">Volatility Index</span>
                         <span className={`font-bold ${getRiskLevel(rmMetrics.riskMetrics.volatilityIndex).color}`}>
                           {rmMetrics.riskMetrics.volatilityIndex}
                         </span>
@@ -449,13 +450,13 @@ export default function TelosIntelligence() {
                   <div className="space-y-3">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Competitor Threats</span>
+                        <span className="text-xs sm:text-sm">Competitor Threats</span>
                         <span className="font-bold text-orange-600">{rmMetrics.riskMetrics.competitorThreats}</span>
                       </div>
                     </div>
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm">Seasonal Risks</span>
+                        <span className="text-xs sm:text-sm">Seasonal Risks</span>
                         <span className="font-bold text-yellow-600">{rmMetrics.riskMetrics.seasonalRisks}</span>
                       </div>
                     </div>
@@ -503,7 +504,7 @@ export default function TelosIntelligence() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Demand Prediction Accuracy</span>
+                    <span className="text-xs sm:text-sm">Demand Prediction Accuracy</span>
                     <div className="text-right">
                       <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
                       <div className="text-xs text-muted-foreground">Target: &gt;90%</div>
@@ -511,7 +512,7 @@ export default function TelosIntelligence() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Load Factor Variance</span>
+                    <span className="text-xs sm:text-sm">Load Factor Variance</span>
                     <div className="text-right">
                       <div className="font-bold text-blue-600">{rmMetrics.operationalEfficiency.loadFactorVariance}%</div>
                       <div className="text-xs text-muted-foreground">Lower is better</div>
@@ -519,7 +520,7 @@ export default function TelosIntelligence() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">Booking Pace Variance</span>
+                    <span className="text-xs sm:text-sm">Booking Pace Variance</span>
                     <div className="text-right">
                       <div className="font-bold text-yellow-600">{rmMetrics.operationalEfficiency.bookingPaceVariance}%</div>
                       <div className="text-xs text-muted-foreground">Weekly average</div>

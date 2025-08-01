@@ -119,6 +119,37 @@
     color: #ffffff !important;
   }
   
+  /* Mobile touch optimization */
+  @media (max-width: 768px) {
+    /* Larger touch targets for mobile */
+    button {
+      min-height: 44px !important;
+      min-width: 44px !important;
+    }
+    
+    /* Better spacing for mobile cards */
+    .card {
+      margin-bottom: 0.75rem !important;
+    }
+    
+    /* Prevent text overflow on small screens */
+    .text-2xl {
+      font-size: 1.25rem !important;
+      line-height: 1.75rem !important;
+    }
+    
+    /* Better tab sizing for mobile */
+    [role="tablist"] button {
+      font-size: 0.75rem !important;
+      padding: 0.5rem !important;
+    }
+    
+    /* Improve scrolling performance */
+    .overflow-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+  
   /* Force card backgrounds to be dark with extreme specificity */
   .card,
   [class*="card"],

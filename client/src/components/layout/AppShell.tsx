@@ -38,7 +38,7 @@ export default function AppShell({ children }: AppShellProps) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         <main className="flex-1 overflow-auto bg-dark-950">
-          <div className="container mx-auto px-3 sm:px-4 py-3 sm:py-4 max-w-7xl">
+          <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-7xl">
             {children}
           </div>
         </main>
