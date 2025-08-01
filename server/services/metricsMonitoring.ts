@@ -310,23 +310,25 @@ export class TelosMetricsMonitoring {
   private async storeAlert(alert: MetricAlert) {
     try {
       await storage.createAlert({
-        id: alert.id,
         type: alert.category,
         priority: alert.severity,
         title: `${alert.metricName} Threshold Alert`,
         description: alert.message,
         status: 'active',
-        agentId: 'metrics_monitoring',
-        routeId: null,
-        confidence: 100,
+        agent_id: 'metrics_monitoring',
+        route: null,
+        confidence: "100",
         metadata: {
           currentValue: alert.currentValue,
           threshold: alert.threshold,
-          category: alert.category
+          category: alert.category,
+          metricAlertId: alert.id
         }
       });
+      console.log(`[MetricsMonitoring] Successfully stored alert: ${alert.metricName}`);
     } catch (error) {
       console.error('[MetricsMonitoring] Error storing alert:', error);
+      console.error('[MetricsMonitoring] Alert data:', alert);
     }
   }
 
@@ -380,7 +382,7 @@ export class TelosMetricsMonitoring {
   }
 
   getActiveAlerts(): MetricAlert[] {
-    return [...this.activeAlerts.values()];
+    return Array.from(this.activeAlerts.values());
   }
 
   getMetricsStatus() {
@@ -396,7 +398,7 @@ export class TelosMetricsMonitoring {
   private groupAlertsByCategory() {
     const categories: Record<string, number> = {};
     
-    for (const alert of [...this.activeAlerts.values()]) {
+    for (const alert of Array.from(this.activeAlerts.values())) {
       categories[alert.category] = (categories[alert.category] || 0) + 1;
     }
 

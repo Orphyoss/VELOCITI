@@ -502,6 +502,8 @@ export class TelosMetricsCalculator {
 
   // Generate comprehensive EasyJet morning briefing
   async generateEasyJetMorningBriefing(date: string) {
+    console.log(`[MetricsCalculator] Starting EasyJet morning briefing generation for ${date}`);
+    
     const yesterday = new Date(date);
     yesterday.setDate(yesterday.getDate() - 1);
     const weekAgo = new Date(date);
@@ -512,7 +514,10 @@ export class TelosMetricsCalculator {
       endDate: yesterday.toISOString().slice(0, 10)
     };
 
+    console.log('[MetricsCalculator] Date range:', dateRange);
+
     try {
+      console.log('[MetricsCalculator] Calculating metrics...');
       const [
         competitiveMetrics,
         systemMetrics,
@@ -527,19 +532,36 @@ export class TelosMetricsCalculator {
         this.calculateUserAdoptionMetrics(dateRange)
       ]);
 
+      console.log('[MetricsCalculator] All metrics calculated successfully');
+      console.log('[MetricsCalculator] Competitive metrics structure:', Object.keys(competitiveMetrics));
+      console.log('[MetricsCalculator] Business metrics structure:', Object.keys(businessMetrics));
+      console.log('[MetricsCalculator] AI metrics structure:', Object.keys(aiMetrics));
+
+      console.log('[MetricsCalculator] Creating executive summary...');
+      const executiveSummary = this.createEasyJetExecutiveSummary(competitiveMetrics, businessMetrics, aiMetrics);
+      
+      console.log('[MetricsCalculator] Identifying priority actions...');
+      const priorityActions = this.identifyEasyJetPriorityActions(competitiveMetrics, businessMetrics);
+      
+      console.log('[MetricsCalculator] Creating KPI dashboard...');
+      const kpiDashboard = this.createKPIDashboard(competitiveMetrics, businessMetrics, aiMetrics, userMetrics);
+
+      console.log('[MetricsCalculator] Morning briefing generated successfully');
+
       return {
         briefingDate: date,
-        executiveSummary: this.createEasyJetExecutiveSummary(competitiveMetrics, businessMetrics, aiMetrics),
-        priorityActions: this.identifyEasyJetPriorityActions(competitiveMetrics, businessMetrics),
+        executiveSummary,
+        priorityActions,
         competitiveIntelligence: competitiveMetrics,
         systemHealth: systemMetrics,
         aiPerformance: aiMetrics,
         businessImpact: businessMetrics,
         userAdoption: userMetrics,
-        kpiDashboard: this.createKPIDashboard(competitiveMetrics, businessMetrics, aiMetrics, userMetrics)
+        kpiDashboard
       };
     } catch (error) {
-      console.error('Error generating EasyJet morning briefing:', error);
+      console.error('[MetricsCalculator] Error generating EasyJet morning briefing:', error);
+      console.error('[MetricsCalculator] Error stack:', (error as Error).stack);
       throw error;
     }
   }
@@ -569,6 +591,11 @@ export class TelosMetricsCalculator {
   }
 
   private createEasyJetExecutiveSummary(competitive: any, business: any, ai: any): string {
+    console.log('[MetricsCalculator] Creating EasyJet executive summary');
+    console.log('[MetricsCalculator] Competitive data:', JSON.stringify(competitive, null, 2));
+    console.log('[MetricsCalculator] Business data:', JSON.stringify(business, null, 2));
+    console.log('[MetricsCalculator] AI data:', JSON.stringify(ai, null, 2));
+
     const today = new Date().toLocaleDateString('en-GB', { 
       weekday: 'long', 
       year: 'numeric', 
@@ -576,17 +603,40 @@ export class TelosMetricsCalculator {
       day: 'numeric' 
     });
 
+    // Safe access with fallbacks
+    const safeGet = (obj: any, path: string, fallback: any = 0) => {
+      const keys = path.split('.');
+      let current = obj;
+      for (const key of keys) {
+        if (current === null || current === undefined || !(key in current)) {
+          console.log(`[MetricsCalculator] WARNING: Missing property ${path}, using fallback:`, fallback);
+          return fallback;
+        }
+        current = current[key];
+      }
+      return current;
+    };
+
+    const ryanairDecreases = safeGet(competitive, 'ryanairActivity.priceDecreases', 0);
+    const aggressivePricingRate = safeGet(competitive, 'ryanairActivity.aggressivePricingRate', 0);
+    const totalRevenue = safeGet(business, 'revenueImpact.totalAIDrivenRevenue', 0);
+    const hoursSaved = safeGet(business, 'analystTimeSavings.totalHoursSaved', 0);
+    const aiAccuracy = safeGet(ai, 'insightAccuracyRate.overallAccuracy', 0);
+    const responseTime = safeGet(business, 'competitiveResponseSpeed.avgResponseTimeHours', 0);
+    const pricePremium = safeGet(competitive, 'pricePositioning.easyjetAvgPremiumToRyanair', 0);
+    const responseRate = safeGet(competitive, 'marketMovements.responseRate', 0);
+
     return `EASYJET INTELLIGENCE BRIEFING - ${today}
 
-🏁 COMPETITIVE LANDSCAPE: Ryanair executed ${competitive.ryanairActivity.priceDecreases} price decreases across monitored routes. ${competitive.ryanairActivity.aggressivePricingRate > 30 ? 'Aggressive competitive pressure detected' : 'Moderate competitive activity'}.
+🏁 COMPETITIVE LANDSCAPE: Ryanair executed ${ryanairDecreases} price decreases across monitored routes. ${aggressivePricingRate > 30 ? 'Aggressive competitive pressure detected' : 'Moderate competitive activity'}.
 
-📈 BUSINESS IMPACT: AI-driven decisions contributed £${(business.revenueImpact.totalAIDrivenRevenue / 1000).toFixed(0)}K in revenue this week. Analysts saved ${business.analystTimeSavings.totalHoursSaved} hours through automation.
+📈 BUSINESS IMPACT: AI-driven decisions contributed £${(totalRevenue / 1000).toFixed(0)}K in revenue this week. Analysts saved ${hoursSaved} hours through automation.
 
-🎯 AI PERFORMANCE: Intelligence agents achieved ${ai.insightAccuracyRate.overallAccuracy.toFixed(1)}% accuracy across all insights. ${ai.insightAccuracyRate.overallAccuracy > 85 ? 'Exceeding target performance' : 'Performance monitoring required'}.
+🎯 AI PERFORMANCE: Intelligence agents achieved ${aiAccuracy.toFixed(1)}% accuracy across all insights. ${aiAccuracy > 85 ? 'Exceeding target performance' : 'Performance monitoring required'}.
 
-📱 COMPETITIVE RESPONSE: Average response time to competitor moves: ${business.competitiveResponseSpeed.avgResponseTimeHours.toFixed(1)} hours. ${business.competitiveResponseSpeed.avgResponseTimeHours < 4 ? 'Maintaining competitive agility' : 'Response time attention needed'}.
+📱 COMPETITIVE RESPONSE: Average response time to competitor moves: ${responseTime.toFixed(1)} hours. ${responseTime < 4 ? 'Maintaining competitive agility' : 'Response time attention needed'}.
 
-🛫 MARKET POSITION: EasyJet maintains price premium of ${competitive.pricePositioning.easyjetAvgPremiumToRyanair.toFixed(1)}% vs Ryanair with ${competitive.pricePositioning.responseRate.toFixed(1)}% response rate to competitive moves.`;
+🛫 MARKET POSITION: EasyJet maintains price premium of ${pricePremium.toFixed(1)}% vs Ryanair with ${responseRate.toFixed(1)}% response rate to competitive moves.`;
   }
 
   private identifyEasyJetPriorityActions(competitive: any, business: any): Array<{
