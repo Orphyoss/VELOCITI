@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgentStatus from '../agents/AgentStatus';
 
@@ -43,6 +43,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'Telos Intelligence',
       icon: Target,
       path: '/telos'
+    },
+    {
+      id: 'nightshift',
+      label: 'NightShift Analytics',
+      icon: Moon,
+      path: '/nightshift'
     },
     {
       id: 'agents',

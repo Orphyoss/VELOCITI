@@ -690,5 +690,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Telos Intelligence Platform endpoints
   app.use("/api/telos", (await import("./api/telos")).default);
 
+  // NightShift Analytics endpoints
+  app.use("/api/nightshift", (await import("./api/nightshift")).default);
+
   return httpServer;
 }

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Moon } from 'lucide-react';
 import AgentStatus from '../agents/AgentStatus';
 
 export default function Sidebar() {
@@ -37,6 +37,12 @@ export default function Sidebar() {
       label: 'Telos Intelligence',
       icon: Target,
       path: '/telos'
+    },
+    {
+      id: 'nightshift',
+      label: 'NightShift Analytics',
+      icon: Moon,
+      path: '/nightshift'
     },
     {
       id: 'agents',
