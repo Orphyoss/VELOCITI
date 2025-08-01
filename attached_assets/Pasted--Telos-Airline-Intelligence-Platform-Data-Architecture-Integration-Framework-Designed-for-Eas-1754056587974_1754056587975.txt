@@ -1,0 +1,836 @@
+"""
+Telos Airline Intelligence Platform - Data Architecture & Integration Framework
+Designed for EasyJet implementation with Databricks backend and Writer AI integration
+"""
+
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta, date
+from typing import Dict, List, Optional, Union, Any
+import json
+import logging
+from dataclasses import dataclass, asdict
+from enum import Enum
+import asyncio
+import aiohttp
+from pydantic import BaseModel, Field
+from sqlalchemy import create_engine, text
+from databricks import sql as databricks_sql
+
+# ============================================================================
+# DATA MODELS AND SCHEMAS
+# ============================================================================
+
+class CarrierType(str, Enum):
+    LCC = "LCC"           # Low Cost Carrier
+    ULCC = "ULCC"         # Ultra Low Cost Carrier  
+    FSC = "FSC"           # Full Service Carrier
+    HYBRID = "Hybrid"     # Hybrid model
+
+class PriorityLevel(str, Enum):
+    LOW = "Low"
+    MEDIUM = "Medium"  
+    HIGH = "High"
+    CRITICAL = "Critical"
+
+class InsightType(str, Enum):
+    ANOMALY = "Anomaly"
+    OPPORTUNITY = "Opportunity"
+    TREND = "Trend"
+    ALERT = "Alert"
+
+@dataclass
+class Route:
+    route_id: str
+    origin_airport: str
+    destination_airport: str
+    market_type: str
+    distance_km: int
+    is_easyjet_route: bool = False
+    route_priority: str = "Secondary"
+
+@dataclass
+class CompetitivePricing:
+    observation_date: date
+    route_id: str
+    airline_code: str
+    flight_date: date
+    flight_number: str
+    price_amount: float
+    price_currency: str = "EUR"
+    fare_type: str = "Basic"
+    availability_seats: int = 0
+    data_source: str = "INFARE"
+
+@dataclass
+class MarketEvent:
+    event_date: date
+    event_type: str
+    event_name: str
+    affected_airports: List[str]
+    affected_routes: List[str]
+    impact_level: PriorityLevel
+    impact_description: str
+    start_date: date
+    end_date: Optional[date] = None
+
+@dataclass
+class IntelligenceInsight:
+    insight_date: date
+    insight_type: InsightType
+    priority_level: PriorityLevel
+    route_id: Optional[str]
+    airline_code: Optional[str]
+    title: str
+    description: str
+    recommendation: str
+    confidence_score: float
+    agent_source: str
+    supporting_data: Dict[str, Any] = None
+    action_taken: bool = False
+
+# ============================================================================
+# DATA INGESTION FRAMEWORK
+# ============================================================================
+
+class TelosDataIngestionPipeline:
+    """
+    Core data ingestion pipeline for Telos Intelligence Platform
+    Handles multiple data sources and transforms them into unified schema
+    """
+    
+    def __init__(self, databricks_config: Dict[str, str]):
+        self.databricks_config = databricks_config
+        self.logger = logging.getLogger(__name__)
+        self.connection = None
+        
+    async def connect_databricks(self):
+        """Establish connection to Databricks SQL warehouse"""
+        try:
+            self.connection = databricks_sql.connect(
+                server_hostname=self.databricks_config['server_hostname'],
+                http_path=self.databricks_config['http_path'],
+                access_token=self.databricks_config['access_token']
+            )
+            self.logger.info("Successfully connected to Databricks")
+        except Exception as e:
+            self.logger.error(f"Failed to connect to Databricks: {e}")
+            raise
+    
+    async def ingest_infare_data(self, file_path: str) -> List[CompetitivePricing]:
+        """
+        Ingest competitive pricing data from Infare CSV files
+        Matches the structure seen in your competitive pricing images
+        """
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Clean and standardize column names
+            df.columns = df.columns.str.lower().str.replace(' ', '_')
+            
+            # Map CSV columns to our schema
+            pricing_data = []
+            for _, row in df.iterrows():
+                pricing = CompetitivePricing(
+                    observation_date=pd.to_datetime(row['observation_dt']).date(),
+                    route_id=f"{row['origin']}-{row['destination']}", 
+                    airline_code=row['carriername'][:3].upper(),  # Standardize to 3-letter codes
+                    flight_date=pd.to_datetime(row['flight_dt']).date(),
+                    flight_number=row['flight_number'],
+                    price_amount=float(row['price_gbp']) if 'price_gbp' in row else float(row['price_eur']),
+                    price_currency='GBP' if 'price_gbp' in row else 'EUR',
+                    availability_seats=int(row.get('availability', 0))
+                )
+                pricing_data.append(pricing)
+            
+            self.logger.info(f"Successfully ingested {len(pricing_data)} pricing records from Infare")
+            return pricing_data
+            
+        except Exception as e:
+            self.logger.error(f"Failed to ingest Infare data: {e}")
+            raise
+    
+    async def ingest_oag_capacity_data(self, file_path: str) -> pd.DataFrame:
+        """
+        Ingest market capacity data from OAG
+        Handles the schedule and capacity structure from your images
+        """
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Standardize capacity data structure
+            capacity_df = df.rename(columns={
+                'carriername': 'airline_code',
+                'num_flights': 'flight_count', 
+                'num_seats': 'seat_capacity',
+                'flight_mth': 'flight_month'
+            })
+            
+            # Create route_id from origin/destination
+            capacity_df['route_id'] = capacity_df['origin'] + '-' + capacity_df['destination']
+            
+            # Add data source and processing timestamp
+            capacity_df['data_source'] = 'OAG'
+            capacity_df['insert_date'] = datetime.now()
+            
+            self.logger.info(f"Successfully processed {len(capacity_df)} capacity records from OAG")
+            return capacity_df
+            
+        except Exception as e:
+            self.logger.error(f"Failed to ingest OAG data: {e}")
+            raise
+    
+    async def ingest_web_search_data(self, file_path: str) -> pd.DataFrame:
+        """
+        Ingest web search and booking data (Skyscanner, Google Flights)
+        Processes demand signals from your web search images
+        """
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Process search data structure
+            search_df = df.rename(columns={
+                'web_ty_searches': 'search_volume',
+                'web_ty_bookings': 'booking_volume', 
+                'search_dt': 'search_date'
+            })
+            
+            # Calculate conversion rates
+            search_df['conversion_rate'] = search_df['booking_volume'] / search_df['search_volume'].replace(0, 1)
+            
+            # Create route_id
+            search_df['route_id'] = search_df['sector'].str.replace('ALCLGW', 'LGW-').str[:7]
+            
+            self.logger.info(f"Successfully processed {len(search_df)} search records")
+            return search_df
+            
+        except Exception as e:
+            self.logger.error(f"Failed to ingest web search data: {e}")
+            raise
+
+    async def ingest_easyjet_rm_data(self, file_path: str) -> pd.DataFrame:
+        """
+        Ingest EasyJet internal revenue management data
+        Handles pricing actions and segment finder data
+        """
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Process RM actions data
+            rm_df = df.rename(columns={
+                'change_dt': 'action_date',
+                'flightkey': 'flight_number',
+                'change_type': 'action_type',
+                'ty_ticketprice_local': 'new_price',
+                'ly_ticketprice_local': 'old_price'
+            })
+            
+            # Add EasyJet-specific fields
+            rm_df['airline_code'] = 'EZY'
+            rm_df['change_source'] = rm_df.get('change_source', 'Segment_Finder')
+            rm_df['distance_from_profile'] = np.random.normal(0, 0.1, len(rm_df))  # Synthetic for now
+            
+            self.logger.info(f"Successfully processed {len(rm_df)} RM action records")
+            return rm_df
+            
+        except Exception as e:
+            self.logger.error(f"Failed to ingest EasyJet RM data: {e}")
+            raise
+
+# ============================================================================
+# AI INTELLIGENCE PROCESSING ENGINE
+# ============================================================================
+
+class TelosIntelligenceEngine:
+    """
+    Core AI intelligence processing engine
+    Integrates with Writer AI for generating insights and recommendations
+    """
+    
+    def __init__(self, writer_api_key: str, databricks_config: Dict[str, str]):
+        self.writer_api_key = writer_api_key
+        self.databricks_config = databricks_config
+        self.logger = logging.getLogger(__name__)
+        
+    async def generate_competitive_insights(self, pricing_data: List[CompetitivePricing]) -> List[IntelligenceInsight]:
+        """
+        Generate competitive intelligence insights using Writer AI
+        Focuses on EasyJet vs Ryanair competitive dynamics per your use cases
+        """
+        insights = []
+        
+        # Group pricing data by route for analysis
+        route_pricing = {}
+        for pricing in pricing_data:
+            if pricing.route_id not in route_pricing:
+                route_pricing[pricing.route_id] = []
+            route_pricing[pricing.route_id].append(pricing)
+        
+        for route_id, route_prices in route_pricing.items():
+            # Analyze competitive positioning
+            ezy_prices = [p.price_amount for p in route_prices if p.airline_code == 'EZY']
+            ryr_prices = [p.price_amount for p in route_prices if p.airline_code == 'RYR']
+            
+            if ezy_prices and ryr_prices:
+                ezy_avg = np.mean(ezy_prices)
+                ryr_avg = np.mean(ryr_prices)
+                price_gap = ((ezy_avg - ryr_avg) / ryr_avg) * 100
+                
+                # Generate insight based on competitive gap
+                if abs(price_gap) > 15:  # Significant price deviation
+                    insight = IntelligenceInsight(
+                        insight_date=date.today(),
+                        insight_type=InsightType.ALERT,
+                        priority_level=PriorityLevel.HIGH if abs(price_gap) > 20 else PriorityLevel.MEDIUM,
+                        route_id=route_id,
+                        airline_code='RYR',
+                        title=f"Significant Price Gap Detected on {route_id}",
+                        description=f"Ryanair pricing is {price_gap:.1f}% {'below' if price_gap > 0 else 'above'} EasyJet on {route_id}. EasyJet avg: €{ezy_avg:.0f}, Ryanair avg: €{ryr_avg:.0f}",
+                        recommendation=f"Monitor booking pace impact. Consider {'price adjustment' if abs(price_gap) > 20 else 'maintaining position'} based on load factor performance.",
+                        confidence_score=0.85 + (abs(price_gap) * 0.005),
+                        agent_source="Competitive_Intelligence_Agent",
+                        supporting_data={
+                            "easyjet_avg_price": ezy_avg,
+                            "ryanair_avg_price": ryr_avg, 
+                            "price_gap_percent": price_gap,
+                            "sample_size_ezy": len(ezy_prices),
+                            "sample_size_ryr": len(ryr_prices)
+                        }
+                    )
+                    insights.append(insight)
+        
+        return insights
+
+    async def generate_performance_insights(self, performance_data: pd.DataFrame) -> List[IntelligenceInsight]:
+        """
+        Generate performance anomaly insights
+        Analyzes load factors, booking pace, and revenue metrics
+        """
+        insights = []
+        
+        # Analyze route-level performance anomalies
+        for route_id in performance_data['route_id'].unique():
+            route_data = performance_data[performance_data['route_id'] == route_id]
+            
+            # Calculate recent vs historical performance
+            recent_lf = route_data['load_factor'].tail(7).mean()
+            historical_lf = route_data['load_factor'].head(-7).mean() if len(route_data) > 7 else recent_lf
+            
+            lf_change = recent_lf - historical_lf
+            
+            # Generate insight for significant load factor changes
+            if abs(lf_change) > 5:  # 5+ percentage point change
+                insight = IntelligenceInsight(
+                    insight_date=date.today(),
+                    insight_type=InsightType.ANOMALY,
+                    priority_level=PriorityLevel.HIGH if abs(lf_change) > 10 else PriorityLevel.MEDIUM,
+                    route_id=route_id,
+                    airline_code='EZY',
+                    title=f"Load Factor {'Decline' if lf_change < 0 else 'Improvement'} on {route_id}",
+                    description=f"Load factors on {route_id} have {'declined' if lf_change < 0 else 'improved'} by {abs(lf_change):.1f} percentage points over the past 7 days. Current average: {recent_lf:.1f}%",
+                    recommendation=f"{'Investigate demand drivers and consider promotional pricing' if lf_change < -8 else 'Monitor trend and consider capacity optimization'} if pattern continues.",
+                    confidence_score=0.80 + (abs(lf_change) * 0.01),
+                    agent_source="Performance_Intelligence_Agent",
+                    supporting_data={
+                        "recent_load_factor": recent_lf,
+                        "historical_load_factor": historical_lf,
+                        "load_factor_change": lf_change,
+                        "data_points": len(route_data)
+                    }
+                )
+                insights.append(insight)
+
+        return insights
+
+    async def process_nightshift_intelligence(self) -> Dict[str, Any]:
+        """
+        Main NightShift processing routine - runs overnight to generate morning briefings
+        Orchestrates all intelligence agents as per EasyJet use cases
+        """
+        processing_start = datetime.now()
+        results = {
+            "processing_date": date.today(),
+            "processing_start": processing_start,
+            "agents_run": [],
+            "insights_generated": [],
+            "alerts_created": [],
+            "summary_stats": {}
+        }
+
+        try:
+            # 1. Performance Intelligence Agent
+            self.logger.info("Running Performance Intelligence Agent...")
+            performance_insights = await self.run_performance_agent()
+            results["agents_run"].append("Performance_Intelligence_Agent")
+            results["insights_generated"].extend(performance_insights)
+
+            # 2. Competitive Intelligence Agent  
+            self.logger.info("Running Competitive Intelligence Agent...")
+            competitive_insights = await self.run_competitive_agent()
+            results["agents_run"].append("Competitive_Intelligence_Agent")
+            results["insights_generated"].extend(competitive_insights)
+
+            # 3. Demand Intelligence Agent
+            self.logger.info("Running Demand Intelligence Agent...")
+            demand_insights = await self.run_demand_agent()
+            results["agents_run"].append("Demand_Intelligence_Agent")
+            results["insights_generated"].extend(demand_insights)
+
+            # 4. External Context Agent
+            self.logger.info("Running External Context Agent...")
+            context_insights = await self.run_external_context_agent()
+            results["agents_run"].append("External_Context_Agent")
+            results["insights_generated"].extend(context_insights)
+
+            # Generate summary statistics
+            results["summary_stats"] = self._generate_summary_stats(results["insights_generated"])
+            results["processing_end"] = datetime.now()
+            results["processing_duration"] = (results["processing_end"] - processing_start).total_seconds()
+
+            self.logger.info(f"NightShift processing completed in {results['processing_duration']:.1f} seconds")
+            return results
+
+        except Exception as e:
+            self.logger.error(f"NightShift processing failed: {e}")
+            results["processing_error"] = str(e)
+            results["processing_end"] = datetime.now()
+            return results
+
+    async def run_performance_agent(self) -> List[IntelligenceInsight]:
+        """Performance Intelligence Agent - monitors EasyJet route performance"""
+        # Query latest performance data from Databricks
+        query = """
+        SELECT * FROM flight_performance 
+        WHERE performance_date >= CURRENT_DATE - INTERVAL 14 DAYS
+        AND route_id IN (SELECT route_id FROM routes WHERE is_easyjet_route = TRUE)
+        ORDER BY performance_date DESC, route_id
+        """
+        
+        performance_data = await self._execute_databricks_query(query)
+        return await self.generate_performance_insights(performance_data)
+
+    async def run_competitive_agent(self) -> List[IntelligenceInsight]:
+        """Competitive Intelligence Agent - monitors Ryanair and other competitors"""
+        query = """
+        SELECT * FROM competitive_pricing 
+        WHERE observation_date >= CURRENT_DATE - INTERVAL 7 DAYS
+        AND route_id IN (SELECT route_id FROM routes WHERE is_easyjet_route = TRUE)
+        AND airline_code IN ('EZY', 'RYR', 'BA', 'VY', 'W6')
+        ORDER BY observation_date DESC, route_id, airline_code
+        """
+        
+        pricing_data = await self._execute_databricks_query(query)
+        pricing_objects = [CompetitivePricing(**row) for row in pricing_data.to_dict('records')]
+        return await self.generate_competitive_insights(pricing_objects)
+
+    async def run_demand_agent(self) -> List[IntelligenceInsight]:
+        """Demand Intelligence Agent - analyzes search and booking trends"""
+        query = """
+        SELECT 
+            route_id, search_date, data_source,
+            search_volume, booking_volume, conversion_rate,
+            avg_search_price
+        FROM web_search_data 
+        WHERE search_date >= CURRENT_DATE - INTERVAL 14 DAYS
+        ORDER BY search_date DESC, route_id
+        """
+        
+        search_data = await self._execute_databricks_query(query)
+        return await self.generate_demand_insights(search_data)
+
+    async def run_external_context_agent(self) -> List[IntelligenceInsight]:
+        """External Context Agent - monitors events, weather, strikes, etc."""
+        query = """
+        SELECT * FROM market_events 
+        WHERE event_date >= CURRENT_DATE - INTERVAL 7 DAYS
+        OR (start_date <= CURRENT_DATE + INTERVAL 7 DAYS AND end_date >= CURRENT_DATE)
+        ORDER BY impact_level DESC, event_date DESC
+        """
+        
+        events_data = await self._execute_databricks_query(query)
+        return await self.generate_external_context_insights(events_data)
+
+    async def generate_demand_insights(self, search_data: pd.DataFrame) -> List[IntelligenceInsight]:
+        """Generate insights from web search and booking data"""
+        insights = []
+        
+        for route_id in search_data['route_id'].unique():
+            route_data = search_data[search_data['route_id'] == route_id]
+            
+            # Analyze recent vs historical search trends
+            recent_searches = route_data['search_volume'].tail(7).sum()
+            historical_searches = route_data['search_volume'].head(-7).sum() if len(route_data) > 7 else recent_searches
+            
+            if historical_searches > 0:
+                search_change = ((recent_searches - historical_searches) / historical_searches) * 100
+                
+                if abs(search_change) > 25:  # 25%+ change in search volume
+                    insight = IntelligenceInsight(
+                        insight_date=date.today(),
+                        insight_type=InsightType.OPPORTUNITY if search_change > 0 else InsightType.ALERT,
+                        priority_level=PriorityLevel.HIGH if abs(search_change) > 40 else PriorityLevel.MEDIUM,
+                        route_id=route_id,
+                        airline_code=None,
+                        title=f"Search Volume {'Surge' if search_change > 0 else 'Decline'} on {route_id}",
+                        description=f"Search volume for {route_id} has {'increased' if search_change > 0 else 'decreased'} by {abs(search_change):.1f}% over the past 7 days.",
+                        recommendation=f"{'Consider price increases to capture demand' if search_change > 30 else 'Monitor booking conversion and consider promotional pricing'} for optimal revenue capture.",
+                        confidence_score=0.75 + (abs(search_change) * 0.005),
+                        agent_source="Demand_Intelligence_Agent",
+                        supporting_data={
+                            "recent_search_volume": recent_searches,
+                            "historical_search_volume": historical_searches,
+                            "search_change_percent": search_change,
+                            "avg_conversion_rate": route_data['conversion_rate'].mean()
+                        }
+                    )
+                    insights.append(insight)
+        
+        return insights
+
+    async def generate_external_context_insights(self, events_data: pd.DataFrame) -> List[IntelligenceInsight]:
+        """Generate insights from external events (weather, strikes, etc.)"""
+        insights = []
+        
+        for _, event in events_data.iterrows():
+            if event['impact_level'] in ['High', 'Critical']:
+                insight = IntelligenceInsight(
+                    insight_date=date.today(),
+                    insight_type=InsightType.ALERT,
+                    priority_level=PriorityLevel.CRITICAL if event['impact_level'] == 'Critical' else PriorityLevel.HIGH,
+                    route_id=None,
+                    airline_code=None,
+                    title=f"{event['event_type']}: {event['event_name']}",
+                    description=event['impact_description'],
+                    recommendation=f"Monitor affected routes {event['affected_routes']} for operational disruptions and passenger rebooking patterns.",
+                    confidence_score=0.95,
+                    agent_source="External_Context_Agent",
+                    supporting_data={
+                        "event_type": event['event_type'],
+                        "affected_airports": event['affected_airports'],
+                        "affected_routes": event['affected_routes'],
+                        "start_date": event['start_date'],
+                        "end_date": event['end_date']
+                    }
+                )
+                insights.append(insight)
+        
+        return insights
+
+    def _generate_summary_stats(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """Generate summary statistics for the intelligence processing run"""
+        if not insights:
+            return {"total_insights": 0}
+        
+        return {
+            "total_insights": len(insights),
+            "insights_by_type": {
+                insight_type.value: sum(1 for i in insights if i.insight_type == insight_type)
+                for insight_type in InsightType
+            },
+            "insights_by_priority": {
+                priority.value: sum(1 for i in insights if i.priority_level == priority)
+                for priority in PriorityLevel
+            },
+            "avg_confidence_score": np.mean([i.confidence_score for i in insights]),
+            "routes_analyzed": len(set(i.route_id for i in insights if i.route_id)),
+            "high_priority_alerts": sum(1 for i in insights if i.priority_level in [PriorityLevel.HIGH, PriorityLevel.CRITICAL])
+        }
+
+    async def _execute_databricks_query(self, query: str) -> pd.DataFrame:
+        """Execute query against Databricks and return DataFrame"""
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(query)
+            result = cursor.fetchall()
+            columns = [desc[0] for desc in cursor.description]
+            return pd.DataFrame(result, columns=columns)
+        except Exception as e:
+            self.logger.error(f"Databricks query failed: {e}")
+            raise
+
+# ============================================================================
+# MORNING BRIEFING GENERATOR
+# ============================================================================
+
+class TelosMorningBriefingGenerator:
+    """
+    Generates role-specific morning briefings for EasyJet analysts
+    Based on overnight NightShift intelligence processing
+    """
+    
+    def __init__(self, writer_api_key: str):
+        self.writer_api_key = writer_api_key
+        self.logger = logging.getLogger(__name__)
+
+    async def generate_rm_manager_briefing(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """
+        Generate morning briefing for RM Manager (Melissa's use case)
+        Structured according to EasyJet workflow requirements
+        """
+        briefing = {
+            "briefing_date": date.today(),
+            "recipient_role": "RM_Manager",
+            "executive_summary": self._create_executive_summary(insights),
+            "priority_actions": self._extract_priority_actions(insights),
+            "competitive_intelligence": self._summarize_competitive_intelligence(insights),
+            "performance_alerts": self._summarize_performance_alerts(insights),
+            "demand_intelligence": self._summarize_demand_intelligence(insights),
+            "external_context": self._summarize_external_context(insights),
+            "recommended_focus_areas": self._identify_focus_areas(insights)
+        }
+        
+        return briefing
+
+    def _create_executive_summary(self, insights: List[IntelligenceInsight]) -> str:
+        """Create executive summary highlighting key overnight findings"""
+        high_priority = [i for i in insights if i.priority_level in [PriorityLevel.HIGH, PriorityLevel.CRITICAL]]
+        
+        if not high_priority:
+            return "No high-priority issues identified overnight. Network performance within expected parameters."
+        
+        summary_points = []
+        for insight in high_priority[:3]:  # Top 3 high-priority items
+            summary_points.append(f"• {insight.title}: {insight.description[:100]}...")
+        
+        return f"Key overnight findings ({len(high_priority)} high-priority alerts):\n" + "\n".join(summary_points)
+
+    def _extract_priority_actions(self, insights: List[IntelligenceInsight]) -> List[Dict[str, Any]]:
+        """Extract actionable items requiring immediate attention"""
+        priority_insights = [i for i in insights if i.priority_level == PriorityLevel.CRITICAL]
+        
+        actions = []
+        for insight in priority_insights:
+            actions.append({
+                "route": insight.route_id,
+                "action": insight.recommendation,
+                "urgency": "Immediate",
+                "confidence": insight.confidence_score,
+                "source": insight.agent_source
+            })
+        
+        return actions
+
+    def _summarize_competitive_intelligence(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """Summarize competitive developments, focusing on Ryanair"""
+        competitive_insights = [i for i in insights if i.agent_source == "Competitive_Intelligence_Agent"]
+        
+        ryanair_activity = [i for i in competitive_insights if i.airline_code == 'RYR']
+        
+        return {
+            "total_competitive_alerts": len(competitive_insights),
+            "ryanair_specific_alerts": len(ryanair_activity),
+            "key_competitive_moves": [
+                {
+                    "route": insight.route_id,
+                    "competitor": insight.airline_code,
+                    "summary": insight.title,
+                    "impact": insight.priority_level.value
+                }
+                for insight in competitive_insights[:5]
+            ]
+        }
+
+    def _summarize_performance_alerts(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """Summarize EasyJet performance anomalies and trends"""
+        performance_insights = [i for i in insights if i.agent_source == "Performance_Intelligence_Agent"]
+        
+        return {
+            "performance_alerts_count": len(performance_insights),
+            "routes_flagged": len(set(i.route_id for i in performance_insights if i.route_id)),
+            "performance_issues": [
+                {
+                    "route": insight.route_id,
+                    "issue_type": insight.insight_type.value,
+                    "description": insight.description,
+                    "recommendation": insight.recommendation
+                }
+                for insight in performance_insights
+            ]
+        }
+
+    def _summarize_demand_intelligence(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """Summarize demand trends and search activity"""
+        demand_insights = [i for i in insights if i.agent_source == "Demand_Intelligence_Agent"]
+        
+        return {
+            "demand_alerts_count": len(demand_insights),
+            "search_trends": [
+                {
+                    "route": insight.route_id,
+                    "trend": insight.insight_type.value,
+                    "magnitude": insight.supporting_data.get('search_change_percent', 0) if insight.supporting_data else 0,
+                    "recommendation": insight.recommendation
+                }
+                for insight in demand_insights
+            ]
+        }
+
+    def _summarize_external_context(self, insights: List[IntelligenceInsight]) -> Dict[str, Any]:
+        """Summarize external events affecting operations"""
+        context_insights = [i for i in insights if i.agent_source == "External_Context_Agent"]
+        
+        return {
+            "external_events_count": len(context_insights),
+            "active_disruptions": [
+                {
+                    "event_name": insight.title,
+                    "impact_level": insight.priority_level.value,
+                    "description": insight.description,
+                    "affected_routes": insight.supporting_data.get('affected_routes', []) if insight.supporting_data else []
+                }
+                for insight in context_insights
+            ]
+        }
+
+    def _identify_focus_areas(self, insights: List[IntelligenceInsight]) -> List[str]:
+        """Identify recommended focus areas for the day"""
+        focus_areas = []
+        
+        # Analyze insight patterns to suggest focus areas
+        route_mentions = {}
+        for insight in insights:
+            if insight.route_id:
+                route_mentions[insight.route_id] = route_mentions.get(insight.route_id, 0) + 1
+        
+        # Routes with multiple issues
+        problematic_routes = [route for route, count in route_mentions.items() if count > 1]
+        if problematic_routes:
+            focus_areas.append(f"Deep dive analysis on routes: {', '.join(problematic_routes[:3])}")
+        
+        # High-priority competitive responses
+        competitive_alerts = [i for i in insights if i.agent_source == "Competitive_Intelligence_Agent" and i.priority_level == PriorityLevel.HIGH]
+        if competitive_alerts:
+            focus_areas.append("Monitor competitive responses and booking pace impacts")
+        
+        # External disruptions
+        external_alerts = [i for i in insights if i.agent_source == "External_Context_Agent"]
+        if external_alerts:
+            focus_areas.append("Coordinate with operations on external event impacts")
+        
+        return focus_areas if focus_areas else ["Standard route performance monitoring"]
+
+# ============================================================================
+# API INTEGRATION LAYER
+# ============================================================================
+
+class TelosAPIIntegration:
+    """
+    API integration layer for connecting with external data sources
+    Handles Infare, OAG, Skyscanner, and other data providers
+    """
+    
+    def __init__(self):
+        self.session = None
+        self.logger = logging.getLogger(__name__)
+
+    async def __aenter__(self):
+        self.session = aiohttp.ClientSession()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if self.session:
+            await self.session.close()
+
+    async def fetch_infare_data(self, api_config: Dict[str, str], routes: List[str]) -> Dict[str, Any]:
+        """Fetch competitive pricing data from Infare API"""
+        # Placeholder for Infare API integration
+        # In practice, this would connect to Infare's REST API or SFTP feed
+        pass
+
+    async def fetch_oag_data(self, api_config: Dict[str, str], markets: List[str]) -> Dict[str, Any]:
+        """Fetch market capacity data from OAG API"""
+        # Placeholder for OAG API integration
+        pass
+
+    async def fetch_skyscanner_data(self, api_config: Dict[str, str], routes: List[str]) -> Dict[str, Any]:
+        """Fetch search and demand data from Skyscanner API"""
+        # Placeholder for Skyscanner/search data integration
+        pass
+
+# ============================================================================
+# MAIN ORCHESTRATION CLASS
+# ============================================================================
+
+class TelosIntelligencePlatform:
+    """
+    Main orchestration class for the Telos Intelligence Platform
+    Coordinates data ingestion, AI processing, and briefing generation
+    """
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.ingestion_pipeline = TelosDataIngestionPipeline(config['databricks'])
+        self.intelligence_engine = TelosIntelligenceEngine(
+            config['writer_api_key'], 
+            config['databricks']
+        )
+        self.briefing_generator = TelosMorningBriefingGenerator(config['writer_api_key'])
+        self.logger = logging.getLogger(__name__)
+
+    async def run_nightshift_processing(self) -> Dict[str, Any]:
+        """
+        Main NightShift processing routine
+        Runs overnight to generate morning intelligence briefings
+        """
+        self.logger.info("Starting NightShift intelligence processing...")
+        
+        try:
+            # Connect to data sources
+            await self.ingestion_pipeline.connect_databricks()
+            
+            # Run intelligence processing
+            intelligence_results = await self.intelligence_engine.process_nightshift_intelligence()
+            
+            # Generate morning briefings
+            rm_briefing = await self.briefing_generator.generate_rm_manager_briefing(
+                intelligence_results['insights_generated']
+            )
+            
+            # Store results for morning access
+            final_results = {
+                "processing_summary": intelligence_results,
+                "rm_manager_briefing": rm_briefing,
+                "processing_timestamp": datetime.now().isoformat(),
+                "platform_version": "1.0.0"
+            }
+            
+            self.logger.info("NightShift processing completed successfully")
+            return final_results
+            
+        except Exception as e:
+            self.logger.error(f"NightShift processing failed: {e}")
+            raise
+
+# ============================================================================
+# USAGE EXAMPLE
+# ============================================================================
+
+async def main():
+    """Example usage of the Telos Intelligence Platform"""
+    
+    # Configuration
+    config = {
+        "databricks": {
+            "server_hostname": "your-databricks-instance.databricks.com",
+            "http_path": "/sql/1.0/endpoints/your-endpoint-id",
+            "access_token": "your-databricks-token"
+        },
+        "writer_api_key": "your-writer-api-key",
+        "log_level": "INFO"
+    }
+    
+    # Initialize platform
+    platform = TelosIntelligencePlatform(config)
+    
+    # Run overnight processing
+    results = await platform.run_nightshift_processing()
+    
+    # Output morning briefing
+    print("=== EASYJET RM MANAGER MORNING BRIEFING ===")
+    print(f"Date: {results['rm_manager_briefing']['briefing_date']}")
+    print(f"Executive Summary: {results['rm_manager_briefing']['executive_summary']}")
+    print(f"Priority Actions: {len(results['rm_manager_briefing']['priority_actions'])}")
+    print(f"Focus Areas: {results['rm_manager_briefing']['recommended_focus_areas']}")
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target } from 'lucide-react';
 import AgentStatus from '../agents/AgentStatus';
 
 export default function Sidebar() {
@@ -31,6 +31,12 @@ export default function Sidebar() {
       label: 'Strategic Analysis',
       icon: Brain,
       path: '/strategic'
+    },
+    {
+      id: 'telos',
+      label: 'Telos Intelligence',
+      icon: Target,
+      path: '/telos'
     },
     {
       id: 'agents',

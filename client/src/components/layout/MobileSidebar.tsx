@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgentStatus from '../agents/AgentStatus';
 
@@ -37,6 +37,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'Strategic Analysis',
       icon: Brain,
       path: '/strategic'
+    },
+    {
+      id: 'telos',
+      label: 'Telos Intelligence',
+      icon: Target,
+      path: '/telos'
     },
     {
       id: 'agents',
