@@ -137,13 +137,13 @@ export class TelosIntelligenceService {
         avgYield: yieldPerPax,
         totalRevenue: estimatedRevenue,
         totalBookings: estimatedPax,
-        flightCount: parseInt(capacity.totalFlights || '0'),
+        flightCount: parseInt(capacity.totalFlights?.toString() || '0'),
         avgPrice: avgPrice,
         priceRange: {
           min: parseFloat(pricing.minPrice || '0'),
           max: parseFloat(pricing.maxPrice || '0')
         },
-        observationCount: parseInt(pricing.observationCount || '0')
+        observationCount: parseInt(pricing.observationCount?.toString() || '0')
       };
     } catch (error) {
       console.error("Error in getRoutePerformanceMetrics:", error);
@@ -165,6 +165,29 @@ export class TelosIntelligenceService {
       return routes.map(r => r.routeId).filter(Boolean);
     } catch (error) {
       console.error("Error in getAvailableRoutes:", error);
+      return [];
+    }
+  }
+
+  // Get intelligence insights - general method used by metrics calculator
+  async getIntelligenceInsights(days: number = 30) {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - days);
+    
+    try {
+      return await db
+        .select()
+        .from(intelligenceInsights)
+        .where(
+          gte(intelligenceInsights.insightDate, cutoffDate.toISOString().slice(0, 10))
+        )
+        .orderBy(
+          desc(intelligenceInsights.insightDate),
+          desc(intelligenceInsights.confidenceScore)
+        )
+        .limit(100);
+    } catch (error) {
+      console.error("Error in getIntelligenceInsights:", error);
       return [];
     }
   }
