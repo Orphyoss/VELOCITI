@@ -55,30 +55,32 @@ export default function MetricsOverview() {
   const metrics = [
     {
       title: 'Network Yield',
-      value: `£${networkYield.toFixed(2)}`,
-      change: networkYield > 100 ? `+${((networkYield - 100) / 100 * 100).toFixed(1)}% vs forecast` : 'Calculating...',
-      trend: 'up',
+      value: networkYield > 0 ? `£${Math.round(networkYield)}` : 'No data',
+      change: networkYield > 100 ? `+${((networkYield - 100) / 100 * 100).toFixed(1)}% vs forecast` : networkYield > 0 ? 'vs forecast' : 'Calculating...',
+      trend: networkYield > 100 ? 'up' : networkYield > 0 ? 'neutral' : 'neutral',
       icon: BarChart3,
     },
     {
       title: 'Load Factor',
-      value: loadFactor > 0 ? `${loadFactor.toFixed(1)}%` : 'No data',
+      value: loadFactor > 0 ? `${Math.round(loadFactor)}%` : 'No data',
       change: loadFactor >= 75 ? '+Above target' : loadFactor > 0 ? 'vs forecast' : 'Calculating...',
       trend: loadFactor >= 75 ? 'up' : loadFactor > 0 ? 'neutral' : 'neutral',
       icon: Users,
     },
     {
       title: 'Revenue Impact',
-      value: `£${(dailyRevenue / 1000000).toFixed(1)}M`,
-      change: 'Daily AI impact',
-      trend: 'up',
+      value: dailyRevenue > 1000000 ? `£${(dailyRevenue / 1000000).toFixed(1)}M` : 
+             dailyRevenue > 1000 ? `£${Math.round(dailyRevenue / 1000)}K` : 
+             dailyRevenue > 0 ? `£${Math.round(dailyRevenue)}` : 'No data',
+      change: dailyRevenue > 0 ? 'Daily AI impact' : 'Calculating...',
+      trend: dailyRevenue > 0 ? 'up' : 'neutral',
       icon: Target,
     },
     {
       title: 'Response Time',
-      value: `${responseTime}h`,
-      change: 'Avg. alert response',
-      trend: responseTime <= 15 ? 'up' : 'down',
+      value: responseTime > 0 ? (responseTime < 1 ? `${Math.round(responseTime * 60)}m` : `${Math.round(responseTime)}h`) : 'No data',
+      change: responseTime > 0 ? 'Avg. alert response' : 'Calculating...',
+      trend: responseTime > 0 && responseTime <= 2 ? 'up' : responseTime > 0 ? 'neutral' : 'neutral',
       icon: Zap,
     },
     {
