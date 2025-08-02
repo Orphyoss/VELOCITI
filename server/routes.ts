@@ -15,6 +15,7 @@ import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { metricsMonitoring } from "./services/metricsMonitoring.js";
 import { TelosIntelligenceService } from "./services/telos-intelligence.js";
+import { logger, logAPI } from "./services/logger.js";
 
 // Function to calculate real dashboard metrics from actual data
 async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activities: any[]) {

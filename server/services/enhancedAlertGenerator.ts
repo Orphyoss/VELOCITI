@@ -2,6 +2,7 @@ import { db } from "./supabase";
 import { alerts } from "@shared/schema";
 import { storage } from "../storage";
 import { sql } from "drizzle-orm";
+import { logger, logAgent } from "./logger";
 
 export interface AlertScenario {
   type: 'competitive' | 'demand' | 'operational' | 'system' | 'economic';
@@ -20,7 +21,9 @@ export class EnhancedAlertGenerator {
   private scenarios: AlertScenario[] = [];
 
   constructor() {
+    logger.info('EnhancedAlertGenerator', 'init', 'Initializing Enhanced Alert Generation Engine');
     this.initializeScenarios();
+    logger.info('EnhancedAlertGenerator', 'init', `Loaded ${this.scenarios.length} sophisticated alert scenarios`);
   }
 
   private initializeScenarios() {
@@ -214,19 +217,50 @@ export class EnhancedAlertGenerator {
   }
 
   async generateScenarioAlerts(count: number = 3): Promise<void> {
-    try {
-      // Select random scenarios
-      const selectedScenarios = this.getRandomScenarios(count);
-      
-      for (const scenario of selectedScenarios) {
-        await this.createAlert(scenario);
-        await this.createActivity(scenario);
-      }
-      
-      console.log(`[EnhancedAlertGenerator] Successfully generated ${selectedScenarios.length} scenario alerts`);
-    } catch (error) {
-      console.error('[EnhancedAlertGenerator] Error generating scenario alerts:', error);
-    }
+    return await logger.logOperation(
+      'EnhancedAlertGenerator',
+      'generateScenarioAlerts',
+      `Generating ${count} scenario alerts`,
+      async () => {
+        const selectedScenarios = this.getRandomScenarios(count);
+        logger.debug('EnhancedAlertGenerator', 'selection', `Selected scenarios`, { 
+          count: selectedScenarios.length,
+          scenarios: selectedScenarios.map(s => ({ title: s.title, priority: s.priority, type: s.type }))
+        });
+        
+        let successful = 0;
+        let failed = 0;
+        
+        for (const scenario of selectedScenarios) {
+          try {
+            await this.createAlert(scenario);
+            await this.createActivity(scenario);
+            successful++;
+            logAgent(scenario.agent_source, 'alert_generated', `Created: ${scenario.title}`, {
+              priority: scenario.priority,
+              type: scenario.type,
+              confidence: scenario.confidence
+            });
+          } catch (error) {
+            failed++;
+            logger.error('EnhancedAlertGenerator', 'create_scenario', `Failed to create scenario: ${scenario.title}`, error, {
+              scenario: scenario.title,
+              type: scenario.type,
+              priority: scenario.priority
+            });
+          }
+        }
+        
+        logger.info('EnhancedAlertGenerator', 'generateScenarioAlerts', 
+          `Generation completed - Success: ${successful}, Failed: ${failed}`, {
+            successful,
+            failed,
+            totalRequested: count,
+            scenarios: selectedScenarios.map(s => s.title)
+          });
+      },
+      { requestedCount: count }
+    );
   }
 
   private getRandomScenarios(count: number): AlertScenario[] {
@@ -235,30 +269,44 @@ export class EnhancedAlertGenerator {
   }
 
   private async createAlert(scenario: AlertScenario): Promise<void> {
-    try {
-      const alertData = {
-        type: scenario.type,
-        priority: scenario.priority,
-        title: scenario.title,
-        description: scenario.description,
-        route: scenario.route || null,
-        confidence: scenario.confidence.toFixed(4),
-        agent_id: scenario.agent_source,
-        category: scenario.category,
-        status: 'active',
-        metadata: {
-          ...scenario.metadata,
-          recommendation: scenario.recommendation,
-          scenario_generated: true,
-          generation_timestamp: new Date().toISOString()
-        }
-      };
+    return await logger.logOperation(
+      'EnhancedAlertGenerator',
+      'createAlert',
+      `Creating alert: ${scenario.title}`,
+      async () => {
+        const alertData = {
+          type: scenario.type,
+          priority: scenario.priority,
+          title: scenario.title,
+          description: scenario.description,
+          route: scenario.route || null,
+          confidence: scenario.confidence.toFixed(4),
+          agent_id: scenario.agent_source,
+          category: scenario.category,
+          status: 'active',
+          metadata: {
+            ...scenario.metadata,
+            recommendation: scenario.recommendation,
+            scenario_generated: true,
+            generation_timestamp: new Date().toISOString()
+          }
+        };
 
-      await db.insert(alerts).values([alertData]);
-      console.log(`[EnhancedAlertGenerator] Created alert: ${scenario.title}`);
-    } catch (error) {
-      console.error('[EnhancedAlertGenerator] Error creating alert:', error);
-    }
+        await db.insert(alerts).values([alertData]);
+        
+        logger.debug('EnhancedAlertGenerator', 'createAlert', `Database insert successful`, {
+          alertId: scenario.title,
+          type: scenario.type,
+          priority: scenario.priority,
+          confidence: scenario.confidence
+        });
+      },
+      { 
+        scenario: scenario.title, 
+        priority: scenario.priority, 
+        type: scenario.type 
+      }
+    );
   }
 
   private async createActivity(scenario: AlertScenario): Promise<void> {

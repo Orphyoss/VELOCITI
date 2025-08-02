@@ -131,45 +131,75 @@ export class MemoryStorage implements IStorage {
   }
 
   async getAlerts(limit = 50): Promise<Alert[]> {
-    try {
-      // Query database directly using raw SQL for all alerts including enhanced scenarios
-      const { client } = await import('./services/supabase.js');
-      
-      const result = await client`
-        SELECT * FROM alerts 
-        ORDER BY created_at DESC 
-        LIMIT ${limit}
-      `;
-      
-      // Convert database format to expected format
-      return result.map((alert: any) => ({
-        id: alert.id,
-        type: alert.type || 'alert',
-        priority: alert.priority,
-        title: alert.title,
-        description: alert.description,
-        route: alert.route || null,
-        route_name: alert.route_name || null,
-        metric_value: alert.metric_value || null,  
-        threshold_value: alert.threshold_value || null,
-        impact_score: alert.impact_score || null,
-        confidence: alert.confidence || null,
-        agent_id: alert.agent_id,
-        metadata: alert.metadata || {},
-        status: alert.status,
-        created_at: alert.created_at,
-        acknowledged_at: alert.acknowledged_at || null,
-        resolved_at: alert.resolved_at || null,
-        category: alert.category
-      }));
-    } catch (error) {
-      console.error('[Storage] Error fetching alerts from database:', error);
-      // Fallback to memory store
-      const allAlerts = Array.from(memoryStore.alerts.values())
-        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-        .slice(0, limit);
-      return allAlerts;
-    }
+    const { logger } = await import('./services/logger.js');
+    
+    return await logger.logOperation(
+      'Storage',
+      'getAlerts',
+      `Fetching ${limit} alerts from database`,
+      async () => {
+        try {
+          const { client } = await import('./services/supabase.js');
+          
+          const result = await client`
+            SELECT * FROM alerts 
+            ORDER BY created_at DESC 
+            LIMIT ${limit}
+          `;
+          
+          const alerts = result.map((alert: any) => ({
+            id: alert.id,
+            type: alert.type || 'alert',
+            priority: alert.priority,
+            title: alert.title,
+            description: alert.description,
+            route: alert.route || null,
+            route_name: alert.route_name || null,
+            metric_value: alert.metric_value || null,  
+            threshold_value: alert.threshold_value || null,
+            impact_score: alert.impact_score || null,
+            confidence: alert.confidence || null,
+            agent_id: alert.agent_id,
+            metadata: alert.metadata || {},
+            status: alert.status,
+            created_at: alert.created_at,
+            acknowledged_at: alert.acknowledged_at || null,
+            resolved_at: alert.resolved_at || null,
+            category: alert.category
+          }));
+          
+          logger.debug('Storage', 'getAlerts', `Successfully fetched alerts from database`, {
+            alertCount: alerts.length,
+            enhancedScenarios: alerts.filter(a => a.metadata?.scenario_generated).length,
+            priorities: alerts.reduce((acc: any, alert) => {
+              acc[alert.priority] = (acc[alert.priority] || 0) + 1;
+              return acc;
+            }, {}),
+            agents: alerts.reduce((acc: any, alert) => {
+              acc[alert.agent_id] = (acc[alert.agent_id] || 0) + 1;
+              return acc;
+            }, {})
+          });
+          
+          return alerts;
+          
+        } catch (error) {
+          logger.error('Storage', 'getAlerts', 'Database query failed, falling back to memory store', error, { limit });
+          
+          // Fallback to memory store
+          const allAlerts = Array.from(memoryStore.alerts.values())
+            .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+            .slice(0, limit);
+          
+          logger.warn('Storage', 'getAlerts', `Using memory store fallback`, {
+            memoryAlertCount: allAlerts.length
+          });
+          
+          return allAlerts;
+        }
+      },
+      { limit }
+    );
   }
 
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
