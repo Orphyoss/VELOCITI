@@ -8,8 +8,6 @@ import { Globe, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function NetworkOverview() {
   const [timeframe, setTimeframe] = useState('7');
-  
-  console.log('Current timeframe:', timeframe);
 
   const { data: routeData, isLoading } = useQuery({
     queryKey: ['/api/routes/performance', timeframe],
@@ -67,19 +65,19 @@ export default function NetworkOverview() {
           <div className="flex space-x-1 sm:space-x-2">
             {timeframes.map((tf) => {
               const isSelected = timeframe === tf.value;
-              console.log(`Button ${tf.label}: selected=${isSelected}, timeframe=${timeframe}, tf.value=${tf.value}`);
               
               return (
                 <Button
                   key={tf.value}
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => setTimeframe(tf.value)}
-                  className={`text-xs sm:text-sm transition-colors ${
-                    isSelected 
-                      ? "bg-aviation-600 hover:bg-aviation-700 text-white border-aviation-600" 
-                      : "bg-dark-800 hover:bg-dark-700 text-dark-50 border-dark-600"
-                  }`}
+                  style={{
+                    backgroundColor: isSelected ? 'hsl(210, 100%, 50%)' : 'hsl(220, 27%, 18%)',
+                    color: isSelected ? 'white' : 'hsl(210, 40%, 80%)',
+                    border: isSelected ? '1px solid hsl(210, 100%, 50%)' : '1px solid hsl(220, 20%, 40%)',
+                  }}
+                  className="text-xs sm:text-sm transition-all duration-200 hover:opacity-80"
                 >
                   {tf.label}
                 </Button>
