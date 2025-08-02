@@ -35,7 +35,7 @@ export default function NetworkOverview() {
   }));
 
   const timeframes = [
-    { value: '2', label: '24h' },
+    { value: '1', label: '24h' },
     { value: '7', label: '7d' },
     { value: '30', label: '30d' },
   ];
@@ -66,13 +66,13 @@ export default function NetworkOverview() {
             {timeframes.map((tf) => (
               <Button
                 key={tf.value}
-                variant="outline"
+                variant={timeframe === tf.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setTimeframe(tf.value)}
-                className={`text-xs sm:text-sm ${timeframe === tf.value 
-                  ? "bg-aviation-600 text-white border-aviation-600" 
-                  : "bg-dark-800 hover:bg-dark-700 text-dark-50 border-dark-600"
-                }`}
+                className={timeframe === tf.value 
+                  ? "bg-aviation-600 hover:bg-aviation-700 text-white border-aviation-600 text-xs sm:text-sm" 
+                  : "bg-dark-800 hover:bg-dark-700 text-dark-50 border-dark-600 text-xs sm:text-sm"
+                }
               >
                 {tf.label}
               </Button>
