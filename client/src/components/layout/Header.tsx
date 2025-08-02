@@ -19,7 +19,7 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
 
   const { data: alerts } = useQuery({
     queryKey: ['/api/alerts'],
-    queryFn: () => api.getAlerts('5'), // Get latest 5 alerts
+    queryFn: () => api.getAlerts(undefined, 5), // Get latest 5 alerts (priority=undefined, limit=5)
     enabled: showNotifications, // Only fetch when dropdown is open
   });
 
