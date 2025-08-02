@@ -14,11 +14,13 @@ export default function MetricsOverview() {
   const { data: rmMetrics } = useQuery({
     queryKey: ['/api/telos/rm-metrics'],
     enabled: true,
+    staleTime: 0, // Force fresh data
   });
 
   const { data: routePerformance } = useQuery({
     queryKey: ['/api/routes/performance'],
     enabled: true,
+    staleTime: 0, // Force fresh data
   });
 
   const { data: competitiveData } = useQuery({
@@ -56,7 +58,7 @@ export default function MetricsOverview() {
     {
       title: 'Network Yield',
       value: networkYield > 0 ? `£${Math.round(networkYield)}` : 'No data',
-      change: networkYield > 100 ? `+${((networkYield - 100) / 100 * 100).toFixed(1)}% vs forecast` : networkYield > 0 ? 'vs forecast' : 'Calculating...',
+      change: networkYield > 100 ? `+${Math.round((networkYield - 100) / 100 * 100)}% vs forecast` : networkYield > 0 ? 'vs forecast' : 'Calculating...',
       trend: networkYield > 100 ? 'up' : networkYield > 0 ? 'neutral' : 'neutral',
       icon: BarChart3,
     },
@@ -69,7 +71,7 @@ export default function MetricsOverview() {
     },
     {
       title: 'Revenue Impact',
-      value: dailyRevenue > 1000000 ? `£${(dailyRevenue / 1000000).toFixed(1)}M` : 
+      value: dailyRevenue > 1000000 ? `£${Math.round(dailyRevenue / 1000000)}M` : 
              dailyRevenue > 1000 ? `£${Math.round(dailyRevenue / 1000)}K` : 
              dailyRevenue > 0 ? `£${Math.round(dailyRevenue)}` : 'No data',
       change: dailyRevenue > 0 ? 'Daily AI impact' : 'Calculating...',
