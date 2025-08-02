@@ -57,29 +57,7 @@
   --alert-low: hsl(142, 76%, 36%);
 }
 
-/* Morning Briefing greeting fix */
-.greeting-text {
-  color: #ffffff !important;
-  font-weight: bold !important;
-  background-color: rgba(255, 0, 0, 0.3) !important;
-  padding: 8px !important;
-  border-radius: 4px !important;
-  display: block !important;
-  position: relative !important;
-  z-index: 999 !important;
-  font-size: 18px !important;
-  line-height: 1.2 !important;
-}
-
-.greeting-text::before {
-  content: "VISIBLE TEXT: " !important;
-  color: #ffff00 !important;
-}
-
-/* Alternative approach - force all text in this card to be visible */
-.analyst-context-card * {
-  color: #ffffff !important;
-}
+/* Clean up - removed temporary styling */
 
 .dark {
   --background: hsl(222, 84%, 4.9%);

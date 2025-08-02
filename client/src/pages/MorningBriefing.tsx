@@ -654,17 +654,8 @@ ${insight.description}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="greeting-text text-lg mb-2" style={{ 
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: '#ffffff',
-                  background: 'rgba(255,0,0,0.3)',
-                  padding: '8px',
-                  display: 'block',
-                  position: 'relative',
-                  zIndex: 999
-                }}>
-                  Good morning, {briefingData?.analyst.name || 'Sarah Mitchell'}
+                <h2 className="text-lg font-semibold text-white mb-2">
+                  Good morning, {briefingData?.analyst.name}
                 </h2>
                 <p className="text-white text-sm mb-1">
                   {briefingData?.analyst.role} • {briefingData?.analyst.focus}
@@ -677,8 +668,8 @@ ${insight.description}
                 <Badge 
                   className={`${
                     briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' 
-                      ? 'bg-orange-100 text-orange-800 hover:bg-orange-200' 
-                      : 'bg-green-100 text-green-800 hover:bg-green-200'
+                      ? 'bg-orange-900 text-orange-200 hover:bg-orange-800' 
+                      : 'bg-green-900 text-green-200 hover:bg-green-800'
                   }`}
                 >
                   {briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' ? (
