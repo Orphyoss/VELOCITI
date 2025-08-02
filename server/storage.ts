@@ -131,16 +131,86 @@ export class MemoryStorage implements IStorage {
   }
 
   async getAlerts(limit = 50): Promise<Alert[]> {
-    const allAlerts = Array.from(memoryStore.alerts.values())
-      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-      .slice(0, limit);
-    return allAlerts;
+    try {
+      // Query database directly using raw SQL for all alerts including enhanced scenarios
+      const { client } = await import('../services/supabase');
+      
+      const result = await client`
+        SELECT * FROM alerts 
+        ORDER BY created_at DESC 
+        LIMIT ${limit}
+      `;
+      
+      // Convert database format to expected format
+      return result.map((alert: any) => ({
+        id: alert.id,
+        type: alert.type || 'alert',
+        priority: alert.priority,
+        title: alert.title,
+        description: alert.description,
+        route: alert.route || null,
+        route_name: alert.route_name || null,
+        metric_value: alert.metric_value || null,  
+        threshold_value: alert.threshold_value || null,
+        impact_score: alert.impact_score || null,
+        confidence: alert.confidence || null,
+        agent_id: alert.agent_id,
+        metadata: alert.metadata || {},
+        status: alert.status,
+        created_at: alert.created_at,
+        acknowledged_at: alert.acknowledged_at || null,
+        resolved_at: alert.resolved_at || null,
+        category: alert.category
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching alerts from database:', error);
+      // Fallback to memory store
+      const allAlerts = Array.from(memoryStore.alerts.values())
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
+        .slice(0, limit);
+      return allAlerts;
+    }
   }
 
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
-    return Array.from(memoryStore.alerts.values())
-      .filter(alert => alert.priority === priority)
-      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    try {
+      // Query database directly using raw SQL for priority alerts
+      const { client } = await import('../services/supabase');
+      
+      const result = await client`
+        SELECT * FROM alerts 
+        WHERE priority = ${priority}
+        ORDER BY created_at DESC
+      `;
+      
+      // Convert database format to expected format
+      return result.map((alert: any) => ({
+        id: alert.id,
+        type: alert.type || 'alert',
+        priority: alert.priority,
+        title: alert.title,
+        description: alert.description,
+        route: alert.route || null,
+        route_name: alert.route_name || null,
+        metric_value: alert.metric_value || null,  
+        threshold_value: alert.threshold_value || null,
+        impact_score: alert.impact_score || null,
+        confidence: alert.confidence || null,
+        agent_id: alert.agent_id,
+        metadata: alert.metadata || {},
+        status: alert.status,
+        created_at: alert.created_at,
+        acknowledged_at: alert.acknowledged_at || null,
+        resolved_at: alert.resolved_at || null,
+        category: alert.category
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching priority alerts from database:', error);
+      // Fallback to memory store
+      return Array.from(memoryStore.alerts.values())
+        .filter(alert => alert.priority === priority)
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    }
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
