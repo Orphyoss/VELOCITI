@@ -2,6 +2,7 @@ import { db } from './supabase';
 import { alerts, agents, feedback, routePerformance, activities } from '@shared/schema';
 import { eq, desc, and, gte } from 'drizzle-orm';
 import { llmService } from './llm';
+import { storage } from '../storage';
 
 export class AgentService {
   
@@ -28,7 +29,7 @@ export class AgentService {
           
           await db.insert(alerts).values([alert]);
           
-          await db.insert(activities).values({
+          await storage.createActivity({
             type: 'alert',
             title: 'Competitive Alert Generated',
             description: `Competitive Agent detected: ${alert.title}`,
@@ -67,7 +68,7 @@ export class AgentService {
           
           await db.insert(alerts).values([alert]);
           
-          await db.insert(activities).values({
+          await storage.createActivity({
             type: 'analysis',
             title: 'Performance Analysis Complete',
             description: `Performance Agent analyzed route: ${alert.route}`,
@@ -105,7 +106,7 @@ export class AgentService {
           
           await db.insert(alerts).values([alert]);
           
-          await db.insert(activities).values({
+          await storage.createActivity({
             type: 'analysis',
             title: 'Network Analysis Complete',
             description: `Network Agent identified: ${alert.title}`,
