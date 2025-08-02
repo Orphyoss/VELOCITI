@@ -320,9 +320,9 @@ export default function TelosIntelligence() {
             <PoundSterling className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold">{formatCurrency(rmMetrics.revenueImpact.daily)}</div>
+            <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.revenueImpact.daily.toFixed(2)}</div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs text-muted-foreground">
-              <span className="mb-1 sm:mb-0">Monthly: {formatCurrency(rmMetrics.revenueImpact.monthly)}</span>
+              <span className="mb-1 sm:mb-0">Monthly: £{rmMetrics.revenueImpact.monthly.toFixed(2)}</span>
               <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
                 {formatPercentage(rmMetrics.revenueImpact.trend)}
               </Badge>
@@ -623,7 +623,7 @@ export default function TelosIntelligence() {
                         <div className="text-sm text-muted-foreground">Current yield performance</div>
                       </div>
                       <div className="text-right space-y-1">
-                        <div className="text-xl font-bold">£{route.yield}</div>
+                        <div className="text-xl font-bold">£{route.yield.toFixed(2)}</div>
                         <div className="flex items-center gap-2">
                           <Badge variant={route.change > 10 ? 'default' : route.change > 5 ? 'secondary' : 'outline'}>
                             {formatPercentage(route.change)}
@@ -644,7 +644,7 @@ export default function TelosIntelligence() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+                  <div className="text-3xl font-bold">£{rmMetrics.yieldOptimization.currentYield.toFixed(2)}</div>
                   <div className="text-muted-foreground">Current Network Yield</div>
                   <div className="mt-2">
                     <Progress 
@@ -653,7 +653,7 @@ export default function TelosIntelligence() {
                     />
                     <div className="text-xs text-muted-foreground mt-1">
                       {rmMetrics.yieldOptimization.currentYield && rmMetrics.yieldOptimization.targetYield 
-                        ? `${((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £${rmMetrics.yieldOptimization.targetYield} target`
+                        ? `${((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £${rmMetrics.yieldOptimization.targetYield.toFixed(2)} target`
                         : 'Target data unavailable'
                       }
                     </div>
@@ -702,21 +702,21 @@ export default function TelosIntelligence() {
                     {(competitive as any)?.slice(0, 6).map((comp: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <div className="font-medium">{comp.routeId}</div>
+                          <div className="font-medium">{comp.airlineCode}</div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(comp.observationDate).toLocaleDateString()}
+                            {comp.observationCount} observations
                           </div>
                         </div>
                         <div className="text-right space-y-1">
                           <div className="font-bold">
-                            EasyJet: £{comp.easyjetAvgPrice ? comp.easyjetAvgPrice.toFixed(0) : 'N/A'}
+                            Avg: £{parseFloat(comp.avgPrice || '0').toFixed(2)}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            vs Ryanair: £{comp.ryanairAvgPrice ? comp.ryanairAvgPrice.toFixed(0) : 'N/A'}
+                            Range: £{parseFloat(comp.minPrice || '0').toFixed(0)} - £{parseFloat(comp.maxPrice || '0').toFixed(0)}
                           </div>
-                          <Badge variant={comp.marketPosition === 'Competitive' ? 'default' : 
-                                       comp.marketPosition === 'Premium' ? 'secondary' : 'destructive'}>
-                            {comp.marketPosition}
+                          <Badge variant={comp.airlineCode === 'EZY' ? 'default' : 
+                                       parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}>
+                            {parseFloat(comp.avgPrice || '0') > 150 ? 'Premium' : parseFloat(comp.avgPrice || '0') < 100 ? 'Budget' : 'Competitive'}
                           </Badge>
                         </div>
                       </div>
@@ -748,7 +748,7 @@ export default function TelosIntelligence() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Market Share</span>
                     <div className="text-right">
-                      <div className="text-xl font-bold">{rmMetrics.competitiveIntelligence.marketShare}%</div>
+                      <div className="text-xl font-bold">{rmMetrics.competitiveIntelligence.marketShare.toFixed(1)}%</div>
                       <Progress value={rmMetrics.competitiveIntelligence.marketShare} className="w-20 h-2 mt-1" />
                     </div>
                   </div>
@@ -806,23 +806,23 @@ export default function TelosIntelligence() {
                         <div className="space-y-1">
                           <div className="font-medium">{perf.routeId}</div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(perf.flightDate).toLocaleDateString()}
+                            {perf.flightCount} flights • {perf.observationCount} observations
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Load Factor</div>
-                            <div className="font-bold">{perf.loadFactor ? (perf.loadFactor * 100).toFixed(1) : '0.0'}%</div>
+                            <div className="font-bold">{perf.avgLoadFactor || 0}%</div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Revenue</div>
-                            <div className="font-bold">{formatCurrency(perf.revenueTotal)}</div>
+                            <div className="font-bold">£{parseFloat(perf.totalRevenue || '0').toFixed(0)}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">vs Forecast</div>
                             <div className="flex items-center gap-1">
-                              {getPerformanceIcon(perf.performanceVsForecast)}
-                              <span className="text-sm">{perf.performanceVsForecast}</span>
+                              {perf.avgLoadFactor >= 75 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                              <span className="text-sm">{perf.avgLoadFactor >= 75 ? '+Above' : '-Below'}</span>
                             </div>
                           </div>
                         </div>
@@ -847,7 +847,7 @@ export default function TelosIntelligence() {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm">Network Load Factor</span>
-                      <span className="font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</span>
+                      <span className="font-bold">{rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</span>
                     </div>
                     <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
                   </div>
