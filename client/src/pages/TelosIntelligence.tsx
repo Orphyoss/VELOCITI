@@ -323,7 +323,7 @@ export default function TelosIntelligence() {
             <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.revenueImpact.daily.toFixed(2)}</div>
             <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs text-muted-foreground">
               <span className="mb-1 sm:mb-0">Monthly: £{rmMetrics.revenueImpact.monthly.toFixed(2)}</span>
-              <Badge variant="default" className="bg-green-100 text-green-800 w-fit">
+              <Badge variant="secondary" className="bg-green-600 dark:bg-green-700 text-white dark:text-green-100 font-medium w-fit">
                 {formatPercentage(rmMetrics.revenueImpact.trend)}
               </Badge>
             </div>
