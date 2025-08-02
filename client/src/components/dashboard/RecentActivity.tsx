@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, AlertTriangle, BarChart3, Bot, TrendingUp } from 'lucide-react';
 import { Activity } from '@/types';
+import { Link } from 'wouter';
 
 export default function RecentActivity() {
   const { data: activities, isLoading } = useQuery({
@@ -145,12 +146,14 @@ export default function RecentActivity() {
         
         {activities && activities.length > 0 && (
           <div className="mt-6 pt-4 border-t border-dark-800">
-            <Button 
-              variant="ghost"
-              className="text-aviation-400 hover:text-aviation-300 font-medium"
-            >
-              View All Activity →
-            </Button>
+            <Link href="/workbench">
+              <Button 
+                variant="ghost"
+                className="text-aviation-400 hover:text-aviation-300 font-medium"
+              >
+                View All Activity →
+              </Button>
+            </Link>
           </div>
         )}
       </CardContent>
