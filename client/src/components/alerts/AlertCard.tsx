@@ -63,7 +63,11 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
   };
 
   const formatTimestamp = (timestamp: string) => {
+    if (!timestamp) return 'Unknown';
+    
     const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -104,7 +108,7 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
             </Badge>
           </div>
           <span className="text-xs text-muted-foreground">
-            {formatTimestamp(alert.createdAt)}
+            {formatTimestamp(alert.createdAt || (alert as any).created_at)}
           </span>
         </div>
 
