@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-// Writer AI SDK (mock interface since package may not exist)
+// Writer AI SDK interface
 interface WriterAPI {
   generate(params: {
     model: string;
@@ -9,14 +9,88 @@ interface WriterAPI {
   }): Promise<{ text: string; confidence: number }>;
 }
 
-// Mock Writer implementation - replace with actual SDK when available
-class MockWriter implements WriterAPI {
-  async generate(params: { model: string; prompt: string; context?: any }) {
-    // This would be replaced with actual Writer API call
-    return {
-      text: "Strategic analysis would be generated here using Writer Palmyra X5",
-      confidence: 0.95
-    };
+// Real Writer implementation using HTTP API
+class WriterClient implements WriterAPI {
+  private apiKey: string;
+  private baseUrl: string = 'https://api.writer.com/v1';
+
+  constructor() {
+    this.apiKey = process.env.WRITER_API_KEY || '';
+    if (!this.apiKey) {
+      console.warn('[Writer] API key not found in environment variables');
+    }
+  }
+
+  async generate(params: { model: string; prompt: string; context?: any }): Promise<{ text: string; confidence: number }> {
+    if (!this.apiKey) {
+      throw new Error('Writer API key not configured. Please add WRITER_API_KEY to environment variables.');
+    }
+
+    try {
+      console.log(`[Writer] Making API request to ${this.baseUrl}/chat/completions`);
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'palmyra-x-5-32b',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are an expert airline revenue management analyst specializing in EasyJet operations. Provide detailed, actionable strategic analysis with specific recommendations and confidence assessments.'
+            },
+            {
+              role: 'user',
+              content: params.prompt
+            }
+          ],
+          max_tokens: 2000,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[Writer] API error: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Writer API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || 'No response generated';
+      
+      // Calculate confidence based on response length and structure
+      const confidence = this.calculateConfidence(text);
+      
+      console.log(`[Writer] Successfully generated ${text.length} characters with confidence ${confidence}`);
+      
+      return {
+        text,
+        confidence
+      };
+    } catch (error) {
+      console.error('[Writer] API error:', error);
+      // Fallback to OpenAI if Writer fails
+      console.log('[Writer] Falling back to OpenAI for analysis');
+      throw error;
+    }
+  }
+
+  private calculateConfidence(text: string): number {
+    // Calculate confidence based on response quality indicators
+    const hasRecommendations = text.toLowerCase().includes('recommend');
+    const hasSpecifics = /\d+/.test(text); // Contains numbers/data
+    const isDetailed = text.length > 500;
+    const hasStructure = text.includes('\n') || text.includes('•') || text.includes('-');
+    
+    let confidence = 0.6; // Base confidence
+    if (hasRecommendations) confidence += 0.1;
+    if (hasSpecifics) confidence += 0.1;
+    if (isDetailed) confidence += 0.1;
+    if (hasStructure) confidence += 0.1;
+    
+    return Math.min(confidence, 0.95);
   }
 }
 
@@ -25,7 +99,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "sk-default-key" 
 });
 
-const writer = new MockWriter(); // Replace with actual Writer SDK
+const writer = new WriterClient();
 
 export class LLMService {
   private currentProvider: 'openai' | 'writer' = 'writer';

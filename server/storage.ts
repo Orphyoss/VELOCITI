@@ -20,7 +20,7 @@ const memoryStore = {
 
 // Initialize with sample data
 const initializeData = () => {
-  // Sample agents
+  // Sample agents - these will be populated from real database by storage implementation
   const sampleAgents: Agent[] = [
     {
       id: 'competitive',

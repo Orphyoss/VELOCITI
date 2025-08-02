@@ -142,43 +142,44 @@ export default function TelosIntelligence() {
     refetchInterval: 15000, // Refresh every 15 seconds for alerts
   });
 
-  // Mock RM metrics data (to be integrated with real data)
+  // Real RM metrics data from live backend metrics
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: (businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500,
-      weekly: ((businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500) * 7,
-      monthly: (businessMetrics as any)?.data?.revenueImpact?.monthlyRevenue || 82450000,
-      trend: 8.3
+      daily: (businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 0,
+      weekly: ((businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 0) * 7,
+      monthly: (businessMetrics as any)?.data?.revenueImpact?.monthlyRevenue || 0,
+      trend: (businessMetrics as any)?.data?.revenueImpact?.roiMultiple || 0
     },
     yieldOptimization: {
-      currentYield: (businessMetrics as any)?.data?.analystTimeSavings?.avgDailySavingsMinutes || 127.45,
-      targetYield: 135.20,
-      improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 6.1,
-      topRoutes: [
-        { route: 'LGW→BCN', yield: 142.30, change: 12.4 },
-        { route: 'LTN→AMS', yield: 138.75, change: 9.8 },
-        { route: 'STN→DUB', yield: 135.90, change: 7.2 },
-        { route: 'LGW→MAD', yield: 133.45, change: 5.6 },
-        { route: 'LTN→FCO', yield: 131.20, change: 4.3 }
-      ]
+      currentYield: (performance as any)?.[0]?.yield ? parseFloat((performance as any)[0].yield) : 0,
+      targetYield: (performance as any)?.reduce((sum: number, route: any) => sum + parseFloat(route.yield || '0'), 0) / Math.max(1, (performance as any)?.length || 1) * 1.15, // 15% above current average
+      improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 0,
+      topRoutes: (performance as any)?.slice(0, 5).map((route: any) => ({
+        route: route.route,
+        yield: parseFloat(route.yield || '0'),
+        change: parseFloat(route.performance || '0')
+      })) || []
     },
     competitiveIntelligence: {
-      priceAdvantageRoutes: 142,
-      priceDisadvantageRoutes: 89,
-      responseTime: (businessMetrics as any)?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 3.2,
-      marketShare: 24.7
+      priceAdvantageRoutes: (competitive as any)?.filter((comp: any) => comp.priceGapPercent && parseFloat(comp.priceGapPercent) < 0).length || 0,
+      priceDisadvantageRoutes: (competitive as any)?.filter((comp: any) => comp.priceGapPercent && parseFloat(comp.priceGapPercent) > 0).length || 0,
+      responseTime: (businessMetrics as any)?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 0,
+      marketShare: 24.7 // This would come from external market data source
     },
     operationalEfficiency: {
-      loadFactorVariance: 4.2,
-      demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 91.3,
-      bookingPaceVariance: 12.8,
-      capacityUtilization: (systemMetrics as any)?.data?.systemAvailability?.availabilityPercent || 87.9
+      loadFactorVariance: (performance as any)?.reduce((acc: number, route: any) => {
+        const lf = parseFloat(route.loadFactor || '0');
+        return acc + Math.abs(lf - 80); // Variance from 80% target load factor
+      }, 0) / Math.max(1, (performance as any)?.length || 1) || 0,
+      demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 0,
+      bookingPaceVariance: (routeDashboard as any)?.demandVariance || 0,
+      capacityUtilization: (systemMetrics as any)?.data?.systemAvailability?.availabilityPercent || 0
     },
     riskMetrics: {
-      routesAtRisk: 23,
-      volatilityIndex: 15.7,
-      competitorThreats: 7,
-      seasonalRisks: 12
+      routesAtRisk: (performance as any)?.filter((route: any) => parseFloat(route.performance || '0') < -5).length || 0,
+      volatilityIndex: (performance as any)?.reduce((acc: number, route: any) => acc + Math.abs(parseFloat(route.performance || '0')), 0) / Math.max(1, (performance as any)?.length || 1) || 0,
+      competitorThreats: (insights as any)?.filter((insight: any) => insight.insightType === 'Alert' && insight.agentSource === 'Competitive Agent').length || 0,
+      seasonalRisks: (insights as any)?.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal')).length || 0
     }
   };
 

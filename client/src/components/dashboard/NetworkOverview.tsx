@@ -14,18 +14,25 @@ export default function NetworkOverview() {
     queryFn: () => api.getRoutePerformance(undefined, parseInt(timeframe)),
   });
 
-  // Mock data for top and bottom performing routes
-  const topRoutes = [
-    { code: 'LGW→FCO', name: 'London Gatwick → Rome', performance: 15.2, yield: 142.30 },
-    { code: 'STN→BCN', name: 'Stansted → Barcelona', performance: 12.7, yield: 138.45 },
-    { code: 'LTN→CDG', name: 'Luton → Paris Charles de Gaulle', performance: 8.9, yield: 156.20 },
-  ];
+  // Calculate top and bottom performing routes from real data
+  const allRoutes = routeData || [];
+  const sortedByPerformance = [...allRoutes].sort((a, b) => 
+    parseFloat(b.performance || '0') - parseFloat(a.performance || '0')
+  );
+  
+  const topRoutes = sortedByPerformance.slice(0, 3).map(route => ({
+    code: route.route,
+    name: route.routeName || route.route,
+    performance: parseFloat(route.performance || '0'),
+    yield: parseFloat(route.yield || '0')
+  }));
 
-  const bottomRoutes = [
-    { code: 'LGW→MAD', name: 'London Gatwick → Madrid', performance: -8.3, yield: 119.75 },
-    { code: 'STN→BER', name: 'Stansted → Berlin', performance: -5.7, yield: 98.50 },
-    { code: 'LTN→NAP', name: 'Luton → Naples', performance: -4.2, yield: 112.80 },
-  ];
+  const bottomRoutes = sortedByPerformance.slice(-3).map(route => ({
+    code: route.route,
+    name: route.routeName || route.route,
+    performance: parseFloat(route.performance || '0'),
+    yield: parseFloat(route.yield || '0')
+  }));
 
   const timeframes = [
     { value: '1', label: '24h' },
