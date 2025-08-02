@@ -26,7 +26,7 @@ export default function MetricsOverview() {
     enabled: true,
   });
 
-  if (isLoading) {
+  if (isLoading || !rmMetrics || !routePerformance) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         {[...Array(8)].map((_, i) => (
@@ -45,12 +45,12 @@ export default function MetricsOverview() {
   }
 
   // Calculate authentic metrics from real data
-  const networkYield = rmMetrics?.yieldOptimization?.currentYield || 0;
-  const loadFactor = routePerformance?.[0]?.avgLoadFactor || 0;
-  const dailyRevenue = rmMetrics?.revenueImpact?.daily || 0;
-  const responseTime = rmMetrics?.competitiveIntelligence?.responseTime || 0;
-  const routesCount = Math.max(routePerformance?.length || 0, competitiveData?.length || 0);
-  const competitiveAdvantage = rmMetrics?.competitiveIntelligence?.priceAdvantageRoutes || 0;
+  const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield || 0;
+  const loadFactor = (routePerformance as any)?.[0]?.avgLoadFactor || 0;
+  const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
+  const responseTime = (rmMetrics as any)?.competitiveIntelligence?.responseTime || 0;
+  const routesCount = Math.max((routePerformance as any)?.length || 0, (competitiveData as any)?.length || 0);
+  const competitiveAdvantage = (rmMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 0;
 
   const metrics = [
     {
