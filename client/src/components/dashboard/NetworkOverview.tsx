@@ -15,23 +15,23 @@ export default function NetworkOverview() {
   });
 
   // Calculate top and bottom performing routes from real data
-  const allRoutes = routeData || [];
-  const sortedByPerformance = [...allRoutes].sort((a, b) => 
-    parseFloat(b.performance || '0') - parseFloat(a.performance || '0')
+  const allRoutes = (routeData as any) || [];
+  const sortedByPerformance = [...allRoutes].sort((a: any, b: any) => 
+    parseFloat(b.avgLoadFactor || '0') - parseFloat(a.avgLoadFactor || '0')
   );
   
-  const topRoutes = sortedByPerformance.slice(0, 3).map(route => ({
-    code: route.route,
-    name: route.routeName || route.route,
-    performance: parseFloat(route.performance || '0'),
-    yield: parseFloat(route.yield || '0')
+  const topRoutes = sortedByPerformance.slice(0, 3).map((route: any) => ({
+    code: route.routeId,
+    name: route.routeId,
+    performance: parseFloat(route.avgLoadFactor || '0'),
+    yield: parseFloat(route.avgYield || '0')
   }));
 
-  const bottomRoutes = sortedByPerformance.slice(-3).map(route => ({
-    code: route.route,
-    name: route.routeName || route.route,
-    performance: parseFloat(route.performance || '0'),
-    yield: parseFloat(route.yield || '0')
+  const bottomRoutes = sortedByPerformance.slice(-3).reverse().map((route: any) => ({
+    code: route.routeId,
+    name: route.routeId,
+    performance: parseFloat(route.avgLoadFactor || '0'),
+    yield: parseFloat(route.avgYield || '0')
   }));
 
   const timeframes = [
@@ -116,9 +116,9 @@ export default function NetworkOverview() {
                     </div>
                     <div className="text-right ml-2">
                       <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs">
-                        {formatPerformance(route.performance)}
+                        {route.performance}%
                       </Badge>
-                      <p className="text-xs text-dark-400 mt-1">{formatCurrency(route.yield)}</p>
+                      <p className="text-xs text-dark-400 mt-1">£{route.yield.toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
@@ -140,9 +140,9 @@ export default function NetworkOverview() {
                     </div>
                     <div className="text-right ml-2">
                       <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs">
-                        {formatPerformance(route.performance)}
+                        {route.performance}%
                       </Badge>
-                      <p className="text-xs text-dark-400 mt-1">{formatCurrency(route.yield)}</p>
+                      <p className="text-xs text-dark-400 mt-1">£{route.yield.toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
