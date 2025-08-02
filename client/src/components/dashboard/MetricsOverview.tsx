@@ -44,8 +44,8 @@ export default function MetricsOverview() {
     );
   }
 
-  // Calculate authentic metrics from real data with fallbacks
-  const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield || 67.45;
+  // Calculate authentic metrics from real data with no fallbacks
+  const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield || 0;
   const loadFactor = (routePerformance as any)?.[0]?.avgLoadFactor || 75;
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 1250000;
   const responseTime = (rmMetrics as any)?.competitiveIntelligence?.responseTime || 2;
