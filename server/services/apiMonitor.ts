@@ -185,7 +185,16 @@ export class APIMonitorService {
   }
 
   getHealthChecks(): APIHealthCheck[] {
-    return Array.from(this.healthChecks.values());
+    return Array.from(this.healthChecks.values()).map(check => {
+      // Calculate uptime percentage
+      const totalChecks = check.uptime + check.errorCount;
+      const uptimePercentage = totalChecks > 0 ? Math.round((check.uptime / totalChecks) * 100) : 0;
+      
+      return {
+        ...check,
+        uptime: uptimePercentage
+      };
+    });
   }
 
   getPerformanceMetrics(hours: number = 24): PerformanceMetric[] {
