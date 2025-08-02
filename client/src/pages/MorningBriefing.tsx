@@ -654,11 +654,11 @@ ${insight.description}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-white">
+                <h2 className="text-lg font-semibold" style={{ color: '#ffffff', fontWeight: '600' }}>
                   Good morning, {briefingData?.analyst.name}
                 </h2>
-                <p className="text-dark-100">{briefingData?.analyst.role} • {briefingData?.analyst.focus}</p>
-                <p className="text-sm text-dark-400 mt-1">
+                <p style={{ color: '#e5e7eb' }}>{briefingData?.analyst.role} • {briefingData?.analyst.focus}</p>
+                <p className="text-sm mt-1" style={{ color: '#9ca3af' }}>
                   Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}
                 </p>
               </div>
