@@ -625,7 +625,7 @@ ${insight.description}
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-dark-50">
+                <p className="text-sm font-medium text-white">
                   {new Date().toLocaleDateString('en-GB', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -654,10 +654,10 @@ ${insight.description}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-dark-50">
+                <h2 className="text-lg font-semibold text-white">
                   Good morning, {briefingData?.analyst.name}
                 </h2>
-                <p className="text-dark-300">{briefingData?.analyst.role} • {briefingData?.analyst.focus}</p>
+                <p className="text-dark-100">{briefingData?.analyst.role} • {briefingData?.analyst.focus}</p>
                 <p className="text-sm text-dark-400 mt-1">
                   Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}
                 </p>
@@ -687,8 +687,8 @@ ${insight.description}
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-dark-50 mb-3">Executive Summary</h3>
-                <p className="text-dark-200 text-lg leading-relaxed">
+                <h3 className="text-xl font-semibold text-white mb-3">Executive Summary</h3>
+                <p className="text-dark-100 text-lg leading-relaxed">
                   {briefingData?.executiveSummary.keyMessage}
                 </p>
                 <div className="mt-4 flex items-center text-sm text-dark-400">
@@ -705,7 +705,7 @@ ${insight.description}
           <div className="lg:col-span-2">
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader className="border-b border-dark-800">
-                <CardTitle className="text-dark-50">Priority Actions</CardTitle>
+                <CardTitle className="text-white">Priority Actions</CardTitle>
                 <p className="text-sm text-dark-400 mt-1">Ranked by revenue impact and urgency</p>
               </CardHeader>
               <CardContent className="p-0">
