@@ -1,0 +1,384 @@
+-- Telos Enhanced Alert Generation Engine
+-- Creates realistic airline intelligence scenarios with actionable anomalies
+
+-- ============================================================================
+-- COMPETITIVE INTELLIGENCE ALERTS
+-- ============================================================================
+
+-- Generate Ryanair "Flash Attack" Scenario
+INSERT INTO competitive_pricing (
+  insertdttm, key_comp, sector, observation_dt, carriername, 
+  flight_dt, price_gbp, route_id, airline_code
+)
+WITH ryanair_flash_sale AS (
+  SELECT 
+    NOW() as insertdttm,
+    'LGWBCN' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') as key_comp,
+    'LGWBCN' as sector,
+    CURRENT_DATE as observation_dt,
+    'Ryanair' as carriername,
+    CURRENT_DATE + INTERVAL '1 day' * generate_series(14, 35) AS flight_dt,
+    'LGW-BCN' as route_id,
+    'RYR' as airline_code
+)
+SELECT 
+  insertdttm, key_comp, sector, observation_dt, carriername, flight_dt,
+  -- Aggressive 25% price drop vs normal Ryanair pricing
+  CASE 
+    WHEN EXTRACT(DOW FROM flight_dt) IN (1,2,3,4) THEN 45.00  -- Weekday flash price
+    ELSE 65.00  -- Weekend still discounted
+  END as price_gbp,
+  route_id, airline_code
+FROM ryanair_flash_sale;
+
+-- Generate British Airways "Premium Push" Counter-Attack
+INSERT INTO competitive_pricing (
+  insertdttm, key_comp, sector, observation_dt, carriername, 
+  flight_dt, price_gbp, route_id, airline_code
+)
+WITH ba_response AS (
+  SELECT 
+    NOW() as insertdttm,
+    'LGWBCN' || TO_CHAR(CURRENT_DATE + 1, 'YYYYMMDD') as key_comp,
+    'LGWBCN' as sector,
+    CURRENT_DATE + 1 as observation_dt,
+    'British Airways' as carriername,
+    CURRENT_DATE + INTERVAL '1 day' * generate_series(14, 35) AS flight_dt,
+    'LGW-BCN' as route_id,
+    'BA' as airline_code
+)
+SELECT 
+  insertdttm, key_comp, sector, observation_dt, carriername, flight_dt,
+  -- BA doubles down on premium positioning (+15% vs normal)
+  CASE 
+    WHEN EXTRACT(DOW FROM flight_dt) IN (0,6) THEN 185.00  -- Weekend premium
+    ELSE 165.00  -- Business traveler focus
+  END as price_gbp,
+  route_id, airline_code
+FROM ba_response;
+
+-- ============================================================================
+-- DEMAND ANOMALY SCENARIOS
+-- ============================================================================
+
+-- Generate "Hidden Gem Route Discovery" - Sudden demand surge
+INSERT INTO web_search_data (
+  insertdttm, key_web, sector, search_dt,
+  web_ty_searches, web_ty_bookings, conversion_rate, route_id
+)
+WITH viral_route_discovery AS (
+  SELECT 
+    NOW() as insertdttm,
+    'LGWAGP' || TO_CHAR(CURRENT_DATE - generate_series(0, 5), 'YYYYMMDD') as key_web,
+    'LGWAGP' as sector,
+    CURRENT_DATE - generate_series(0, 5) AS search_dt,
+    'LGW-AGP' as route_id
+)
+SELECT 
+  insertdttm, key_web, sector, search_dt,
+  -- Viral social media effect: searches explode 300% in 5 days
+  CASE 
+    WHEN search_dt = CURRENT_DATE THEN 2400       -- Day 0: Peak viral moment
+    WHEN search_dt = CURRENT_DATE - 1 THEN 2100   -- Day 1: Still trending
+    WHEN search_dt = CURRENT_DATE - 2 THEN 1650   -- Day 2: Momentum continues
+    WHEN search_dt = CURRENT_DATE - 3 THEN 950    -- Day 3: Building
+    WHEN search_dt = CURRENT_DATE - 4 THEN 720    -- Day 4: Starting to rise
+    ELSE 580  -- Day 5: Normal baseline
+  END as web_ty_searches,
+  -- Conversion rates also spike with urgency
+  CASE 
+    WHEN search_dt = CURRENT_DATE THEN 432        -- 18% conversion (vs 12% normal)
+    WHEN search_dt = CURRENT_DATE - 1 THEN 357    -- 17% conversion
+    WHEN search_dt = CURRENT_DATE - 2 THEN 231    -- 14% conversion
+    ELSE web_ty_searches * 0.11  -- Normal conversion
+  END::INTEGER as web_ty_bookings,
+  CASE 
+    WHEN search_dt >= CURRENT_DATE - 2 THEN 0.16  -- High urgency conversion
+    ELSE 0.11  -- Normal conversion
+  END as conversion_rate,
+  route_id
+FROM viral_route_discovery;
+
+-- ============================================================================
+-- OPERATIONAL DISRUPTION CASCADES
+-- ============================================================================
+
+-- Generate "Strike Ripple Effect" - French ATC impacts multiple routes
+INSERT INTO market_events (
+  event_date, event_type, event_name, affected_routes,
+  impact_level, impact_description, start_date, end_date
+) VALUES
+(CURRENT_DATE - 1, 'Strike', 'French ATC 48-Hour Strike', 
+ '["LGW-CDG", "LGW-ORY", "BCN-CDG"]',
+ 'High', 'French air traffic controllers striking over pension reforms. 70% flight cancellations expected.',
+ CURRENT_DATE - 1, CURRENT_DATE + 1);
+
+-- Generate cascading demand shift to alternative routes
+INSERT INTO web_search_data (
+  insertdttm, key_web, sector, search_dt,
+  web_ty_searches, web_ty_bookings, conversion_rate, route_id
+)
+VALUES
+-- LGW-AMS benefits from Paris disruption
+(NOW(), 'LGWAMS' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD'), 'LGWAMS', CURRENT_DATE,
+ 1450, 232, 0.16, 'LGW-AMS'),
+-- LGW-BRU also sees spillover demand  
+(NOW(), 'LGWBRU' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD'), 'LGWBRU', CURRENT_DATE,
+ 890, 125, 0.14, 'LGW-BRU');
+
+-- ============================================================================
+-- REVENUE MANAGEMENT SYSTEM ANOMALIES
+-- ============================================================================
+
+-- Generate "System vs Human Intelligence Conflict"
+INSERT INTO rm_pricing_actions (
+  insertdttm, key_price, sector, flight_dt, observation_dt,
+  action_type, change_reason, change_source, 
+  distance_from_profile, route_id
+)
+VALUES
+-- System recommends price increase but human analyst disagrees
+(NOW(), 'LGWBCN' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD'), 'LGWBCN', 
+ CURRENT_DATE + 25, CURRENT_DATE,
+ 'price_increase', 'system_auto', 'Elysium', 
+ -0.23, 'LGW-BCN'),  -- 23% below profile triggers system action
+
+-- Analyst manually overrides with price decrease 2 hours later
+(NOW(), 'LGWBCN' || TO_CHAR(CURRENT_DATE, 'YYYYMMDD') || '_02', 'LGWBCN', 
+ CURRENT_DATE + 25, CURRENT_DATE,
+ 'price_decrease', 'analyst_manual', 'Manual_Override', 
+ -0.18, 'LGW-BCN');  -- Analyst sees competitive threat system missed
+
+-- ============================================================================
+-- BOOKING CURVE DISRUPTION PATTERNS
+-- ============================================================================
+
+-- Generate "Weekend Warrior Surge" - Unusual mid-week booking spike
+INSERT INTO flight_performance (
+  insert_date, performance_date, flight_date, route_id, 
+  flight_number, load_factor, bookings_count, total_seats
+)
+WITH weekend_warrior_pattern AS (
+  SELECT 
+    CURRENT_DATE + INTERVAL '1 day' * generate_series(21, 25) AS flight_date,
+    'LGW-PMI' as route_id,
+    180 as total_seats
+)
+SELECT 
+  NOW() as insert_date,
+  CURRENT_DATE as performance_date,
+  flight_date,
+  route_id,
+  'EZY' || LPAD((RANDOM() * 9999)::INTEGER::text, 4, '0') as flight_number,
+  -- Unusual pattern: Mid-week Palma flights selling faster than weekends
+  CASE 
+    WHEN EXTRACT(DOW FROM flight_date) IN (2,3,4) THEN 87.5  -- Tue/Wed/Thu hot
+    ELSE 72.3  -- Mon/Fri/Weekend normal
+  END as load_factor,
+  -- Booking count matches load factor
+  CASE 
+    WHEN EXTRACT(DOW FROM flight_date) IN (2,3,4) THEN 158
+    ELSE 130
+  END as bookings_count,
+  total_seats
+FROM weekend_warrior_pattern;
+
+-- ============================================================================
+-- MACRO ECONOMIC SIGNAL DETECTION
+-- ============================================================================
+
+-- Generate "Currency Volatility Impact"
+INSERT INTO economic_indicators (
+  indicator_date, indicator_type, indicator_name, value, region
+)
+WITH currency_shock AS (
+  SELECT CURRENT_DATE - generate_series(0, 5) AS ind_date
+)
+SELECT 
+  ind_date,
+  'Exchange_Rate' as indicator_type,
+  'GBP_EUR' as indicator_name,
+  -- Sudden GBP strength makes UK holidays more expensive for Europeans
+  CASE 
+    WHEN ind_date = CURRENT_DATE THEN 1.23      -- GBP jumps 5%
+    WHEN ind_date = CURRENT_DATE - 1 THEN 1.21  -- Building strength
+    WHEN ind_date = CURRENT_DATE - 2 THEN 1.19  -- Starting to move
+    ELSE 1.17  -- Previous stable rate
+  END as value,
+  'EU' as region
+FROM currency_shock;
+
+-- ============================================================================
+-- AI INSIGHT GENERATION FROM SCENARIOS
+-- ============================================================================
+
+-- Generate intelligent alerts based on the scenarios above
+INSERT INTO intelligence_insights (
+  insight_date, insight_type, priority_level, route_id, 
+  title, description, recommendation, confidence_score, agent_source
+)
+VALUES
+-- Competitive response alert
+(CURRENT_DATE, 'Alert', 'Critical', 'LGW-BCN',
+ 'Ryanair Flash Sale Attack on Core Route LGW-BCN',
+ 'Ryanair has launched aggressive pricing 25% below normal levels on LGW-BCN for mid-haul flights (14-35 days out). This represents their most aggressive move on this route in 6 months. British Airways has responded by increasing premium positioning rather than matching.',
+ 'IMMEDIATE ACTION: Consider selective price matching on Tuesday-Thursday flights where Ryanair pricing is most aggressive. Maintain weekend premium but monitor booking pace carefully. Set up hourly booking alerts for next 48 hours.',
+ 0.94, 'Competitive_Intelligence_Agent'),
+
+-- Demand surge opportunity
+(CURRENT_DATE, 'Opportunity', 'High', 'LGW-AGP',
+ 'Viral Demand Surge on LGW-Malaga Route',
+ 'Search volume for LGW-AGP has increased 300% in 5 days, likely due to social media travel content. Conversion rates are 45% above normal, indicating high purchase intent. Current pricing may be leaving money on the table.',
+ 'REVENUE OPPORTUNITY: Increase prices 12-15% for flights departing 14-28 days. Demand strength supports premium capture. Monitor competitor response and be ready to adjust if market pushes back.',
+ 0.89, 'Demand_Intelligence_Agent'),
+
+-- System conflict alert
+(CURRENT_DATE, 'Alert', 'Medium', 'LGW-BCN',
+ 'Revenue Management System Override Detected',
+ 'Elysium recommended price increase on LGW-BCN flight EZY8842 (25 days out) but analyst manually overrode with price decrease. Distance from profile: -23%. This suggests either system calibration issue or analyst has market intelligence not captured in model.',
+ 'REVIEW REQUIRED: Investigate analyst reasoning for override. If valid competitive threat detected, update system parameters. If analyst error, provide additional training on profile interpretation.',
+ 0.82, 'Performance_Intelligence_Agent'),
+
+-- Operational impact cascade
+(CURRENT_DATE, 'Alert', 'High', 'LGW-AMS',
+ 'Strike Disruption Creates Demand Spillover',
+ 'French ATC strike is disrupting Paris routes, creating 60% surge in demand for Amsterdam and Brussels alternatives. Current capacity may be insufficient to capture opportunity.',
+ 'TACTICAL RESPONSE: Consider aircraft swap to larger gauge on LGW-AMS if available. Increase prices 8-10% to optimize revenue from constrained capacity. Extend promotion to Brussels route to capture additional spillover.',
+ 0.91, 'External_Context_Agent'),
+
+-- Currency impact prediction
+(CURRENT_DATE, 'Trend', 'Medium', NULL,
+ 'GBP Strength May Impact European Leisure Demand',
+ 'GBP has strengthened 5% vs EUR in 3 days, making UK holidays more expensive for European travelers. Historical correlation suggests 8-12% demand reduction for European leisure traffic within 14 days.',
+ 'HEDGE STRATEGY: Consider promotional pricing for European point-of-sale markets. Monitor booking pace from EU origins closely. Potential opportunity to shift marketing spend to domestic UK leisure market.',
+ 0.76, 'External_Context_Agent');
+
+-- ============================================================================
+-- ALERT ESCALATION FRAMEWORK
+-- ============================================================================
+
+-- Generate escalation triggers for different stakeholder levels
+CREATE TABLE alert_escalation_rules (
+  id SERIAL PRIMARY KEY,
+  alert_type VARCHAR(50),
+  priority_level VARCHAR(20),
+  confidence_threshold DECIMAL(3,2),
+  revenue_impact_threshold INTEGER,
+  escalation_target VARCHAR(50),
+  notification_method VARCHAR(30),
+  escalation_delay_minutes INTEGER
+);
+
+INSERT INTO alert_escalation_rules VALUES
+(1, 'Competitive_Response', 'Critical', 0.90, 100000, 'RM_Manager', 'immediate', 0),
+(2, 'Competitive_Response', 'Critical', 0.90, 100000, 'Trading_Team', 'immediate', 5),
+(3, 'Revenue_Opportunity', 'High', 0.85, 50000, 'Pricing_Analyst', 'immediate', 0),
+(4, 'System_Conflict', 'Medium', 0.80, 25000, 'RM_Supervisor', 'standard', 30),
+(5, 'Market_Disruption', 'High', 0.85, 75000, 'Operations_Center', 'immediate', 0);
+
+-- ============================================================================
+-- REAL-TIME ALERT MONITORING QUERY
+-- ============================================================================
+
+-- Query to surface active alerts requiring attention
+CREATE VIEW active_alert_dashboard AS
+SELECT 
+  ii.insight_date,
+  ii.priority_level,
+  ii.route_id,
+  ii.title,
+  ii.description,
+  ii.recommendation,
+  ii.confidence_score,
+  ii.action_taken,
+  -- Calculate urgency score
+  CASE 
+    WHEN ii.priority_level = 'Critical' AND ii.confidence_score >= 0.90 THEN 100
+    WHEN ii.priority_level = 'High' AND ii.confidence_score >= 0.85 THEN 80
+    WHEN ii.priority_level = 'Medium' AND ii.confidence_score >= 0.80 THEN 60
+    ELSE 40
+  END as urgency_score,
+  -- Time since alert generated
+  EXTRACT(HOUR FROM NOW() - ii.created_at) as hours_since_created,
+  -- Color coding for UI
+  CASE 
+    WHEN ii.priority_level = 'Critical' THEN 'red'
+    WHEN ii.priority_level = 'High' THEN 'orange'
+    WHEN ii.priority_level = 'Medium' THEN 'yellow'
+    ELSE 'green'
+  END as alert_color
+FROM intelligence_insights ii
+WHERE ii.insight_date >= CURRENT_DATE - INTERVAL '3 days'
+  AND ii.action_taken = FALSE
+ORDER BY urgency_score DESC, ii.confidence_score DESC;
+
+-- ============================================================================
+-- PATTERN DETECTION QUERIES
+-- ============================================================================
+
+-- Detect unusual competitive patterns
+CREATE VIEW competitive_pattern_detection AS
+SELECT 
+  cp.route_id,
+  cp.airline_code,
+  cp.observation_date,
+  AVG(cp.price_gbp) as avg_price,
+  LAG(AVG(cp.price_gbp)) OVER (
+    PARTITION BY cp.route_id, cp.airline_code 
+    ORDER BY cp.observation_date
+  ) as prev_avg_price,
+  CASE 
+    WHEN AVG(cp.price_gbp) / LAG(AVG(cp.price_gbp)) OVER (
+      PARTITION BY cp.route_id, cp.airline_code 
+      ORDER BY cp.observation_date
+    ) - 1 > 0.15 THEN 'PRICE_SPIKE'
+    WHEN AVG(cp.price_gbp) / LAG(AVG(cp.price_gbp)) OVER (
+      PARTITION BY cp.route_id, cp.airline_code 
+      ORDER BY cp.observation_date
+    ) - 1 < -0.15 THEN 'PRICE_DROP'
+    ELSE 'NORMAL'
+  END as price_pattern
+FROM competitive_pricing cp
+WHERE cp.observation_date >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY cp.route_id, cp.airline_code, cp.observation_date
+HAVING COUNT(*) >= 3  -- Minimum price points for pattern detection
+ORDER BY cp.observation_date DESC;
+
+-- Detect demand anomalies
+CREATE VIEW demand_anomaly_detection AS
+SELECT 
+  ws.route_id,
+  ws.search_dt,
+  ws.web_ty_searches,
+  AVG(ws.web_ty_searches) OVER (
+    PARTITION BY ws.route_id 
+    ORDER BY ws.search_dt 
+    ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING
+  ) as rolling_avg_searches,
+  ws.conversion_rate,
+  AVG(ws.conversion_rate) OVER (
+    PARTITION BY ws.route_id 
+    ORDER BY ws.search_dt 
+    ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING
+  ) as rolling_avg_conversion,
+  CASE 
+    WHEN ws.web_ty_searches > AVG(ws.web_ty_searches) OVER (
+      PARTITION BY ws.route_id 
+      ORDER BY ws.search_dt 
+      ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING
+    ) * 1.5 THEN 'SEARCH_SURGE'
+    WHEN ws.conversion_rate > AVG(ws.conversion_rate) OVER (
+      PARTITION BY ws.route_id 
+      ORDER BY ws.search_dt 
+      ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING
+    ) * 1.3 THEN 'CONVERSION_SPIKE'
+    WHEN ws.web_ty_searches < AVG(ws.web_ty_searches) OVER (
+      PARTITION BY ws.route_id 
+      ORDER BY ws.search_dt 
+      ROWS BETWEEN 6 PRECEDING AND 1 PRECEDING
+    ) * 0.7 THEN 'DEMAND_DROP'
+    ELSE 'NORMAL'
+  END as demand_pattern
+FROM web_search_data ws
+WHERE ws.search_dt >= CURRENT_DATE - INTERVAL '14 days'
+ORDER BY ws.search_dt DESC, ws.route_id;
