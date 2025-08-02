@@ -1069,20 +1069,22 @@ export default function TelosIntelligence() {
                       <div className="space-y-1">
                         <div className="font-semibold flex items-center gap-2">
                           {perf.routeId}
-                          {getPerformanceIcon(perf.performanceVsForecast)}
+                          {perf.avgLoadFactor >= 80 ? <TrendingUp className="h-4 w-4 text-green-500" /> : 
+                           perf.avgLoadFactor >= 70 ? <TrendingUp className="h-4 w-4 text-yellow-500" /> : 
+                           <TrendingDown className="h-4 w-4 text-red-500" />}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {new Date(perf.flightDate).toLocaleDateString()}
+                          {perf.flightCount} flights • {perf.observationCount} observations
                         </div>
                       </div>
                       <div className="text-right space-y-1">
                         <div className="flex items-center gap-4 text-sm">
-                          <span>LF: {perf.loadFactor ? (perf.loadFactor * 100).toFixed(1) : '0.0'}%</span>
-                          <span>Revenue: {formatCurrency(perf.revenueTotal)}</span>
-                          <span>Yield: {formatCurrency(perf.yieldPerPax)}</span>
+                          <span>LF: {perf.avgLoadFactor?.toFixed(1) || '0.0'}%</span>
+                          <span>Revenue: £{parseFloat(perf.totalRevenue || '0').toFixed(0)}</span>
+                          <span>Yield: £{parseFloat(perf.avgYield || '0').toFixed(2)}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {perf.bookingsCount} bookings • {perf.performanceVsForecast}
+                          {perf.totalBookings || 0} bookings • Price: £{parseFloat(perf.avgPrice || '0').toFixed(2)}
                         </div>
                       </div>
                     </div>
