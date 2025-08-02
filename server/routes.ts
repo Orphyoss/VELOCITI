@@ -16,6 +16,7 @@ import { z } from "zod";
 import { metricsMonitoring } from "./services/metricsMonitoring.js";
 import { TelosIntelligenceService } from "./services/telos-intelligence.js";
 import { logger, logAPI } from "./services/logger.js";
+import { duplicatePreventionService } from "./services/duplicatePreventionService.js";
 
 // Function to calculate real dashboard metrics from actual data
 async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activities: any[]) {
@@ -469,7 +470,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Performance monitoring endpoint
+  // Duplicate cleanup endpoint
+  app.post("/api/admin/cleanup-duplicates", async (req, res) => {
+    try {
+      logger.info('API', 'cleanup-duplicates', 'Starting duplicate cleanup');
+      const cleanedCount = await duplicatePreventionService.cleanupDuplicates();
+      
+      res.json({ 
+        success: true, 
+        message: `Cleaned up ${cleanedCount} duplicate alerts`,
+        cleanedCount 
+      });
+      
+      logger.info('API', 'cleanup-duplicates', `Completed cleanup`, { cleanedCount });
+    } catch (error) {
+      logger.error('API', 'cleanup-duplicates', 'Cleanup failed', error);
+      res.status(500).json({ error: 'Failed to cleanup duplicates' });
+    }
+  });
+
+  // Performance monitoring endpoint  
   app.get("/api/monitor/performance", async (req, res) => {
     try {
       const healthMetrics = apiMonitor.getHealthChecks();
