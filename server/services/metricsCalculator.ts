@@ -347,8 +347,8 @@ export class TelosMetricsCalculator {
       let activitiesData: any[] = [];
       
       try {
-        const telosService = await import('./telos-intelligence');
-        insightsData = await telosService.telosIntelligenceService.getIntelligenceInsights();
+        const { telosIntelligenceService } = await import('./telos-intelligence');
+        insightsData = await telosIntelligenceService.getIntelligenceInsights();
         console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from Telos service`);
       } catch (error) {
         console.error('[MetricsCalculator] Failed to fetch from Telos service:', error);
