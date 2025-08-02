@@ -188,7 +188,11 @@ export default function TelosIntelligence() {
       priceAdvantageRoutes: (competitive as any)?.filter((comp: any) => comp.priceGapPercent && parseFloat(comp.priceGapPercent) < 0).length || 0,
       priceDisadvantageRoutes: (competitive as any)?.filter((comp: any) => comp.priceGapPercent && parseFloat(comp.priceGapPercent) > 0).length || 0,
       responseTime: (businessMetrics as any)?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 0,
-      marketShare: 24.7 // This would come from external market data source
+      marketShare: (competitive as any)?.reduce((acc: number, comp: any) => {
+        const ourVolume = parseFloat(comp.ourVolume || '0');
+        const marketVolume = parseFloat(comp.totalMarketVolume || '0');
+        return acc + (marketVolume > 0 ? (ourVolume / marketVolume) * 100 : 0);
+      }, 0) / Math.max(1, (competitive as any)?.length || 1) || 0 // Calculate from real market data
     },
     operationalEfficiency: {
       loadFactorVariance: (performance as any)?.reduce((acc: number, route: any) => {

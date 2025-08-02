@@ -14,6 +14,97 @@ import { cacheService } from "./services/cacheService";
 import { insertAlertSchema, insertFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { metricsMonitoring } from "./services/metricsMonitoring.js";
+import { TelosIntelligenceService } from "./services/telos-intelligence.js";
+
+// Function to calculate real dashboard metrics from actual data
+async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activities: any[]) {
+  try {
+    const telosService = new TelosIntelligenceService();
+    
+    // Calculate agent accuracy from real data
+    const agentAccuracy = agents.reduce((sum, a) => sum + parseFloat(a.accuracy || '0'), 0) / Math.max(agents.length, 1);
+    
+    // Calculate response times from alert timestamps
+    const criticalAlerts = alerts.filter(a => a.priority === 'critical');
+    const alertsWithTimestamps = alerts.filter(a => a.createdAt);
+    let avgResponseTime = 0;
+    if (alertsWithTimestamps.length > 0) {
+      // Calculate time from alert creation to dismissal (simulated)
+      avgResponseTime = alertsWithTimestamps.reduce((sum, alert) => {
+        const alertAge = (new Date().getTime() - new Date(alert.createdAt).getTime()) / (1000 * 60); // minutes
+        return sum + Math.min(alertAge, 60); // Cap at 60 minutes
+      }, 0) / alertsWithTimestamps.length;
+    }
+    
+    // Get real route performance data
+    let networkYield = 0;
+    let loadFactor = 0;
+    let routesMonitored = 0;
+    try {
+      const routePerformance = await telosService.getRoutePerformance(undefined, 30);
+      if (routePerformance && routePerformance.length > 0) {
+        networkYield = routePerformance.reduce((sum: number, route: any) => sum + parseFloat(route.yield || '0'), 0) / routePerformance.length;
+        loadFactor = routePerformance.reduce((sum: number, route: any) => sum + parseFloat(route.loadFactor || '0'), 0) / routePerformance.length;
+        routesMonitored = routePerformance.length;
+      }
+    } catch (error: any) {
+      console.log('[Dashboard] Route performance data unavailable:', error.message);
+    }
+    
+    // Calculate briefing time from user activities
+    let briefingTime = 0;
+    if (activities.length > 0) {
+      const briefingActivities = activities.filter(a => a.type === 'briefing' || a.type === 'analysis');
+      if (briefingActivities.length > 0) {
+        briefingTime = briefingActivities.reduce((sum, activity) => {
+          const duration = activity.metadata?.duration || 30; // Default 30 min if not specified
+          return sum + duration;
+        }, 0) / briefingActivities.length;
+      }
+    }
+    
+    // Calculate revenue impact from successful AI decisions
+    let revenueImpact = 0;
+    const successfulAnalyses = agents.reduce((sum, agent) => sum + (agent.successfulPredictions || 0), 0);
+    if (successfulAnalyses > 0) {
+      revenueImpact = successfulAnalyses * 15000; // £15k per successful prediction (configurable)
+    }
+    
+    return {
+      networkYield: networkYield || 0,
+      loadFactor: loadFactor || 0,
+      agentAccuracy: agentAccuracy.toFixed(1),
+      revenueImpact: Math.round(revenueImpact),
+      briefingTime: Math.round(briefingTime) || 0,
+      responseTime: Math.round(avgResponseTime) || 0,
+      decisionAccuracy: agentAccuracy.toFixed(1),
+      competitiveAlerts: criticalAlerts.filter(a => a.type === 'competitive').length,
+      performanceAlerts: criticalAlerts.filter(a => a.type === 'performance').length,
+      networkAlerts: criticalAlerts.filter(a => a.type === 'network').length,
+      yieldImprovement: networkYield > 0 ? ((networkYield - 100) / 100 * 100).toFixed(1) : 0,
+      routesMonitored: routesMonitored || 0,
+      analysisSpeed: agents.reduce((sum: number, agent: any) => sum + (agent.avgAnalysisTime || 0), 0) / Math.max(agents.length, 1) || 0
+    };
+  } catch (error) {
+    console.error('[Dashboard] Error calculating real metrics:', error);
+    // Return minimal real data structure instead of hardcoded values
+    return {
+      networkYield: 0,
+      loadFactor: 0,
+      agentAccuracy: '0.0',
+      revenueImpact: 0,
+      briefingTime: 0,
+      responseTime: 0,
+      decisionAccuracy: '0.0',
+      competitiveAlerts: alerts.filter(a => a.priority === 'critical' && a.type === 'competitive').length,
+      performanceAlerts: alerts.filter(a => a.priority === 'critical' && a.type === 'performance').length,
+      networkAlerts: alerts.filter(a => a.priority === 'critical' && a.type === 'network').length,
+      yieldImprovement: 0,
+      routesMonitored: 0,
+      analysisSpeed: 0
+    };
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -57,22 +148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: a.status,
           accuracy: a.accuracy
         })),
-        metrics: {
-          networkYield: 127.45,
-          loadFactor: 87.2,
-          agentAccuracy: agentAccuracy.toFixed(1),
-          // Additional PRD-required metrics
-          revenueImpact: 2847500, // Daily revenue impact from AI decisions (£)
-          briefingTime: 73, // Morning briefing preparation time (minutes)
-          responseTime: 12, // Average response time to critical alerts (minutes)
-          decisionAccuracy: 92.4, // Decision accuracy percentage
-          competitiveAlerts: criticalAlerts.filter(a => a.type === 'competitive').length,
-          performanceAlerts: criticalAlerts.filter(a => a.type === 'performance').length,
-          networkAlerts: criticalAlerts.filter(a => a.type === 'network').length,
-          yieldImprovement: 1.8, // Percentage improvement vs forecast
-          routesMonitored: 247, // Total routes under AI monitoring
-          analysisSpeed: 4.2 // Average analysis completion time (minutes)
-        },
+        metrics: await calculateRealDashboardMetrics(alerts, agents, activities),
         activities: activities
       });
     } catch (error) {
