@@ -39,11 +39,11 @@ export default function Dashboard() {
         
 
         
-        {/* Network Performance & Recent Activity - Side by side on desktop */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          <NetworkOverview />
-          <RecentActivity />
-        </div>
+        {/* Network Performance - Full width horizontal */}
+        <NetworkOverview />
+        
+        {/* Recent Activity - Below network performance */}
+        <RecentActivity />
       </div>
     </AppShell>
   );
