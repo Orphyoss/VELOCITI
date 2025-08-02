@@ -307,12 +307,29 @@ export class TelosMetricsMonitoring {
     return metric?.category || MetricCategory.SYSTEM_PERFORMANCE;
   }
 
+  private formatMetricName(metricName: string): string {
+    const metricTitles: { [key: string]: string } = {
+      'insight_action_rate': 'User Engagement Rate',
+      'daily_active_users': 'Daily Active Users',
+      'user_satisfaction_score': 'User Satisfaction Score',
+      'revenue_impact': 'AI Revenue Impact',
+      'alert_accuracy': 'Alert Accuracy Rate',
+      'agent_performance': 'Agent Performance Score',
+      'system_uptime': 'System Uptime',
+      'response_time': 'System Response Time',
+      'error_rate': 'System Error Rate',
+      'data_quality': 'Data Quality Index'
+    };
+    
+    return metricTitles[metricName] || metricName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
   private async storeAlert(alert: MetricAlert) {
     try {
       await storage.createAlert({
         type: alert.category,
         priority: alert.severity,
-        title: `${alert.metricName} Threshold Alert`,
+        title: `${this.formatMetricName(alert.metricName)} Alert`,
         description: alert.message,
         status: 'active',
         agent_id: 'metrics_monitoring',
