@@ -157,17 +157,17 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
                                       'bg-green-600/20 text-green-400 border-green-500/40'
                                     }`}
                                   >
-                                    {alert.priority.toUpperCase()}
+                                    {alert.priority?.toUpperCase() || 'UNKNOWN'}
                                   </Badge>
                                   <span className="text-xs text-dark-400">
-                                    {alert.agent?.charAt(0).toUpperCase() + alert.agent?.slice(1)}
+                                    {alert.agent ? alert.agent.charAt(0).toUpperCase() + alert.agent.slice(1) : 'System'}
                                   </span>
                                 </div>
                                 <h4 className="text-sm font-medium text-dark-50 line-clamp-2">
-                                  {alert.title}
+                                  {alert.title || 'Untitled Alert'}
                                 </h4>
                                 <p className="text-xs text-dark-400 mt-1 line-clamp-2">
-                                  {alert.description}
+                                  {alert.description || 'No description available'}
                                 </p>
                                 {alert.route && (
                                   <span className="text-xs text-aviation-400 mt-1 block">
