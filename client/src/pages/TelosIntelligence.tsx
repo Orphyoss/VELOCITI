@@ -142,6 +142,30 @@ export default function TelosIntelligence() {
     refetchInterval: 15000, // Refresh every 15 seconds for alerts
   });
 
+  // Fetch intelligence insights
+  const { data: insights, isLoading: insightsLoading } = useQuery<IntelligenceAlert[]>({
+    queryKey: ['/api/telos/insights'],
+    refetchInterval: 300000, // Refresh every 5 minutes
+  });
+
+  // Fetch competitive pricing
+  const { data: competitive, isLoading: competitiveLoading } = useQuery({
+    queryKey: ['/api/telos/competitive-pricing'],
+    enabled: true,
+  });
+
+  // Fetch route dashboard
+  const { data: routeDashboard, isLoading: dashboardLoading } = useQuery({
+    queryKey: ['/api/telos/route-dashboard'],
+    enabled: true,
+  });
+
+  // Fetch route performance data
+  const { data: performance, isLoading: performanceLoading } = useQuery({
+    queryKey: ['/api/routes/performance'],
+    enabled: true,
+  });
+
   // Real RM metrics data from live backend metrics
   const rmMetrics: RMMetrics = {
     revenueImpact: {
@@ -182,30 +206,6 @@ export default function TelosIntelligence() {
       seasonalRisks: (insights as any)?.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal')).length || 0
     }
   };
-
-  // Fetch intelligence insights
-  const { data: insights, isLoading: insightsLoading } = useQuery<IntelligenceAlert[]>({
-    queryKey: ['/api/telos/insights'],
-    refetchInterval: 300000, // Refresh every 5 minutes
-  });
-
-  // Fetch competitive pricing
-  const { data: competitive, isLoading: competitiveLoading } = useQuery({
-    queryKey: ['/api/telos/competitive-pricing'],
-    enabled: true,
-  });
-
-  // Fetch route dashboard
-  const { data: routeDashboard, isLoading: dashboardLoading } = useQuery({
-    queryKey: ['/api/telos/route-dashboard'],
-    enabled: true,
-  });
-
-  // Fetch route performance data
-  const { data: performance, isLoading: performanceLoading } = useQuery({
-    queryKey: ['/api/routes/performance'],
-    enabled: true,
-  });
 
   // Fetch competitive position data
   const { data: positions, isLoading: positionsLoading } = useQuery({
