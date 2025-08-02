@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Sunrise } from 'lucide-react';
 import AgentStatus from '../agents/AgentStatus';
 
 export default function Sidebar() {
@@ -13,6 +13,12 @@ export default function Sidebar() {
       label: 'Dashboard',
       icon: ChartLine,
       path: '/'
+    },
+    {
+      id: 'briefing',
+      label: 'Morning Briefing',
+      icon: Sunrise,
+      path: '/briefing'
     },
     {
       id: 'telos',

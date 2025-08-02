@@ -1,0 +1,625 @@
+"""
+Velociti Morning Briefing Backend Integration
+Connects React frontend with Writer AI and RAG vector database for intelligent narrative generation
+"""
+
+import asyncio
+import json
+import logging
+from datetime import datetime, date, timedelta
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass, asdict
+from enum import Enum
+import pandas as pd
+import numpy as np
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+import aiohttp
+import asyncpg
+from contextlib import asynccontextmanager
+
+# ============================================================================
+# DATA MODELS
+# ============================================================================
+
+class PriorityLevel(str, Enum):
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH" 
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+class ActionCategory(str, Enum):
+    COMPETITIVE_RESPONSE = "Competitive Response"
+    DEMAND_OPTIMIZATION = "Demand Optimization"
+    SYSTEM_PERFORMANCE = "System Performance"
+    REVENUE_OPTIMIZATION = "Revenue Optimization"
+
+@dataclass
+class PriorityAction:
+    id: int
+    priority: PriorityLevel
+    category: ActionCategory
+    title: str
+    description: str
+    recommendation: str
+    confidence: float
+    time_to_act: str
+    impact: str
+    routes: List[str]
+    competitor: Optional[str] = None
+
+@dataclass
+class BriefingData:
+    date: str
+    processing_time: str
+    analyst: Dict[str, Any]
+    executive_summary: Dict[str, Any]
+    priority_actions: List[PriorityAction]
+    competitive_intelligence: Dict[str, Any]
+    demand_signals: Dict[str, Any]
+    rm_activity: Dict[str, Any]
+    route_insights: List[Dict[str, Any]]
+
+# ============================================================================
+# WRITER AI RAG INTEGRATION
+# ============================================================================
+
+class WriterAIService:
+    """Service for integrating with Writer AI API and RAG vector database"""
+    
+    def __init__(self, api_key: str, rag_endpoint: str):
+        self.api_key = api_key
+        self.rag_endpoint = rag_endpoint
+        self.base_url = "https://api.writer.com/v1"
+        self.logger = logging.getLogger(__name__)
+        
+        # EasyJet domain context for RAG
+        self.easyjet_context = {
+            "airline_profile": {
+                "name": "EasyJet",
+                "type": "Low Cost Carrier (LCC)",
+                "network": "European short-haul",
+                "main_bases": ["London Gatwick", "London Luton", "London Stansted"],
+                "aircraft": "Airbus A320 family",
+                "business_model": "Point-to-point, high frequency, cost optimization"
+            },
+            "competitive_landscape": {
+                "primary_competitor": "Ryanair (ULCC - most aggressive pricing)",
+                "secondary_competitors": ["British Airways (FSC)", "Vueling Airlines (LCC)", "Wizz Air (ULCC)"],
+                "market_positioning": "Premium LCC - higher service than ULCC, lower cost than FSC"
+            },
+            "revenue_management": {
+                "system": "Segment Finder + Elysium",
+                "key_metrics": ["Load Factor", "Yield", "RASK", "Distance from Profile"],
+                "booking_curve": "European leisure travel patterns",
+                "seasonality": "High summer (Jun-Sep), shoulder (Apr-May, Oct), low winter"
+            }
+        }
+    
+    async def generate_strategic_narrative(self, action: PriorityAction, context_data: Dict[str, Any]) -> str:
+        """Generate strategic narrative using Writer AI with RAG context"""
+        
+        # Build comprehensive prompt with RAG context
+        prompt = self._build_strategic_prompt(action, context_data)
+        
+        # Query RAG vector database for relevant context
+        rag_context = await self._query_rag_database(action, context_data)
+        
+        # Generate narrative using Writer AI
+        narrative = await self._call_writer_api(prompt, rag_context)
+        
+        return narrative
+    
+    def _build_strategic_prompt(self, action: PriorityAction, context_data: Dict[str, Any]) -> str:
+        """Build comprehensive prompt for Writer AI"""
+        
+        base_prompt = f"""
+        You are a senior revenue management consultant specializing in European low-cost carriers, 
+        with deep expertise in EasyJet's operations, competitive landscape, and revenue optimization strategies.
+        
+        **ANALYSIS REQUEST**: Provide strategic analysis and recommendations for the following situation:
+        
+        **Priority Action**: {action.title}
+        **Category**: {action.category}
+        **Priority Level**: {action.priority}
+        **Routes Affected**: {', '.join(action.routes)}
+        **Situation**: {action.description}
+        **Current Recommendation**: {action.recommendation}
+        **Confidence Level**: {action.confidence:.0%}
+        
+        **CONTEXT DATA**:
+        """
+        
+        # Add specific context based on action category
+        if action.category == ActionCategory.COMPETITIVE_RESPONSE:
+            base_prompt += f"""
+            **Competitive Intelligence**:
+            - Primary Competitor: {action.competitor or 'Multiple'}
+            - Market Context: {context_data.get('competitive_context', 'Standard competitive environment')}
+            - Historical Pattern: {context_data.get('historical_pattern', 'Analysis based on recent data')}
+            
+            **Revenue Impact Assessment**:
+            - Estimated Impact: {action.impact}
+            - Time Sensitivity: {action.time_to_act}
+            """
+            
+        elif action.category == ActionCategory.DEMAND_OPTIMIZATION:
+            base_prompt += f"""
+            **Demand Intelligence**:
+            - Search Growth: {context_data.get('search_growth', 'N/A')}
+            - Booking Trends: {context_data.get('booking_trends', 'N/A')}
+            - Conversion Patterns: {context_data.get('conversion_patterns', 'N/A')}
+            
+            **Market Dynamics**:
+            - Seasonality Factors: {context_data.get('seasonality', 'Standard European patterns')}
+            - Competitive Pressure: {context_data.get('competitive_pressure', 'Moderate')}
+            """
+            
+        elif action.category == ActionCategory.SYSTEM_PERFORMANCE:
+            base_prompt += f"""
+            **System Performance Data**:
+            - Segment Finder Metrics: {context_data.get('segment_finder_performance', 'Standard operation')}
+            - Booking Curve Analysis: {context_data.get('booking_curve_analysis', 'Within normal parameters')}
+            - System vs Manual Actions: {context_data.get('system_manual_ratio', 'N/A')}
+            """
+        
+        base_prompt += f"""
+        
+        **REQUIRED ANALYSIS STRUCTURE**:
+        1. **Situation Assessment**: Deep analysis of the current situation with historical context
+        2. **Strategic Context**: How this fits into EasyJet's broader competitive positioning and revenue strategy
+        3. **Risk Assessment**: Detailed evaluation of risks and opportunities
+        4. **Tactical Recommendations**: Specific, actionable steps with timing and implementation guidance
+        5. **Success Metrics**: How to measure effectiveness of recommended actions
+        6. **Contingency Planning**: Alternative scenarios and response strategies
+        
+        **ANALYSIS REQUIREMENTS**:
+        - Provide specific, actionable recommendations with clear reasoning
+        - Include quantitative assessments where possible (revenue impact, timing, probabilities)
+        - Consider EasyJet's position as a premium LCC in the European market
+        - Address both immediate tactical needs and strategic implications
+        - Include risk mitigation strategies
+        - Reference relevant industry best practices and competitive intelligence
+        
+        **TONE & STYLE**: Professional, analytical, and decisive. Write for an experienced revenue management analyst who needs strategic guidance and tactical clarity.
+        """
+        
+        return base_prompt
+    
+    async def _query_rag_database(self, action: PriorityAction, context_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Query RAG vector database for relevant historical context and best practices"""
+        
+        try:
+            # Build semantic search query
+            search_query = f"{action.category} {action.title} {' '.join(action.routes)}"
+            
+            # Query vector database for similar situations
+            async with aiohttp.ClientSession() as session:
+                payload = {
+                    "query": search_query,
+                    "context": {
+                        "airline": "EasyJet",
+                        "category": action.category,
+                        "routes": action.routes,
+                        "priority": action.priority
+                    },
+                    "top_k": 5
+                }
+                
+                async with session.post(
+                    f"{self.rag_endpoint}/query",
+                    json=payload,
+                    headers={"Authorization": f"Bearer {self.api_key}"}
+                ) as response:
+                    if response.status == 200:
+                        rag_results = await response.json()
+                        return rag_results
+                    else:
+                        self.logger.warning(f"RAG query failed: {response.status}")
+                        return {}
+        
+        except Exception as e:
+            self.logger.error(f"RAG query error: {e}")
+            return {}
+    
+    async def _call_writer_api(self, prompt: str, rag_context: Dict[str, Any]) -> str:
+        """Call Writer AI API with prompt and RAG context"""
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Combine prompt with RAG context
+                enhanced_prompt = prompt
+                
+                if rag_context and 'results' in rag_context:
+                    enhanced_prompt += "\n\n**RELEVANT HISTORICAL CONTEXT**:\n"
+                    for i, result in enumerate(rag_context['results'][:3]):  # Top 3 results
+                        enhanced_prompt += f"{i+1}. {result.get('content', '')}\n"
+                
+                payload = {
+                    "messages": [
+                        {
+                            "role": "system",
+                            "content": f"You are an expert EasyJet revenue management consultant. Context: {json.dumps(self.easyjet_context)}"
+                        },
+                        {
+                            "role": "user", 
+                            "content": enhanced_prompt
+                        }
+                    ],
+                    "model": "palmyra-x5-enterprise",
+                    "max_tokens": 2000,
+                    "temperature": 0.3,  # Lower temperature for analytical content
+                    "top_p": 0.9
+                }
+                
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
+                
+                async with session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers=headers
+                ) as response:
+                    if response.status == 200:
+                        result = await response.json()
+                        return result['choices'][0]['message']['content']
+                    else:
+                        error_text = await response.text()
+                        self.logger.error(f"Writer API error: {response.status} - {error_text}")
+                        return "Analysis temporarily unavailable. Please try again."
+        
+        except Exception as e:
+            self.logger.error(f"Writer API call failed: {e}")
+            return "Analysis service currently unavailable. Please try again shortly."
+
+# ============================================================================
+# DATA PROCESSING SERVICE
+# ============================================================================
+
+class EasyJetDataProcessor:
+    """Process EasyJet data to generate morning briefing insights"""
+    
+    def __init__(self, db_connection_string: str):
+        self.db_connection_string = db_connection_string
+        self.logger = logging.getLogger(__name__)
+    
+    async def generate_morning_briefing(self, analyst_id: str, target_date: date) -> BriefingData:
+        """Generate comprehensive morning briefing for specific analyst"""
+        
+        async with asyncpg.connect(self.db_connection_string) as conn:
+            
+            # Get analyst context
+            analyst_info = await self._get_analyst_context(conn, analyst_id)
+            
+            # Process overnight data
+            competitive_data = await self._process_competitive_intelligence(conn, target_date)
+            demand_data = await self._process_demand_signals(conn, target_date)
+            rm_data = await self._process_rm_activity(conn, target_date)
+            route_data = await self._process_route_performance(conn, target_date, analyst_info['routes'])
+            
+            # Generate priority actions
+            priority_actions = await self._generate_priority_actions(
+                competitive_data, demand_data, rm_data, route_data
+            )
+            
+            # Create executive summary
+            executive_summary = self._create_executive_summary(priority_actions, competitive_data, demand_data)
+            
+            return BriefingData(
+                date=target_date.isoformat(),
+                processing_time=datetime.now().strftime("%H:%M"),
+                analyst=analyst_info,
+                executive_summary=executive_summary,
+                priority_actions=priority_actions,
+                competitive_intelligence=competitive_data,
+                demand_signals=demand_data,
+                rm_activity=rm_data,
+                route_insights=route_data
+            )
+    
+    async def _process_competitive_intelligence(self, conn, target_date: date) -> Dict[str, Any]:
+        """Process competitive pricing data for intelligence insights"""
+        
+        query = """
+        SELECT 
+            cp.carriername,
+            cp.sector,
+            cp.observation_dt,
+            cp.price_gbp,
+            LAG(cp.price_gbp) OVER (
+                PARTITION BY cp.carriername, cp.sector 
+                ORDER BY cp.observation_dt
+            ) as prev_price,
+            cp.flight_dt
+        FROM competitive_pricing cp
+        WHERE cp.observation_dt >= $1 - INTERVAL '7 days'
+        AND cp.observation_dt <= $1
+        ORDER BY cp.observation_dt DESC, cp.carriername, cp.sector
+        """
+        
+        rows = await conn.fetch(query, target_date)
+        df = pd.DataFrame(rows)
+        
+        if df.empty:
+            return {"ryanairActivity": {"priceChanges": 0, "routesAffected": [], "avgPriceChange": 0}}
+        
+        # Analyze Ryanair activity
+        ryanair_data = df[df['carriername'] == 'Ryanair'].copy()
+        ryanair_changes = 0
+        affected_routes = []
+        price_changes = []
+        
+        if not ryanair_data.empty:
+            ryanair_data['price_change_pct'] = (
+                (ryanair_data['price_gbp'] - ryanair_data['prev_price']) / 
+                ryanair_data['prev_price'] * 100
+            ).fillna(0)
+            
+            # Count significant price changes (>5%)
+            significant_changes = ryanair_data[abs(ryanair_data['price_change_pct']) > 5]
+            ryanair_changes = len(significant_changes)
+            affected_routes = significant_changes['sector'].unique().tolist()
+            price_changes = significant_changes['price_change_pct'].tolist()
+        
+        # Analyze British Airways activity
+        ba_data = df[df['carriername'] == 'British Airways'].copy()
+        ba_changes = 0
+        ba_avg_change = 0
+        
+        if not ba_data.empty:
+            ba_data['price_change_pct'] = (
+                (ba_data['price_gbp'] - ba_data['prev_price']) / 
+                ba_data['prev_price'] * 100
+            ).fillna(0)
+            
+            ba_significant = ba_data[abs(ba_data['price_change_pct']) > 5]
+            ba_changes = len(ba_significant)
+            ba_avg_change = ba_significant['price_change_pct'].mean() if len(ba_significant) > 0 else 0
+        
+        return {
+            "ryanairActivity": {
+                "priceChanges": ryanair_changes,
+                "routesAffected": affected_routes,
+                "avgPriceChange": np.mean(price_changes) if price_changes else 0,
+                "trend": "AGGRESSIVE_PRICING" if ryanair_changes > 5 else "STABLE"
+            },
+            "britishAirways": {
+                "priceChanges": ba_changes,
+                "routesAffected": ba_data['sector'].unique().tolist() if not ba_data.empty else [],
+                "avgPriceChange": ba_avg_change,
+                "trend": "STABLE"
+            },
+            "marketContext": f"Ryanair {'exhibiting unusual aggressive pricing pattern' if ryanair_changes > 5 else 'maintaining stable pricing approach'}. {ryanair_changes}x normal price change frequency." if ryanair_changes > 0 else "Stable competitive environment across monitored routes."
+        }
+    
+    async def _process_demand_signals(self, conn, target_date: date) -> Dict[str, Any]:
+        """Process web search and booking data for demand intelligence"""
+        
+        query = """
+        SELECT 
+            ws.sector,
+            SUM(ws.web_ty_searches) as ty_searches,
+            SUM(ws.web_ly_searches) as ly_searches,
+            SUM(ws.web_ty_bookings) as ty_bookings,
+            SUM(ws.web_ly_bookings) as ly_bookings,
+            AVG(ws.conversion_rate) as avg_conversion
+        FROM web_search_data ws
+        WHERE ws.search_dt >= $1 - INTERVAL '7 days'
+        AND ws.search_dt <= $1
+        GROUP BY ws.sector
+        """
+        
+        rows = await conn.fetch(query, target_date)
+        df = pd.DataFrame(rows)
+        
+        if df.empty:
+            return {"searchGrowth": 0, "bookingGrowth": 0, "conversionRate": 0}
+        
+        # Calculate growth metrics
+        df['search_growth'] = (df['ty_searches'] - df['ly_searches']) / df['ly_searches'] * 100
+        df['booking_growth'] = (df['ty_bookings'] - df['ly_bookings']) / df['ly_bookings'] * 100
+        
+        # Identify top performers and concerns
+        top_performers = df.nlargest(3, 'search_growth')['sector'].tolist()
+        concerns = df.nsmallest(1, 'search_growth')['sector'].tolist()
+        
+        return {
+            "searchGrowth": df['search_growth'].mean(),
+            "bookingGrowth": df['booking_growth'].mean(), 
+            "conversionRate": df['avg_conversion'].mean() * 100,
+            "topPerformers": top_performers,
+            "concerns": concerns
+        }
+    
+    async def _generate_priority_actions(self, competitive_data, demand_data, rm_data, route_data) -> List[PriorityAction]:
+        """Generate prioritized actions based on overnight analysis"""
+        
+        actions = []
+        action_id = 1
+        
+        # Competitive response actions
+        ryanair_activity = competitive_data.get('ryanairActivity', {})
+        if ryanair_activity.get('priceChanges', 0) > 3:
+            for route in ryanair_activity.get('routesAffected', [])[:2]:  # Top 2 affected routes
+                impact_amount = np.random.randint(50000, 100000)  # Simulate impact calculation
+                price_change = abs(ryanair_activity.get('avgPriceChange', 0))
+                
+                actions.append(PriorityAction(
+                    id=action_id,
+                    priority=PriorityLevel.CRITICAL if price_change > 20 else PriorityLevel.HIGH,
+                    category=ActionCategory.COMPETITIVE_RESPONSE,
+                    title=f"Ryanair Price Drops on {route}",
+                    description=f"Ryanair dropped prices {price_change:.0f}% on {route} flights. Impact: £{impact_amount:,} potential revenue loss if no response.",
+                    recommendation=f"Consider {'immediate price matching' if price_change > 20 else 'selective price matching'} on weekend flights. Maintain premium on weekday business travel.",
+                    confidence=0.85 + (price_change / 100 * 0.1),
+                    time_to_act="2 hours" if price_change > 20 else "Today",
+                    impact=f"£{impact_amount:,}",
+                    routes=[route],
+                    competitor="Ryanair"
+                ))
+                action_id += 1
+        
+        # Demand optimization actions
+        if demand_data.get('searchGrowth', 0) > 15:
+            strong_routes = demand_data.get('topPerformers', [])[:1]  # Top performing route
+            for route in strong_routes:
+                impact_amount = np.random.randint(30000, 60000)
+                
+                actions.append(PriorityAction(
+                    id=action_id,
+                    priority=PriorityLevel.HIGH,
+                    category=ActionCategory.DEMAND_OPTIMIZATION,
+                    title=f"Strong Demand Growth on {route.replace('ALCLGW', 'LGW-BCN').replace('LGW', 'LGW-')} Route",
+                    description=f"{route} search volume up {demand_data['searchGrowth']:.0f}% YoY with improved conversion rates.",
+                    recommendation=f"Increase prices 8-12% for flights departing in next 2 weeks. Demand strength supports premium positioning.",
+                    confidence=0.80 + (demand_data['searchGrowth'] / 100 * 0.05),
+                    time_to_act="Today",
+                    impact=f"£{impact_amount:,}",
+                    routes=[route.replace('ALCLGW', 'LGW-BCN').replace('LGW', 'LGW-')],
+                    competitor=None
+                ))
+                action_id += 1
+        
+        # System performance actions (if RM data indicates issues)
+        if rm_data.get('systemActions', 0) < rm_data.get('manualActions', 0):
+            actions.append(PriorityAction(
+                id=action_id,
+                priority=PriorityLevel.MEDIUM,
+                category=ActionCategory.SYSTEM_PERFORMANCE,
+                title="Segment Finder Optimization Opportunity",
+                description="Higher than normal manual interventions detected. System may need recalibration.",
+                recommendation="Review Segment Finder parameters and booking curve forecasts. Consider updating demand models.",
+                confidence=0.75,
+                time_to_act="This week",
+                impact="£25,000",
+                routes=["Multiple"],
+                competitor=None
+            ))
+            action_id += 1
+        
+        return sorted(actions, key=lambda x: (x.priority.value, -x.confidence))
+    
+    async def _get_analyst_context(self, conn, analyst_id: str) -> Dict[str, Any]:
+        """Get analyst profile and route assignments"""
+        
+        # Simulate analyst data - in production, query from user management system
+        return {
+            "name": "Sarah Mitchell",
+            "role": "Revenue Management Analyst", 
+            "routes": ["LGW-BCN", "LGW-MAD", "LGW-CDG", "LGW-FCO", "LGW-AMS"],
+            "focus": "European Short-haul Network",
+            "experience_level": "Intermediate"
+        }
+    
+    def _create_executive_summary(self, priority_actions, competitive_data, demand_data) -> Dict[str, Any]:
+        """Create executive summary based on priority actions and data"""
+        
+        critical_actions = [a for a in priority_actions if a.priority == PriorityLevel.CRITICAL]
+        high_actions = [a for a in priority_actions if a.priority == PriorityLevel.HIGH]
+        
+        status = "ATTENTION_REQUIRED" if critical_actions or len(high_actions) > 2 else "NORMAL"
+        
+        # Build key message
+        key_elements = []
+        
+        ryanair_changes = competitive_data.get('ryanairActivity', {}).get('priceChanges', 0)
+        if ryanair_changes > 3:
+            key_elements.append(f"Ryanair aggressive pricing detected on {ryanair_changes} routes")
+        
+        demand_growth = demand_data.get('searchGrowth', 0)
+        if abs(demand_growth) > 10:
+            key_elements.append(f"Demand signals {'strong' if demand_growth > 0 else 'weak'} ({demand_growth:+.0f}% YoY)")
+        
+        if critical_actions:
+            key_elements.append("Immediate competitive response recommended")
+        elif high_actions:
+            key_elements.append("Revenue optimization opportunities identified")
+        
+        key_message = ". ".join(key_elements) + "." if key_elements else "Standard market conditions across monitored routes."
+        
+        return {
+            "status": status,
+            "keyMessage": key_message,
+            "confidence": np.mean([a.confidence for a in priority_actions]) if priority_actions else 0.8
+        }
+
+# ============================================================================
+# FASTAPI APPLICATION
+# ============================================================================
+
+app = FastAPI(title="Velociti Morning Briefing API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize services
+writer_service = WriterAIService(
+    api_key="your-writer-api-key",
+    rag_endpoint="https://your-rag-endpoint.com"
+)
+
+data_processor = EasyJetDataProcessor(
+    db_connection_string="postgresql://user:password@host:port/database"
+)
+
+# ============================================================================
+# API ENDPOINTS
+# ============================================================================
+
+@app.get("/api/morning-briefing/{analyst_id}")
+async def get_morning_briefing(analyst_id: str, date: Optional[str] = None):
+    """Get morning briefing for specific analyst"""
+    
+    try:
+        target_date = datetime.strptime(date, "%Y-%m-%d").date() if date else date.today()
+        
+        briefing_data = await data_processor.generate_morning_briefing(analyst_id, target_date)
+        
+        return {
+            "status": "success",
+            "data": asdict(briefing_data)
+        }
+    
+    except Exception as e:
+        logging.error(f"Morning briefing generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate morning briefing")
+
+@app.post("/api/generate-narrative")
+async def generate_narrative(request: dict):
+    """Generate AI narrative for specific priority action"""
+    
+    try:
+        action_data = request.get("action")
+        context_data = request.get("context", {})
+        
+        # Convert dict to PriorityAction object
+        action = PriorityAction(**action_data)
+        
+        narrative = await writer_service.generate_strategic_narrative(action, context_data)
+        
+        return {
+            "status": "success", 
+            "narrative": narrative,
+            "generated_at": datetime.now().isoformat()
+        }
+    
+    except Exception as e:
+        logging.error(f"Narrative generation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate narrative analysis")
+
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

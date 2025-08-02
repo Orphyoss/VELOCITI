@@ -9,6 +9,7 @@ import Agents from "@/pages/Agents";
 import DatabricsGenie from "@/pages/DatabricsGenie";
 import StrategicAnalysis from "@/pages/StrategicAnalysis";
 import TelosIntelligence from "@/pages/TelosIntelligence";
+import MorningBriefing from "@/pages/MorningBriefing";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/genie" component={DatabricsGenie} />
       <Route path="/strategic" component={StrategicAnalysis} />
       <Route path="/telos" component={TelosIntelligence} />
+      <Route path="/briefing" component={MorningBriefing} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>

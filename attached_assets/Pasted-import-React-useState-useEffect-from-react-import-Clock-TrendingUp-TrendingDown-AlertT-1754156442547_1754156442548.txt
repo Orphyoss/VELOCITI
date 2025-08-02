@@ -1,0 +1,561 @@
+import React, { useState, useEffect } from 'react';
+import { Clock, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Target, Zap, BarChart3, Globe, Calendar, ArrowRight, RefreshCw, MessageSquare, Download, Share2 } from 'lucide-react';
+
+const VelocitiMorningBriefing = () => {
+  const [briefingData, setBriefingData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedInsight, setSelectedInsight] = useState(null);
+  const [aiNarrative, setAiNarrative] = useState('');
+  const [narrativeLoading, setNarrativeLoading] = useState(false);
+
+  // Simulated data based on EasyJet structure
+  useEffect(() => {
+    const generateBriefingData = () => {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      return {
+        date: today.toISOString().split('T')[0],
+        processingTime: "04:32",
+        analyst: {
+          name: "Sarah Mitchell",
+          role: "Revenue Management Analyst",
+          routes: ["LGW-BCN", "LGW-MAD", "LGW-CDG", "LGW-FCO", "LGW-AMS"],
+          focus: "European Short-haul Network"
+        },
+        executiveSummary: {
+          status: "ATTENTION_REQUIRED",
+          keyMessage: "Ryanair aggressive pricing detected on 3 core routes. Demand signals strong (+18% YoY). Immediate competitive response recommended.",
+          confidence: 0.89
+        },
+        priorityActions: [
+          {
+            id: 1,
+            priority: "CRITICAL",
+            category: "Competitive Response",
+            title: "Ryanair Price Drops on LGW-BCN",
+            description: "Ryanair dropped prices 22% on LGW-BCN flights departing 15-21 Nov. Impact: £75K potential revenue loss if no response.",
+            recommendation: "Consider price matching on weekend flights (Fri-Sun) departing 15-21 Nov. Maintain premium on weekday business travel.",
+            confidence: 0.91,
+            timeToAct: "2 hours",
+            impact: "£75,000",
+            routes: ["LGW-BCN"],
+            competitor: "Ryanair"
+          },
+          {
+            id: 2,
+            priority: "HIGH",
+            category: "Demand Optimization", 
+            title: "Strong Demand Growth on Madrid Route",
+            description: "LGW-MAD search volume up 18% YoY with improved conversion rates. Load factors averaging 82%.",
+            recommendation: "Increase prices 8-12% for flights departing 20-30 Nov. Demand strength supports premium positioning.",
+            confidence: 0.84,
+            timeToAct: "Today",
+            impact: "£45,000",
+            routes: ["LGW-MAD"],
+            competitor: null
+          },
+          {
+            id: 3,
+            priority: "MEDIUM",
+            category: "System Performance",
+            title: "Segment Finder Optimization Opportunity",
+            description: "Distance from profile showing -12% variance on CDG route. Booking curve ahead of forecast.",
+            recommendation: "Review Segment Finder parameters for LGW-CDG. Consider adjusting booking curve expectations.",
+            confidence: 0.76,
+            timeToAct: "This week",
+            impact: "£25,000",
+            routes: ["LGW-CDG"],
+            competitor: null
+          }
+        ],
+        competitiveIntelligence: {
+          ryanairActivity: {
+            priceChanges: 8,
+            routesAffected: ["LGW-BCN", "STN-BCN", "LGW-MAD"],
+            avgPriceChange: -18.5,
+            trend: "AGGRESSIVE_PRICING"
+          },
+          britishAirways: {
+            priceChanges: 3,
+            routesAffected: ["LGW-CDG"],
+            avgPriceChange: 5.2,
+            trend: "STABLE"
+          },
+          marketContext: "Ryanair exhibiting unusual aggressive pricing pattern. 3x normal price change frequency."
+        },
+        demandSignals: {
+          searchGrowth: 18.2,
+          bookingGrowth: 14.7,
+          conversionRate: 12.3,
+          topPerformers: ["LGW-MAD", "LGW-CDG", "LGW-AMS"],
+          concerns: ["LGW-FCO"]
+        },
+        rmActivity: {
+          pricingActions: 23,
+          systemActions: 18,
+          manualActions: 5,
+          segmentFinderChanges: 12,
+          avgResponseTime: "3.2 hours"
+        },
+        routeInsights: [
+          {
+            route: "LGW-BCN",
+            status: "ATTENTION",
+            loadFactor: 78.5,
+            yield: 89.2,
+            competitorPressure: "HIGH",
+            demandTrend: "STABLE",
+            lastAction: "No pricing change in 48h",
+            recommendation: "Immediate competitive review required"
+          },
+          {
+            route: "LGW-MAD", 
+            status: "OPPORTUNITY",
+            loadFactor: 85.3,
+            yield: 94.1,
+            competitorPressure: "LOW",
+            demandTrend: "STRONG",
+            lastAction: "Price increase +5% yesterday",
+            recommendation: "Continue premium strategy"
+          },
+          {
+            route: "LGW-CDG",
+            status: "OPTIMAL",
+            loadFactor: 81.7,
+            yield: 91.8,
+            competitorPressure: "MEDIUM", 
+            demandTrend: "STABLE",
+            lastAction: "Segment Finder auto-adjust",
+            recommendation: "Monitor and maintain"
+          }
+        ]
+      };
+    };
+
+    // Simulate data loading
+    setTimeout(() => {
+      setBriefingData(generateBriefingData());
+      setLoading(false);
+    }, 1500);
+  }, []);
+
+  const generateAINarrative = async (insight) => {
+    setNarrativeLoading(true);
+    setSelectedInsight(insight);
+    
+    // Simulate Writer API call with RAG
+    setTimeout(() => {
+      const narratives = {
+        1: `**Competitive Intelligence Analysis - Ryanair LGW-BCN Aggressive Pricing**
+
+Based on overnight monitoring, Ryanair has executed a significant competitive move on the LGW-BCN route with a 22% price reduction across flights departing November 15-21. This represents their most aggressive pricing action on this route in the past 90 days.
+
+**Historical Context**: Ryanair typically maintains prices 15-20% below EasyJet on this route. The current 22% reduction pushes them to a 35% discount, which is unprecedented for this market segment.
+
+**Revenue Impact Assessment**: 
+- **Immediate Risk**: £75,000 potential revenue loss if no response within 24-48 hours
+- **Load Factor Impact**: Estimated 8-12% passenger shift to Ryanair if price gap persists
+- **Booking Curve Analysis**: Peak impact expected on weekend departures (higher leisure segment sensitivity)
+
+**Strategic Recommendations**:
+1. **Immediate Response (Next 2 hours)**: Implement selective price matching on Friday-Sunday departures only. This protects 60% of revenue exposure while maintaining business traveler premiums.
+
+2. **Tactical Positioning**: Maintain 10-15% premium on Monday-Thursday flights where business demand is less price-sensitive.
+
+3. **Monitoring Protocol**: Track Ryanair's response within 24 hours. Historical pattern suggests they may moderate pricing if EasyJet responds selectively rather than across all flights.
+
+**Risk Assessment**: 
+- **High**: Revenue loss if no action taken
+- **Medium**: Margin compression if full price matching implemented  
+- **Low**: Competitive escalation risk given EasyJet's network strength on this route
+
+**Next Steps**: Coordinate with Pricing team for immediate review. Consider temporary promotional campaign to reinforce value proposition while adjusting prices selectively.`,
+
+        2: `**Demand Intelligence Analysis - LGW-MAD Growth Opportunity**
+
+Strong positive demand signals detected on the London-Madrid route, presenting a clear revenue optimization opportunity. The 18% year-over-year search growth combined with improved conversion rates indicates robust underlying demand strength.
+
+**Demand Analysis**:
+- **Search Volume**: +18.2% YoY growth, significantly above network average of +3.1%
+- **Conversion Rate**: 12.3%, up from 10.8% same period last year
+- **Booking Pace**: 14% ahead of forecast, indicating strong forward demand
+- **Load Factor Performance**: Currently averaging 85.3%, above optimal target of 82%
+
+**Market Context**: Madrid market showing resilience despite broader European economic concerns. Business travel recovery contributing to weekday strength, while leisure demand remains robust for weekend travel.
+
+**Revenue Optimization Strategy**:
+The combination of strong demand indicators and limited competitive pressure creates an optimal window for yield enhancement. Current data suggests demand elasticity can support 8-12% price increases without significant volume impact.
+
+**Recommended Actions**:
+1. **Immediate Pricing (Today)**: Implement 8% price increase for departures November 20-30
+2. **Segment Strategy**: Higher increases (10-12%) for weekend leisure travel, moderate increases (6-8%) for weekday business segments
+3. **Capacity Consideration**: Monitor for potential tactical capacity deployment if demand sustains
+
+**Risk Mitigation**: Gradual implementation allows for demand response monitoring. Strong booking pace provides buffer against conversion rate decline.
+
+**Expected Impact**: £45,000 incremental revenue over next 2 weeks with minimal volume risk. Success would validate expansion to similar routes with strong demand signals.`,
+
+        3: `**Revenue Management System Analysis - Segment Finder Optimization**
+
+Segment Finder analysis reveals optimization opportunity on LGW-CDG route with -12% distance from profile variance and booking curve performance ahead of forecast. This indicates potential for enhanced yield management calibration.
+
+**System Performance Review**:
+- **Distance from Profile**: -12% variance suggests conservative pricing relative to demand patterns
+- **Booking Curve**: 7% ahead of historical forecast, indicating stronger early booking momentum
+- **Yield Performance**: Currently at 91.8%, with potential for 3-5% improvement through parameter adjustment
+
+**Technical Analysis**: 
+The Segment Finder algorithm appears to be applying historical seasonality patterns that may not reflect current market conditions. The negative variance combined with strong booking performance suggests demand strength exceeds system expectations.
+
+**Calibration Recommendations**:
+1. **Parameter Review**: Adjust demand forecast multipliers for November-December period
+2. **Booking Curve Update**: Incorporate recent early booking trends into forecasting model
+3. **Competitive Positioning**: Update competitive price sensitivity parameters based on recent BA pricing stability
+
+**Implementation Approach**:
+- **Phase 1**: Adjust booking curve expectations (+5% demand forecast)
+- **Phase 2**: Monitor performance for 3-5 days before further optimization
+- **Phase 3**: Apply learnings to similar European business routes
+
+**Expected Outcome**: £25,000 revenue enhancement over 4-week period through improved yield management. System learning will benefit broader network optimization.
+
+**Technical Note**: Recommended collaboration with RM Systems team for parameter adjustment and performance monitoring dashboard setup.`
+      };
+
+      setAiNarrative(narratives[insight.id] || "Analysis in progress...");
+      setNarrativeLoading(false);
+    }, 2000);
+  };
+
+  const getPriorityColor = (priority) => {
+    switch(priority) {
+      case 'CRITICAL': return 'bg-red-50 border-red-200 text-red-800';
+      case 'HIGH': return 'bg-orange-50 border-orange-200 text-orange-800';
+      case 'MEDIUM': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+      default: return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
+  };
+
+  const getPriorityIcon = (priority) => {
+    switch(priority) {
+      case 'CRITICAL': return <AlertTriangle className="w-4 h-4" />;
+      case 'HIGH': return <TrendingUp className="w-4 h-4" />;
+      case 'MEDIUM': return <Target className="w-4 h-4" />;
+      default: return <CheckCircle className="w-4 h-4" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900">Generating Your Morning Briefing</h2>
+          <p className="text-gray-600">Processing overnight intelligence...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <div className="flex items-center">
+                <Zap className="w-8 h-8 text-blue-600 mr-3" />
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Velociti Morning Briefing</h1>
+                  <p className="text-sm text-gray-600">AI-Powered Revenue Intelligence</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                <p className="text-xs text-gray-600">Generated at {briefingData?.processingTime || '04:32'} GMT</p>
+              </div>
+              <button className="btn-secondary">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </button>
+              <button className="btn-secondary">
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Analyst Context */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Good morning, {briefingData?.analyst.name}</h2>
+              <p className="text-gray-600">{briefingData?.analyst.role} • {briefingData?.analyst.focus}</p>
+              <p className="text-sm text-gray-500 mt-1">Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}</p>
+            </div>
+            <div className="text-right">
+              <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' 
+                  ? 'bg-orange-100 text-orange-800' 
+                  : 'bg-green-100 text-green-800'
+              }`}>
+                {briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' ? (
+                  <AlertTriangle className="w-4 h-4 mr-1" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                )}
+                {briefingData?.executiveSummary.status.replace('_', ' ')}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Executive Summary */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-8">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Executive Summary</h3>
+              <p className="text-gray-800 text-lg leading-relaxed">{briefingData?.executiveSummary.keyMessage}</p>
+              <div className="mt-4 flex items-center text-sm text-gray-600">
+                <Target className="w-4 h-4 mr-2" />
+                Confidence Score: {Math.round(briefingData?.executiveSummary.confidence * 100)}%
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Priority Actions */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Priority Actions</h3>
+                <p className="text-sm text-gray-600 mt-1">Ranked by revenue impact and urgency</p>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {briefingData?.priorityActions.map((action) => (
+                  <div key={action.id} className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                       onClick={() => generateAINarrative(action)}>
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center">
+                        <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mr-3 ${getPriorityColor(action.priority)}`}>
+                          {getPriorityIcon(action.priority)}
+                          <span className="ml-1">{action.priority}</span>
+                        </div>
+                        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{action.category}</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-semibold text-gray-900">{action.impact}</div>
+                        <div className="text-xs text-gray-500">Potential Impact</div>
+                      </div>
+                    </div>
+                    
+                    <h4 className="text-base font-semibold text-gray-900 mb-2">{action.title}</h4>
+                    <p className="text-gray-700 mb-3">{action.description}</p>
+                    
+                    <div className="bg-blue-50 border-l-4 border-blue-400 p-3 mb-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>Recommendation:</strong> {action.recommendation}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center space-x-4">
+                        <span className="text-gray-600">
+                          <Clock className="w-4 h-4 inline mr-1" />
+                          Act within: <strong>{action.timeToAct}</strong>
+                        </span>
+                        <span className="text-gray-600">
+                          Confidence: <strong>{Math.round(action.confidence * 100)}%</strong>
+                        </span>
+                      </div>
+                      <button className="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                        Analyze with AI <ArrowRight className="w-4 h-4 ml-1" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Intelligence Summary */}
+          <div className="space-y-6">
+            {/* Competitive Intelligence */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Competitive Intelligence</h3>
+              
+              <div className="space-y-4">
+                <div className="border-l-4 border-red-400 pl-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">Ryanair Activity</span>
+                    <span className="text-red-600 font-semibold">{briefingData?.competitiveIntelligence.ryanairActivity.priceChanges} changes</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">Avg price change: {briefingData?.competitiveIntelligence.ryanairActivity.avgPriceChange}%</p>
+                </div>
+                
+                <div className="border-l-4 border-blue-400 pl-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-900">British Airways</span>
+                    <span className="text-blue-600 font-semibold">{briefingData?.competitiveIntelligence.britishAirways.priceChanges} changes</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">Avg price change: +{briefingData?.competitiveIntelligence.britishAirways.avgPriceChange}%</p>
+                </div>
+              </div>
+              
+              <div className="mt-4 p-3 bg-yellow-50 rounded-lg">
+                <p className="text-sm text-yellow-800">{briefingData?.competitiveIntelligence.marketContext}</p>
+              </div>
+            </div>
+
+            {/* Demand Signals */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Demand Signals</h3>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">+{briefingData?.demandSignals.searchGrowth}%</div>
+                  <div className="text-xs text-gray-600">Search Growth YoY</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">+{briefingData?.demandSignals.bookingGrowth}%</div>
+                  <div className="text-xs text-gray-600">Booking Growth YoY</div>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Top Performers:</span>
+                  <div className="mt-1">
+                    {briefingData?.demandSignals.topPerformers.map((route) => (
+                      <span key={route} className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-1 mb-1">{route}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-900">Watch List:</span>
+                  <div className="mt-1">
+                    {briefingData?.demandSignals.concerns.map((route) => (
+                      <span key={route} className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded mr-1 mb-1">{route}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RM Activity */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">RM System Activity</h3>
+              
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Total Pricing Actions</span>
+                  <span className="font-semibold">{briefingData?.rmActivity.pricingActions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">System Automated</span>
+                  <span className="font-semibold text-blue-600">{briefingData?.rmActivity.systemActions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Manual Actions</span>
+                  <span className="font-semibold text-orange-600">{briefingData?.rmActivity.manualActions}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Avg Response Time</span>
+                  <span className="font-semibold">{briefingData?.rmActivity.avgResponseTime}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Narrative Panel */}
+        {selectedInsight && (
+          <div className="mt-8 bg-white rounded-lg shadow-lg border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <MessageSquare className="w-5 h-5 mr-2" />
+                  AI Strategic Analysis
+                </h3>
+                <button 
+                  onClick={() => setSelectedInsight(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Deep analysis powered by Writer AI with EasyJet domain knowledge</p>
+            </div>
+            
+            <div className="p-6">
+              {narrativeLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="w-6 h-6 animate-spin text-blue-600 mr-3" />
+                  <span className="text-gray-600">Generating strategic analysis...</span>
+                </div>
+              ) : (
+                <div className="prose max-w-none">
+                  <div className="whitespace-pre-line text-gray-800 leading-relaxed">
+                    {aiNarrative}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Route Performance Summary */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Route Performance Summary</h3>
+            <p className="text-sm text-gray-600 mt-1">Your core route portfolio overview</p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Route</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Load Factor</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Yield</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Competitive Pressure</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Demand Trend</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recommendation</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {briefingData?.routeInsights.map((route) => (
+                  <tr key={route.route} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{route.route}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        route.status === 'ATTENTION' ? 'bg-red-100 text-red-800' :
+                        route.status === 'OPPORTUNITY' ? 'bg-green-100 text-green-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {route.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{route.loadFactor}%</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">£{route.yield}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`text-sm ${
+                        route.competitorPressure === 'HIGH' ? 'text-red-600' :
+                        route.competitorPressure === 'MEDIUM' ? 'text-yellow-600' :
+                        'text-green-600'
+                      }`}>
+                        {route.competitorPressure}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`text-sm ${
