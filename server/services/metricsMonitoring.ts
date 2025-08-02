@@ -327,7 +327,7 @@ export class TelosMetricsMonitoring {
   private async storeAlert(alert: MetricAlert) {
     try {
       await storage.createAlert({
-        type: alert.category,
+        category: alert.category,
         priority: alert.severity,
         title: `${this.formatMetricName(alert.metricName)} Alert`,
         description: alert.message,
