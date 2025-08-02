@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function NetworkOverview() {
-  const [timeframe, setTimeframe] = useState('7d');
+  const [timeframe, setTimeframe] = useState('7');
 
   const { data: routeData, isLoading } = useQuery({
     queryKey: ['/api/routes/performance', timeframe],
@@ -35,7 +35,7 @@ export default function NetworkOverview() {
   }));
 
   const timeframes = [
-    { value: '1', label: '24h' },
+    { value: '2', label: '24h' },
     { value: '7', label: '7d' },
     { value: '30', label: '30d' },
   ];
@@ -66,11 +66,11 @@ export default function NetworkOverview() {
             {timeframes.map((tf) => (
               <Button
                 key={tf.value}
-                variant={timeframe === tf.value ? "default" : "outline"}
+                variant="outline"
                 size="sm"
                 onClick={() => setTimeframe(tf.value)}
                 className={`text-xs sm:text-sm ${timeframe === tf.value 
-                  ? "bg-aviation-600 text-white" 
+                  ? "bg-aviation-600 text-white border-aviation-600" 
                   : "bg-dark-800 hover:bg-dark-700 text-dark-50 border-dark-600"
                 }`}
               >
