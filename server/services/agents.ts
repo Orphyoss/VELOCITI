@@ -4,54 +4,57 @@ import { eq, desc, and, gte } from 'drizzle-orm';
 import { llmService } from './llm';
 import { storage } from '../storage';
 import { enhancedAlertGenerator } from './enhancedAlertGenerator';
-import { enhancedAlertGenerator } from './enhancedAlertGenerator';
+import { logger, logAgent } from './logger';
+import { duplicatePreventionService } from './duplicatePreventionService';
 
 export class AgentService {
   
   async runCompetitiveAgent(): Promise<void> {
-    try {
-      // Enhanced competitive intelligence analysis
-      console.log('Running Competitive Agent analysis...');
-      
-      // Use enhanced alert generator for more realistic scenarios
-      if (Math.random() > 0.4) { // 60% chance to use enhanced scenarios
-        await enhancedAlertGenerator.generateAlertsByType('competitive', 1);
-        await this.updateAgentMetrics('competitive', 1);
-        return;
-      }
-      
-      const competitiveAlerts = await this.detectCompetitiveChanges();
-      
-      for (const alert of competitiveAlerts) {
-        try {
-          console.log(`[Competitive Agent] Inserting alert:`, {
-            title: alert.title,
-            category: alert.category,
-            priority: alert.priority
-          });
-          
-          await db.insert(alerts).values([alert]);
-          
-          await storage.createActivity({
-            type: 'alert',
-            title: 'Competitive Alert Generated',
-            description: `Competitive Agent detected: ${alert.title}`,
-            agentId: 'competitive',
-          });
-          
-          console.log(`[Competitive Agent] Successfully inserted alert: ${alert.title}`);
-        } catch (error) {
-          console.error(`[Competitive Agent] Failed to insert alert:`, error);
-          console.error(`[Competitive Agent] Alert data:`, alert);
+    return await logger.logOperation(
+      'Agent',
+      'runCompetitiveAgent',
+      'Running competitive intelligence analysis',
+      async () => {
+        // Prefer enhanced alert generator for sophisticated scenarios
+        if (Math.random() > 0.3) { // 70% chance to use enhanced scenarios
+          await enhancedAlertGenerator.generateAlertsByType('competitive', 1);
+          await this.updateAgentMetrics('competitive', 1);
+          logAgent('competitive', 'enhanced_scenario', 'Generated enhanced competitive scenario');
+          return;
         }
-      }
-
-      // Update agent metrics
-      await this.updateAgentMetrics('competitive', competitiveAlerts.length);
+        
+        const competitiveAlerts = await this.detectCompetitiveChanges();
       
-    } catch (error) {
-      console.error('Competitive Agent error:', error);
-    }
+        for (const alert of competitiveAlerts) {
+          try {
+            logAgent('competitive', 'alert_creation', `Creating alert: ${alert.title}`, {
+              priority: alert.priority,
+              route: alert.route
+            });
+            
+            await db.insert(alerts).values([alert]);
+            
+            await storage.createActivity({
+              type: 'alert',
+              title: 'Competitive Alert Generated',
+              description: `Competitive Agent detected: ${alert.title}`,
+              agentId: 'competitive',
+            });
+            
+            logger.info('Agent', 'runCompetitiveAgent', `Successfully created alert: ${alert.title}`);
+          } catch (error) {
+            logger.error('Agent', 'runCompetitiveAgent', `Failed to create alert: ${alert.title}`, error);
+          }
+        }
+
+        // Update agent metrics
+        await this.updateAgentMetrics('competitive', competitiveAlerts.length);
+        
+        logger.info('Agent', 'runCompetitiveAgent', `Competitive agent completed`, {
+          alertsGenerated: competitiveAlerts.length
+        });
+      }
+    );
   }
 
   async runPerformanceAgent(): Promise<void> {
@@ -145,29 +148,68 @@ export class AgentService {
   }
 
   private async detectCompetitiveChanges() {
-    // Simulate competitive intelligence detection
-    // In real implementation: connect to Infare API, analyze pricing data
+    // Check if we have generated recent competitive alerts to prevent spam
+    const recentAlertCount = await duplicatePreventionService.getRecentAlertCount('competitive', 1);
+    if (recentAlertCount > 0) {
+      logger.debug('Agent', 'detectCompetitiveChanges', 'Skipping - recent competitive alert exists', { recentCount: recentAlertCount });
+      return [];
+    }
+
+    // Simulate competitive intelligence detection with unique scenarios
     const alerts = [];
+    const scenarios = [
+      {
+        title: 'British Airways Premium Push - LGW→FCO',
+        description: 'BA increased business class capacity by 30% on London Gatwick to Rome route. Premium positioning strategy detected.',
+        competitor: 'British Airways',
+        route: 'LGW→FCO',
+        impact: 65000
+      },
+      {
+        title: 'Wizz Air Frequency Increase - LTN→BER', 
+        description: 'Wizz Air added 3 weekly flights on London Luton to Berlin route. Aggressive market expansion detected.',
+        competitor: 'Wizz Air',
+        route: 'LTN→BER',
+        impact: 42000
+      },
+      {
+        title: 'Jet2 Late Booking Campaign - STN→ALC',
+        description: 'Jet2 launched aggressive last-minute pricing on London Stansted to Alicante. Short-haul leisure market pressure.',
+        competitor: 'Jet2',
+        route: 'STN→ALC', 
+        impact: 38000
+      }
+    ];
     
-    // Example: Significant price drop detected
-    if (Math.random() > 0.7) { // 30% chance for demo
-      alerts.push({
-        type: 'competitive',
-        title: 'Ryanair 25% Price Drop - LGW→BCN',
-        description: 'Competitor reduced prices by 25% on London Gatwick to Barcelona route. Estimated revenue impact: £87,500 weekly.',
-        priority: 'critical' as const,
-        category: 'competitive' as const,
-        route: 'LGW→BCN',
-        impact_score: "87500.00",
-        confidence: "0.9500",
-        agent_id: 'competitive',
-        metadata: {
-          competitor: 'Ryanair',
-          priceChange: -25,
-          previousPrice: 120,
-          newPrice: 90
-        }
-      });
+    // Randomly select a scenario but check for duplicates
+    if (Math.random() > 0.8) { // 20% chance for uniqueness
+      const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+      
+      // Check if this specific alert already exists
+      const isDuplicate = await duplicatePreventionService.isDuplicateAlert(scenario.title, 'competitive', 48);
+      if (!isDuplicate) {
+        alerts.push({
+          type: 'competitive',
+          title: scenario.title,
+          description: scenario.description,
+          priority: 'high' as const,
+          category: 'competitive' as const,
+          route: scenario.route,
+          impact_score: scenario.impact.toString(),
+          confidence: (0.80 + Math.random() * 0.15).toFixed(4),
+          agent_id: 'competitive',
+          metadata: {
+            competitor: scenario.competitor,
+            detection_method: 'market_monitoring',
+            generated_at: new Date().toISOString()
+          }
+        });
+        
+        logger.info('Agent', 'detectCompetitiveChanges', 'Generated unique competitive scenario', {
+          title: scenario.title,
+          competitor: scenario.competitor
+        });
+      }
     }
 
     return alerts;
