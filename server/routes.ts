@@ -500,12 +500,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Route performance endpoints
   app.get("/api/routes/performance", async (req, res) => {
     try {
-      const { route, days } = req.query;
-      const performance = await storage.getRoutePerformance(
-        route as string, 
-        Number(days) || 7
-      );
-      res.json(performance);
+      const { route, days, limit = 10 } = req.query;
+      console.log(`[API] GET /routes/performance - route: ${route}, days: ${days}, limit: ${limit}`);
+      
+      // Import the Telos Intelligence service
+      const { telosIntelligenceService } = await import('./services/telos-intelligence');
+      
+      if (route) {
+        // Get performance for specific route
+        const performance = await telosIntelligenceService.getRoutePerformanceMetrics(route as string, Number(days) || 7);
+        res.json(performance ? [performance] : []);
+      } else {
+        // Get available routes and calculate performance for top routes
+        const routes = await telosIntelligenceService.getAvailableRoutes();
+        const limitNum = parseInt(limit as string);
+        const routesToFetch = routes.slice(0, limitNum);
+        
+        const performancePromises = routesToFetch.map(async (routeId) => {
+          const perf = await telosIntelligenceService.getRoutePerformanceMetrics(routeId, Number(days) || 7);
+          return perf;
+        });
+        
+        const performances = await Promise.all(performancePromises);
+        const validPerformances = performances.filter(p => p !== null);
+        
+        console.log(`[API] Returning ${validPerformances.length} route performance records`);
+        res.json(validPerformances);
+      }
     } catch (error) {
       console.error('Get route performance error:', error);
       res.status(500).json({ error: 'Failed to fetch route performance' });

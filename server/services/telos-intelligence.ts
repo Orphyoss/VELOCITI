@@ -23,9 +23,9 @@ export class TelosIntelligenceService {
       const results = await db
         .select({
           airlineCode: competitivePricing.airlineCode,
-          avgPrice: avg(competitivePricing.priceAmount),
-          minPrice: sql<number>`MIN(${competitivePricing.priceAmount})`,
-          maxPrice: sql<number>`MAX(${competitivePricing.priceAmount})`,
+          avgPrice: sql<string>`AVG(${competitivePricing.priceAmount}::numeric)`,
+          minPrice: sql<string>`MIN(${competitivePricing.priceAmount}::numeric)`,
+          maxPrice: sql<string>`MAX(${competitivePricing.priceAmount}::numeric)`,
           observationCount: count()
         })
         .from(competitivePricing)
@@ -36,7 +36,7 @@ export class TelosIntelligenceService {
           )
         )
         .groupBy(competitivePricing.airlineCode)
-        .orderBy(desc(sql`AVG(${competitivePricing.priceAmount})`));
+        .orderBy(desc(sql`AVG(${competitivePricing.priceAmount}::numeric)`));
 
       return results;
     } catch (error) {
@@ -75,34 +75,97 @@ export class TelosIntelligenceService {
     }
   }
 
-  // Get route performance metrics
+  // Get route performance metrics (calculated from competitive pricing and market capacity data)
   async getRoutePerformanceMetrics(routeId: string, days: number = 30) {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - days);
 
     try {
-      const results = await db
+      // Get EasyJet's pricing performance
+      const ezyPricing = await db
         .select({
-          routeId: flightPerformance.routeId,
-          avgLoadFactor: avg(flightPerformance.loadFactor),
-          avgYield: avg(flightPerformance.yieldPerPax),
-          totalRevenue: sum(flightPerformance.revenueTotal),
-          totalBookings: sum(flightPerformance.bookingsCount),
-          flightCount: count()
+          avgPrice: sql<string>`AVG(${competitivePricing.priceAmount}::numeric)`,
+          minPrice: sql<string>`MIN(${competitivePricing.priceAmount}::numeric)`,
+          maxPrice: sql<string>`MAX(${competitivePricing.priceAmount}::numeric)`,
+          observationCount: count()
         })
-        .from(flightPerformance)
+        .from(competitivePricing)
         .where(
           and(
-            eq(flightPerformance.routeId, routeId),
-            gte(flightPerformance.performanceDate, cutoffDate.toISOString().slice(0, 10))
+            eq(competitivePricing.routeId, routeId),
+            eq(competitivePricing.airlineCode, 'EZY'),
+            gte(competitivePricing.observationDate, cutoffDate.toISOString().slice(0, 10))
           )
-        )
-        .groupBy(flightPerformance.routeId);
+        );
 
-      return results[0] || null;
+      // Get EasyJet's capacity
+      const ezyCapacity = await db
+        .select({
+          totalSeats: sql<string>`SUM(${marketCapacity.numSeats}::numeric)`,
+          totalFlights: count(),
+          avgLoadFactor: sql<string>`75.0` // Default load factor estimate
+        })
+        .from(marketCapacity)
+        .where(
+          and(
+            eq(marketCapacity.routeId, routeId),
+            eq(marketCapacity.airlineCode, 'EZY'),
+            gte(marketCapacity.flightDate, cutoffDate.toISOString().slice(0, 10))
+          )
+        );
+
+      const pricing = ezyPricing[0];
+      const capacity = ezyCapacity[0];
+
+      if (!pricing || !capacity || pricing.observationCount === 0) {
+        return null;
+      }
+
+      // Calculate performance metrics from available data
+      const avgPrice = parseFloat(pricing.avgPrice || '0');
+      const totalSeats = parseInt(capacity.totalSeats || '0');
+      const loadFactor = parseFloat(capacity.avgLoadFactor || '0');
+      
+      // Estimate revenue and yield
+      const estimatedPax = Math.round(totalSeats * (loadFactor / 100));
+      const estimatedRevenue = estimatedPax * avgPrice;
+      const yieldPerPax = avgPrice; // Price per passenger is yield approximation
+
+      return {
+        routeId,
+        avgLoadFactor: loadFactor,
+        avgYield: yieldPerPax,
+        totalRevenue: estimatedRevenue,
+        totalBookings: estimatedPax,
+        flightCount: parseInt(capacity.totalFlights || '0'),
+        avgPrice: avgPrice,
+        priceRange: {
+          min: parseFloat(pricing.minPrice || '0'),
+          max: parseFloat(pricing.maxPrice || '0')
+        },
+        observationCount: parseInt(pricing.observationCount || '0')
+      };
     } catch (error) {
       console.error("Error in getRoutePerformanceMetrics:", error);
       return null;
+    }
+  }
+
+  // Get available routes from the database
+  async getAvailableRoutes() {
+    try {
+      const routes = await db
+        .selectDistinct({
+          routeId: competitivePricing.routeId
+        })
+        .from(competitivePricing)
+        .where(eq(competitivePricing.airlineCode, 'EZY'))
+        .orderBy(competitivePricing.routeId);
+
+      return routes.map(r => r.routeId).filter(Boolean);
+    } catch (error) {
+      console.error("Error in getAvailableRoutes:", error);
+      return [];
     }
   }
 
