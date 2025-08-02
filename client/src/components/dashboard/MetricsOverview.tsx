@@ -46,11 +46,11 @@ export default function MetricsOverview() {
 
   // Calculate authentic metrics from real data with no fallbacks
   const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield || 0;
-  const loadFactor = (routePerformance as any)?.[0]?.avgLoadFactor || 75;
-  const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 1250000;
-  const responseTime = (rmMetrics as any)?.competitiveIntelligence?.responseTime || 2;
-  const routesCount = Math.max((routePerformance as any)?.length || 6, (competitiveData as any)?.length || 5);
-  const competitiveAdvantage = (rmMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 18;
+  const loadFactor = (routePerformance as any)?.[0]?.avgLoadFactor || 0;
+  const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
+  const responseTime = (rmMetrics as any)?.competitiveIntelligence?.responseTime || 0;
+  const routesCount = Math.max((routePerformance as any)?.length || 0, (competitiveData as any)?.length || 0);
+  const competitiveAdvantage = (rmMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 0;
 
   const metrics = [
     {
@@ -62,9 +62,9 @@ export default function MetricsOverview() {
     },
     {
       title: 'Load Factor',
-      value: `${loadFactor}%`,
-      change: loadFactor >= 75 ? '+Above target' : 'vs forecast',
-      trend: loadFactor >= 75 ? 'up' : 'neutral',
+      value: loadFactor > 0 ? `${loadFactor.toFixed(1)}%` : 'No data',
+      change: loadFactor >= 75 ? '+Above target' : loadFactor > 0 ? 'vs forecast' : 'Calculating...',
+      trend: loadFactor >= 75 ? 'up' : loadFactor > 0 ? 'neutral' : 'neutral',
       icon: Users,
     },
     {
