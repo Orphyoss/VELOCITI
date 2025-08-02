@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
@@ -12,6 +15,13 @@ interface HeaderProps {
 export default function Header({ onMobileMenuToggle }: HeaderProps) {
   const { currentModule, llmProvider, setLLMProvider, isConnected, dashboardSummary } = useVelocitiStore();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const { data: alerts } = useQuery({
+    queryKey: ['/api/alerts'],
+    queryFn: () => api.getAlerts('5'), // Get latest 5 alerts
+    enabled: showNotifications, // Only fetch when dropdown is open
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -20,6 +30,23 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Close notifications dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showNotifications && !(event.target as Element).closest('.notifications-dropdown')) {
+        setShowNotifications(false);
+      }
+    };
+
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNotifications]);
 
   const handleProviderChange = async (provider: 'openai' | 'writer') => {
     try {
@@ -80,12 +107,88 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
             </span>
           </div>
           
-          {/* Alert Count */}
-          <div className="flex items-center space-x-1 sm:space-x-2">
-            <Bell className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-              {dashboardSummary?.alerts.critical || 0}
-            </span>
+          {/* Alert Count - Clickable */}
+          <div className="relative notifications-dropdown">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="flex items-center space-x-1 sm:space-x-2 p-1 sm:p-2 hover:bg-dark-800 rounded-md"
+            >
+              <Bell className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                {dashboardSummary?.alerts.critical || 0}
+              </span>
+            </Button>
+
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 z-50">
+                <Card className="bg-dark-900 border-dark-700 shadow-xl">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-dark-50">
+                        Recent Notifications
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowNotifications(false)}
+                        className="p-1 hover:bg-dark-800"
+                      >
+                        <X className="w-4 h-4 text-dark-400" />
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0 max-h-96 overflow-y-auto">
+                    {alerts && alerts.length > 0 ? (
+                      <div className="space-y-2 p-4">
+                        {alerts.map((alert: any) => (
+                          <div key={alert.id} className="border-b border-dark-800 pb-3 last:border-b-0">
+                            <div className="flex items-start justify-between space-x-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`text-xs px-2 py-0.5 ${
+                                      alert.priority === 'critical' ? 'bg-red-600/20 text-red-400 border-red-500/40' :
+                                      alert.priority === 'high' ? 'bg-orange-600/20 text-orange-400 border-orange-500/40' :
+                                      alert.priority === 'medium' ? 'bg-yellow-600/20 text-yellow-400 border-yellow-500/40' :
+                                      'bg-green-600/20 text-green-400 border-green-500/40'
+                                    }`}
+                                  >
+                                    {alert.priority.toUpperCase()}
+                                  </Badge>
+                                  <span className="text-xs text-dark-400">
+                                    {alert.agent?.charAt(0).toUpperCase() + alert.agent?.slice(1)}
+                                  </span>
+                                </div>
+                                <h4 className="text-sm font-medium text-dark-50 line-clamp-2">
+                                  {alert.title}
+                                </h4>
+                                <p className="text-xs text-dark-400 mt-1 line-clamp-2">
+                                  {alert.description}
+                                </p>
+                                {alert.route && (
+                                  <span className="text-xs text-aviation-400 mt-1 block">
+                                    Route: {alert.route}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center">
+                        <Bell className="w-8 h-8 text-dark-600 mx-auto mb-2" />
+                        <p className="text-sm text-dark-400">No recent notifications</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
           
           {/* LLM Provider Selector - Compact on mobile */}
