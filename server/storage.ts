@@ -133,7 +133,7 @@ export class MemoryStorage implements IStorage {
   async getAlerts(limit = 50): Promise<Alert[]> {
     try {
       // Query database directly using raw SQL for all alerts including enhanced scenarios
-      const { client } = await import('../services/supabase');
+      const { client } = await import('./services/supabase.js');
       
       const result = await client`
         SELECT * FROM alerts 
@@ -175,7 +175,7 @@ export class MemoryStorage implements IStorage {
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
     try {
       // Query database directly using raw SQL for priority alerts
-      const { client } = await import('../services/supabase');
+      const { client } = await import('./services/supabase.js');
       
       const result = await client`
         SELECT * FROM alerts 
