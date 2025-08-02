@@ -261,7 +261,8 @@ export default function TelosIntelligence() {
     }).format(amount);
   };
 
-  const formatPercentage = (value: number) => {
+  const formatPercentage = (value: number | undefined | null) => {
+    if (value === undefined || value === null || isNaN(value)) return '0.0%';
     return `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
   };
 
@@ -400,7 +401,10 @@ export default function TelosIntelligence() {
                     <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
                     <Progress value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} className="h-2" />
                     <div className="text-xs text-muted-foreground">
-                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target
+                      {rmMetrics.yieldOptimization.currentYield && rmMetrics.yieldOptimization.targetYield 
+                        ? `${((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target`
+                        : 'Target data unavailable'
+                      }
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -641,7 +645,10 @@ export default function TelosIntelligence() {
                       className="h-3" 
                     />
                     <div className="text-xs text-muted-foreground mt-1">
-                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £{rmMetrics.yieldOptimization.targetYield} target
+                      {rmMetrics.yieldOptimization.currentYield && rmMetrics.yieldOptimization.targetYield 
+                        ? `${((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £${rmMetrics.yieldOptimization.targetYield} target`
+                        : 'Target data unavailable'
+                      }
                     </div>
                   </div>
                 </div>
@@ -695,10 +702,10 @@ export default function TelosIntelligence() {
                         </div>
                         <div className="text-right space-y-1">
                           <div className="font-bold">
-                            EasyJet: £{comp.easyjetAvgPrice?.toFixed(0) || 'N/A'}
+                            EasyJet: £{comp.easyjetAvgPrice ? comp.easyjetAvgPrice.toFixed(0) : 'N/A'}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            vs Ryanair: £{comp.ryanairAvgPrice?.toFixed(0) || 'N/A'}
+                            vs Ryanair: £{comp.ryanairAvgPrice ? comp.ryanairAvgPrice.toFixed(0) : 'N/A'}
                           </div>
                           <Badge variant={comp.marketPosition === 'Competitive' ? 'default' : 
                                        comp.marketPosition === 'Premium' ? 'secondary' : 'destructive'}>
@@ -798,7 +805,7 @@ export default function TelosIntelligence() {
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Load Factor</div>
-                            <div className="font-bold">{(perf.loadFactor * 100).toFixed(1)}%</div>
+                            <div className="font-bold">{perf.loadFactor ? (perf.loadFactor * 100).toFixed(1) : '0.0'}%</div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Revenue</div>
@@ -1049,7 +1056,7 @@ export default function TelosIntelligence() {
                       </div>
                       <div className="text-right space-y-1">
                         <div className="flex items-center gap-4 text-sm">
-                          <span>LF: {(perf.loadFactor * 100).toFixed(1)}%</span>
+                          <span>LF: {perf.loadFactor ? (perf.loadFactor * 100).toFixed(1) : '0.0'}%</span>
                           <span>Revenue: {formatCurrency(perf.revenueTotal)}</span>
                           <span>Yield: {formatCurrency(perf.yieldPerPax)}</span>
                         </div>
@@ -1094,7 +1101,7 @@ export default function TelosIntelligence() {
                             {insight.priority}
                           </Badge>
                           <Badge variant="outline">
-                            {(insight.confidenceScore * 100).toFixed(0)}% confidence
+                            {insight.confidenceScore ? (insight.confidenceScore * 100).toFixed(0) : '0'}% confidence
                           </Badge>
                         </div>
                       </div>

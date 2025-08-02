@@ -117,8 +117,9 @@ export class MemoryStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
+    const id = `user-${Date.now()}`;
     const newUser: User = {
-      id: user.id || `user-${Date.now()}`,
+      id,
       username: user.username,
       email: user.email,
       role: user.role || 'analyst',
@@ -143,24 +144,26 @@ export class MemoryStorage implements IStorage {
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
+    const id = `alert-${Date.now()}`;
     const newAlert: Alert = {
-      id: alert.id || `alert-${Date.now()}`,
-      type: alert.type,
+      id,
+      type: alert.type || 'alert',
       priority: alert.priority,
       title: alert.title,
       description: alert.description,
-      route: alert.route,
-      routeName: alert.routeName,
-      metricValue: alert.metricValue,
-      thresholdValue: alert.thresholdValue,
-      impactScore: alert.impactScore,
-      confidence: alert.confidence,
-      agentId: alert.agentId,
+      route: alert.route || null,
+      route_name: alert.route_name || null,
+      metric_value: alert.metric_value || null,
+      threshold_value: alert.threshold_value || null,
+      impact_score: alert.impact_score || null,
+      confidence: alert.confidence || null,
+      agent_id: alert.agent_id,
       metadata: alert.metadata || {},
       status: alert.status || 'active',
-      createdAt: new Date(),
-      acknowledgedAt: null,
-      resolvedAt: null
+      created_at: new Date(),
+      acknowledged_at: null,
+      resolved_at: null,
+      category: alert.category
     };
     memoryStore.alerts.set(newAlert.id, newAlert);
     return newAlert;
