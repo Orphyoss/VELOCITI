@@ -89,26 +89,50 @@ export default function MorningBriefing() {
   const [narrativeLoading, setNarrativeLoading] = useState(false);
 
   useEffect(() => {
+    console.log('[MorningBriefing] Component initialized');
     setCurrentModule('dashboard'); // Use existing module type
   }, [setCurrentModule]);
 
   // Fetch briefing data
-  const { data: briefingData, isLoading } = useQuery({
+  const { data: briefingData, isLoading, error } = useQuery({
     queryKey: ['/api/morning-briefing'],
     queryFn: async () => {
-      // Since we don't have the backend implementation yet, generate realistic data
-      // using our existing data sources
-      const [alerts, activities] = await Promise.all([
-        api.getAlerts('all', 10),
-        api.getActivities()
-      ]);
+      try {
+        console.log('[MorningBriefing] Fetching briefing data...');
+        
+        // Since we don't have the backend implementation yet, generate realistic data
+        // using our existing data sources
+        const [alerts, activities] = await Promise.all([
+          api.getAlerts('all', 10),
+          api.getActivities()
+        ]);
 
-      return generateBriefingData(alerts, activities, {});
+        console.log('[MorningBriefing] Retrieved data:', {
+          alertsCount: alerts?.length || 0,
+          activitiesCount: activities?.length || 0
+        });
+
+        const briefingData = generateBriefingData(alerts, activities, {});
+        console.log('[MorningBriefing] Generated briefing data:', briefingData);
+        
+        return briefingData;
+      } catch (error) {
+        console.error('[MorningBriefing] Error fetching briefing data:', error);
+        throw error;
+      }
     },
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   const generateBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
+    console.log('[MorningBriefing] Generating briefing data with inputs:', {
+      alerts: alerts?.length || 0,
+      activities: activities?.length || 0,
+      rmMetrics: rmMetrics ? Object.keys(rmMetrics).length : 0
+    });
+    
     const today = new Date();
     
     // Generate sophisticated priority actions based on realistic RM scenarios
@@ -154,7 +178,7 @@ export default function MorningBriefing() {
       }
     ];
 
-    return {
+    const result: BriefingData = {
       date: today.toISOString().split('T')[0],
       processingTime: today.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
       analyst: {
@@ -251,6 +275,15 @@ export default function MorningBriefing() {
         }
       ]
     };
+
+    console.log('[MorningBriefing] Generated briefing data structure:', {
+      analyst: result.analyst,
+      priorityActionsCount: result.priorityActions.length,
+      routeInsightsCount: result.routeInsights.length,
+      executiveStatus: result.executiveSummary.status
+    });
+
+    return result;
   };
 
   const getActionCategory = (category: string): string => {
@@ -300,16 +333,21 @@ export default function MorningBriefing() {
   };
 
   const generateAINarrative = async (insight: PriorityAction) => {
+    console.log('[MorningBriefing] Generating AI narrative for insight:', insight.id);
+    
     setNarrativeLoading(true);
     setSelectedInsight(insight);
     
     try {
       // Simulate Writer AI analysis with context-aware narrative
+      console.log('[MorningBriefing] Starting narrative generation for category:', insight.category);
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       const narrative = await generateContextualNarrative(insight);
+      console.log('[MorningBriefing] Generated narrative length:', narrative.length);
       setAiNarrative(narrative);
     } catch (error) {
+      console.error('[MorningBriefing] Error generating AI narrative:', error);
       setAiNarrative("Analysis service temporarily unavailable. Please try again.");
     } finally {
       setNarrativeLoading(false);
@@ -317,6 +355,11 @@ export default function MorningBriefing() {
   };
 
   const generateContextualNarrative = async (insight: PriorityAction): Promise<string> => {
+    console.log('[MorningBriefing] Looking up narrative for insight:', {
+      id: insight.id,
+      category: insight.category,
+      title: insight.title
+    });
     const narratives: { [key: string]: { [key: string]: string } } = {
       'Competitive Response': {
         'action-competitive-bcn': `**CRITICAL COMPETITIVE INTELLIGENCE: Ryanair Strategic Assault on Spanish Leisure Market**
@@ -465,9 +508,12 @@ LGW-CDG segment finder exhibiting suboptimal performance with 23% manual overrid
     // Get specific narrative for the action, fallback to category default
     const categoryNarratives = narratives[insight.category];
     if (categoryNarratives && categoryNarratives[insight.id]) {
+      console.log('[MorningBriefing] Found specific narrative for:', insight.id);
       return categoryNarratives[insight.id];
     }
 
+    console.log('[MorningBriefing] Using fallback narrative for:', insight.id);
+    
     // Fallback to generic narrative
     return `**Strategic Analysis - ${insight.title}**
 
@@ -507,7 +553,31 @@ ${insight.description}
     }
   };
 
+  // Handle error state
+  if (error) {
+    console.error('[MorningBriefing] Query error:', error);
+    return (
+      <AppShell>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-dark-50">Error Loading Morning Briefing</h2>
+            <p className="text-dark-400">Unable to load briefing data. Please try refreshing the page.</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              className="mt-4"
+              variant="outline"
+            >
+              Refresh Page
+            </Button>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   if (isLoading) {
+    console.log('[MorningBriefing] Loading briefing data...');
     return (
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -520,6 +590,23 @@ ${insight.description}
       </AppShell>
     );
   }
+
+  if (!briefingData) {
+    console.warn('[MorningBriefing] No briefing data available');
+    return (
+      <AppShell>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <AlertTriangle className="w-8 h-8 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-dark-50">No Briefing Data Available</h2>
+            <p className="text-dark-400">Unable to generate morning briefing at this time.</p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  console.log('[MorningBriefing] Rendering briefing with data:', briefingData.analyst.name);
 
   return (
     <AppShell>
