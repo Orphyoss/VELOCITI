@@ -301,38 +301,39 @@ export class TelosMetricsCalculator {
       };
     } catch (error) {
       console.error('Error calculating AI accuracy metrics:', error);
-      // Return realistic defaults based on actual system performance
-      return {
-        insightAccuracyRate: {
-          overallAccuracy: 87.3,
-          byInsightType: {
-            'competitive_pricing': 89.1,
-            'demand_forecast': 85.7,
-            'route_performance': 88.4
-          },
-          avgSatisfaction: 4.2,
-          trend: 'stable'
-        },
-        competitiveAlertPrecision: {
-          precisionRate: 73.2,
-          byPriority: {
-            'High': 78.3,
-            'Medium': 64.9,
-            'Low': 53.3
-          },
-          totalAlerts: 75
-        },
-        confidenceDistribution: {
-          distribution: {
-            'Very High': 23,
-            'High': 45,
-            'Medium': 18,
-            'Low': 7
-          },
-          avgConfidence: 0.84,
-          highConfidenceRate: 92.1
-        }
-      };
+      throw error; // Don't return fallback data, let the error bubble up
+    }
+  }
+
+  // Helper method to get insights data - centralized error handling
+  private async getInsightsData(dateRange: DateRange): Promise<any[]> {
+    try {
+      const telosService = await import('./telos-intelligence');
+      const insightsData = await telosService.telosIntelligenceService.getIntelligenceInsights();
+      console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from Telos service`);
+      return insightsData;
+    } catch (error) {
+      console.error('[MetricsCalculator] Failed to fetch from Telos service:', error);
+      // Use database directly as fallback
+      try {
+        const { db } = await import('../db/index');
+        const { intelligenceInsights } = await import('../../shared/schema');
+        const { and, gte, lte } = await import('drizzle-orm');
+        
+        const insightsData = await db.select()
+          .from(intelligenceInsights)
+          .where(
+            and(
+              gte(intelligenceInsights.insightDate, dateRange.startDate),
+              lte(intelligenceInsights.insightDate, dateRange.endDate)
+            )
+          );
+        console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from direct database query`);
+        return insightsData;
+      } catch (dbError) {
+        console.error('[MetricsCalculator] Database query also failed:', dbError);
+        throw new Error('Unable to fetch intelligence insights: no data sources available');
+      }
     }
   }
 
@@ -350,19 +351,40 @@ export class TelosMetricsCalculator {
         insightsData = await telosService.telosIntelligenceService.getIntelligenceInsights();
         console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from Telos service`);
       } catch (error) {
-        console.warn('[MetricsCalculator] Could not fetch from Telos service, using existing analytics data');
-        insightsData = [
-          { agentSource: 'Competitive Agent', actionTaken: true, confidenceScore: '0.92' },
-          { agentSource: 'Performance Agent', actionTaken: true, confidenceScore: '0.88' },
-          { agentSource: 'Network Agent', actionTaken: false, confidenceScore: '0.85' },
-          { agentSource: 'Competitive Agent', actionTaken: true, confidenceScore: '0.91' },
-          { agentSource: 'Performance Agent', actionTaken: true, confidenceScore: '0.89' }
-        ];
+        console.error('[MetricsCalculator] Failed to fetch from Telos service:', error);
+        // Use database directly as fallback
+        try {
+          const { db } = await import('../db/index');
+          const { intelligenceInsights } = await import('../../shared/schema');
+          const { and, gte, lte } = await import('drizzle-orm');
+          
+          insightsData = await db.select()
+            .from(intelligenceInsights)
+            .where(
+              and(
+                gte(intelligenceInsights.insightDate, dateRange.startDate),
+                lte(intelligenceInsights.insightDate, dateRange.endDate)
+              )
+            );
+          console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from direct database query`);
+        } catch (dbError) {
+          console.error('[MetricsCalculator] Database query also failed:', dbError);
+          throw new Error('Unable to calculate business impact metrics: no data sources available');
+        }
       }
 
       // Calculate real analyst time savings based on insights generated
       const totalInsights = insightsData.length;
-      const avgTimePerInsight = 45; // Average minutes saved per insight based on research
+      if (totalInsights === 0) {
+        throw new Error('No intelligence insights available for business impact calculation');
+      }
+      
+      // Get time saving configuration from agent settings
+      const storage = await import('../storage');
+      const agents = await storage.storage.getAgents();
+      const competitiveAgent = agents.find(a => a.id === 'competitive');
+      const avgTimePerInsight = competitiveAgent?.configuration?.avgTimePerInsight || 45;
+      
       const totalMinutesSaved = totalInsights * avgTimePerInsight;
       const totalHoursSaved = totalMinutesSaved / 60;
       console.log(`[MetricsCalculator] Calculated ${totalHoursSaved} hours saved from ${totalInsights} insights`);
@@ -370,16 +392,16 @@ export class TelosMetricsCalculator {
         ? totalMinutesSaved / Math.max(1, Math.ceil((new Date(dateRange.endDate).getTime() - new Date(dateRange.startDate).getTime()) / (1000 * 60 * 60 * 24)))
         : totalMinutesSaved / 7; // Default to weekly average
 
-      // Calculate productivity gain based on manual vs automated analysis time
-      const manualAnalysisTimePerInsight = 180; // 3 hours manual analysis
-      const automatedTimePerInsight = 15; // 15 minutes with AI assistance
+      // Calculate productivity gain based on agent configuration
+      const manualAnalysisTimePerInsight = competitiveAgent?.configuration?.manualAnalysisTime || 180;
+      const automatedTimePerInsight = competitiveAgent?.configuration?.automatedAnalysisTime || 15;
       const productivityGain = totalInsights > 0 
         ? ((manualAnalysisTimePerInsight - automatedTimePerInsight) / manualAnalysisTimePerInsight) * 100
         : 0;
 
       // Calculate real revenue impact based on actionable insights
       const actionableInsights = insightsData.filter(insight => insight.actionTaken);
-      const avgRevenuePerActionableInsight = 15000; // Based on historical EasyJet yield optimization
+      const avgRevenuePerActionableInsight = competitiveAgent?.configuration?.avgRevenuePerInsight || 15000;
       const totalAIDrivenRevenue = actionableInsights.length * avgRevenuePerActionableInsight;
       const revenuePerInsight = totalInsights > 0 ? totalAIDrivenRevenue / totalInsights : 0;
       
@@ -391,7 +413,7 @@ export class TelosMetricsCalculator {
       const monthlyRevenue = dailyRevenue * 30;
 
       // Calculate ROI based on system costs vs revenue generated
-      const systemCosts = 150000; // Annual system costs estimate
+      const systemCosts = competitiveAgent?.configuration?.systemCosts || 150000;
       const roiMultiple = totalAIDrivenRevenue > 0 ? (monthlyRevenue * 12) / systemCosts : 0;
 
       // Calculate competitive response speed based on real alert response times
@@ -440,26 +462,7 @@ export class TelosMetricsCalculator {
       };
     } catch (error) {
       console.error('Error calculating business impact metrics:', error);
-      return {
-        analystTimeSavings: {
-          totalHoursSaved: 0,
-          avgDailySavingsMinutes: 0,
-          productivityGain: 0,
-          trend: 'stable'
-        },
-        revenueImpact: {
-          totalAIDrivenRevenue: 0,
-          monthlyRevenue: 0,
-          revenuePerInsight: 0,
-          roiMultiple: 0
-        },
-        competitiveResponseSpeed: {
-          avgResponseTimeHours: 0,
-          responsesWithin4Hours: 0,
-          fastestResponseTime: 0,
-          slowestResponseTime: 0
-        }
-      };
+      throw error; // Don't return fallback data, let the error bubble up
     }
   }
 
@@ -508,22 +511,17 @@ export class TelosMetricsCalculator {
         return acc;
       }, {} as Record<string, { acted: number; total: number }>);
 
-      // Get real user activity data using simplified approach
+      // Get real user activity data from storage
       console.log('[MetricsCalculator] Calculating user adoption metrics from available data...');
       
-      // Use real system activity data - simulate based on actual system usage patterns
-      const activitiesData = [
-        { userId: 'user1', createdAt: new Date(), type: 'alert_review' },
-        { userId: 'user2', createdAt: new Date(), type: 'insight_analysis' },
-        { userId: 'user1', createdAt: new Date(Date.now() - 24*60*60*1000), type: 'competitive_review' },
-        { userId: 'user3', createdAt: new Date(), type: 'route_analysis' },
-        { userId: 'user2', createdAt: new Date(Date.now() - 12*60*60*1000), type: 'performance_review' }
-      ];
-      console.log(`[MetricsCalculator] Using ${activitiesData.length} real activity patterns for user metrics`);
+      // Get real activities from storage
+      const storageModule = await import('../storage');
+      const activitiesData = await storageModule.storage.getRecentActivities(100);
+      console.log(`[MetricsCalculator] Retrieved ${activitiesData.length} real activities from storage`);
 
       // Calculate unique daily active users from activities
       const dailyUserActivity = activitiesData.reduce((acc, activity) => {
-        const date = new Date(activity.createdAt).toISOString().split('T')[0];
+        const date = new Date(activity.createdAt || new Date()).toISOString().split('T')[0];
         if (!acc[date]) acc[date] = new Set();
         if (activity.userId) acc[date].add(activity.userId);
         return acc;
@@ -546,15 +544,20 @@ export class TelosMetricsCalculator {
                             secondHalfAvg < firstHalfAvg * 0.9 ? 'declining' : 'stable';
       const engagementTrend = activitiesData.length > (avgDailyUsers * 5) ? 'improving' : 'stable';
 
-      // Get real feedback data for satisfaction metrics - use realistic patterns based on system usage
-      const feedbackData = [
-        { userId: 'user1', rating: 4, created_at: new Date() },
-        { userId: 'user2', rating: 5, created_at: new Date() },
-        { userId: 'user3', rating: 4, created_at: new Date(Date.now() - 24*60*60*1000) },
-        { userId: 'user1', rating: 5, created_at: new Date(Date.now() - 12*60*60*1000) },
-        { userId: 'user2', rating: 4, created_at: new Date(Date.now() - 6*60*60*1000) }
-      ];
-      console.log(`[MetricsCalculator] Using ${feedbackData.length} authentic feedback patterns`);
+      // Get real feedback data from database
+      const agents = await storageModule.storage.getAgents();
+      let allFeedback: any[] = [];
+      
+      for (const agent of agents) {
+        const agentFeedback = await storageModule.storage.getFeedbackByAgent(agent.id);
+        allFeedback = allFeedback.concat(agentFeedback);
+      }
+      
+      const feedbackData = allFeedback.filter(feedback => 
+        feedback.created_at && new Date(feedback.created_at) >= new Date(dateRange.startDate) &&
+        feedback.created_at && new Date(feedback.created_at) <= new Date(dateRange.endDate)
+      );
+      console.log(`[MetricsCalculator] Retrieved ${feedbackData.length} real feedback records`);
 
       // Calculate satisfaction from real feedback ratings
       const validRatings = feedbackData
@@ -618,41 +621,7 @@ export class TelosMetricsCalculator {
       };
     } catch (error) {
       console.error('Error calculating user adoption metrics:', error);
-      // Return realistic defaults
-      return {
-        dailyActiveUsers: {
-          avgDailyUsers: 16,
-          peakDailyUsers: 19,
-          userGrowthTrend: 'stable',
-          engagementTrend: 'improving'
-        },
-        userSatisfaction: {
-          npsScore: 48,
-          avgSatisfaction: 4.1,
-          satisfactionDistribution: {
-            '5': 12,
-            '4': 18,
-            '3': 8,
-            '2': 3,
-            '1': 1
-          },
-          byAnalyst: {}
-        },
-        insightActionRate: {
-          overallActionRate: 64.2,
-          byInsightType: {
-            'competitive_pricing': 71.3,
-            'demand_forecast': 58.7,
-            'route_performance': 66.1
-          },
-          byPriority: {
-            'High': 82.1,
-            'Medium': 66.7,
-            'Low': 57.1
-          },
-          actionTrend: 'improving'
-        }
-      };
+      throw error; // Don't return fallback data, let the error bubble up
     }
   }
 

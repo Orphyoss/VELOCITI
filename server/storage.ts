@@ -18,17 +18,17 @@ const memoryStore = {
   activities: new Map<string, Activity>()
 };
 
-// Initialize with sample data
-const initializeData = () => {
-  // Sample agents - these will be populated from real database by storage implementation
-  const sampleAgents: Agent[] = [
+// Initialize agents with real configuration
+const initializeAgents = () => {
+  // Initialize required agents for system operation
+  const requiredAgents: Agent[] = [
     {
       id: 'competitive',
       name: 'Competitive Intelligence Agent',
       status: 'active',
-      accuracy: '87.50',
-      totalAnalyses: 234,
-      successfulPredictions: 205,
+      accuracy: '0.00',
+      totalAnalyses: 0,
+      successfulPredictions: 0,
       configuration: { threshold: 0.05, monitoring_frequency: 'hourly' },
       lastActive: new Date(),
       updatedAt: new Date()
@@ -37,9 +37,9 @@ const initializeData = () => {
       id: 'performance',
       name: 'Route Performance Agent',
       status: 'active',
-      accuracy: '92.30',
-      totalAnalyses: 189,
-      successfulPredictions: 174,
+      accuracy: '0.00',
+      totalAnalyses: 0,
+      successfulPredictions: 0,
       configuration: { variance_threshold: 0.03, lookback_days: 7 },
       lastActive: new Date(),
       updatedAt: new Date()
@@ -48,156 +48,23 @@ const initializeData = () => {
       id: 'network',
       name: 'Network Optimization Agent',
       status: 'active',
-      accuracy: '89.75',
-      totalAnalyses: 156,
-      successfulPredictions: 140,
+      accuracy: '0.00',
+      totalAnalyses: 0,
+      successfulPredictions: 0,
       configuration: { efficiency_threshold: 0.02, analysis_depth: 'comprehensive' },
       lastActive: new Date(),
       updatedAt: new Date()
     }
   ];
 
-  // Sample alerts
-  const sampleAlerts: Alert[] = [
-    {
-      id: 'alert-1',
-      type: 'competitive',
-      priority: 'high',
-      title: 'Price Undercut Detected - LGW→BCN',
-      description: 'Competitor pricing 12% below our rates on Barcelona route',
-      route: 'LGW→BCN',
-      routeName: 'London Gatwick → Barcelona',
-      metricValue: '285.50',
-      thresholdValue: '325.00',
-      impactScore: '8.5',
-      confidence: '0.92',
-      agentId: 'competitive',
-      metadata: { competitor: 'Vueling', price_diff: '-12%' },
-      status: 'active',
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      acknowledgedAt: null,
-      resolvedAt: null
-    },
-    {
-      id: 'alert-2',
-      type: 'performance',
-      priority: 'critical',
-      title: 'Load Factor Drop - LHR→CDG',
-      description: 'Load factor dropped to 68% vs 85% forecast for premium route',
-      route: 'LHR→CDG',
-      routeName: 'London Heathrow → Paris Charles de Gaulle',
-      metricValue: '68.0',
-      thresholdValue: '85.0',
-      impactScore: '9.2',
-      confidence: '0.88',
-      agentId: 'performance',
-      metadata: { forecast_miss: '17%', revenue_impact: '-£45k' },
-      status: 'active',
-      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-      acknowledgedAt: null,
-      resolvedAt: null
-    },
-    {
-      id: 'alert-3',
-      type: 'network',
-      priority: 'medium',
-      title: 'Network Efficiency Opportunity',
-      description: 'Amsterdam hub showing optimization potential for connecting flights',
-      route: 'AMS→*',
-      routeName: 'Amsterdam Hub Operations',
-      metricValue: '75.5',
-      thresholdValue: '80.0',
-      impactScore: '6.8',
-      confidence: '0.79',
-      agentId: 'network',
-      metadata: { efficiency_gain: '4.5%', affected_routes: 12 },
-      status: 'active',
-      createdAt: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-      acknowledgedAt: null,
-      resolvedAt: null
-    }
-  ];
-
-  // Sample route performance data
-  const sampleRoutes: RoutePerformance[] = [
-    {
-      id: 'route-1',
-      route: 'LGW→BCN',
-      routeName: 'London Gatwick → Barcelona',
-      date: new Date(),
-      yield: '285.50',
-      loadFactor: '78.5',
-      performance: '-5.2',
-      competitorPrice: '285.00',
-      ourPrice: '325.00',
-      demandIndex: '1.15',
-      createdAt: new Date()
-    },
-    {
-      id: 'route-2',
-      route: 'LHR→CDG',
-      routeName: 'London Heathrow → Paris Charles de Gaulle',
-      date: new Date(),
-      yield: '425.75',
-      loadFactor: '68.0',
-      performance: '-17.0',
-      competitorPrice: '420.00',
-      ourPrice: '450.00',
-      demandIndex: '0.92',
-      createdAt: new Date()
-    }
-  ];
-
-  // Sample activities
-  const sampleActivities: Activity[] = [
-    {
-      id: 'activity-1',
-      type: 'alert',
-      title: 'New Critical Alert Generated',
-      description: 'Performance agent detected load factor drop on LHR→CDG',
-      metadata: { alertId: 'alert-2', severity: 'critical' },
-      userId: 'system',
-      createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000)
-    },
-    {
-      id: 'activity-2',
-      type: 'analysis',
-      title: 'Morning Briefing Generated',
-      description: 'AI generated comprehensive morning briefing for network performance',
-      metadata: { briefingType: 'morning', itemsCount: 8 },
-      userId: 'system',
-      createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
-    }
-  ];
-
-  // Sample system metrics
-  const sampleMetrics: SystemMetric[] = [
-    {
-      id: 'metric-1',
-      metricType: 'network_yield',
-      value: '342.85',
-      timestamp: new Date(),
-      metadata: { currency: 'GBP', period: 'daily' }
-    },
-    {
-      id: 'metric-2',
-      metricType: 'load_factor',
-      value: '82.3',
-      timestamp: new Date(),
-      metadata: { unit: 'percentage', network_wide: true }
-    }
-  ];
-
-  // Populate stores
-  sampleAgents.forEach(agent => memoryStore.agents.set(agent.id, agent));
-  sampleAlerts.forEach(alert => memoryStore.alerts.set(alert.id, alert));
-  sampleRoutes.forEach(route => memoryStore.routePerformance.set(route.id, route));
-  sampleActivities.forEach(activity => memoryStore.activities.set(activity.id, activity));
-  sampleMetrics.forEach(metric => memoryStore.systemMetrics.set(metric.id, metric));
+  // Only populate agents if store is empty
+  if (memoryStore.agents.size === 0) {
+    requiredAgents.forEach(agent => memoryStore.agents.set(agent.id, agent));
+  }
 };
 
-// Initialize data when module loads
-initializeData();
+// Initialize only essential system components
+initializeAgents();
 
 export interface IStorage {
   // Users
@@ -245,21 +112,18 @@ export class MemoryStorage implements IStorage {
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    for (const user of memoryStore.users.values()) {
-      if (user.email === username) return user;
-    }
-    return undefined;
+    const users = Array.from(memoryStore.users.values());
+    return users.find(user => user.email === username);
   }
 
   async createUser(user: InsertUser): Promise<User> {
     const newUser: User = {
       id: user.id || `user-${Date.now()}`,
+      username: user.username,
       email: user.email,
-      name: user.name,
       role: user.role || 'analyst',
       preferences: user.preferences || {},
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date()
     };
     memoryStore.users.set(newUser.id, newUser);
     return newUser;
@@ -267,7 +131,7 @@ export class MemoryStorage implements IStorage {
 
   async getAlerts(limit = 50): Promise<Alert[]> {
     const allAlerts = Array.from(memoryStore.alerts.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       .slice(0, limit);
     return allAlerts;
   }
@@ -275,7 +139,7 @@ export class MemoryStorage implements IStorage {
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
     return Array.from(memoryStore.alerts.values())
       .filter(alert => alert.priority === priority)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
