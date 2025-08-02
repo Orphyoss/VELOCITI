@@ -55,6 +55,31 @@ export default function Agents() {
     },
   });
 
+  // Enhanced scenario generation mutation
+  const generateScenariosMutation = useMutation({
+    mutationFn: (count: number = 5) => 
+      fetch('/api/agents/generate-scenarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ count })
+      }).then(res => res.json()),
+    onSuccess: (data) => {
+      toast({
+        title: "Enhanced Scenarios Generated",
+        description: `Successfully generated ${data.stats?.total || 'multiple'} realistic airline intelligence scenarios`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/alerts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/activities'] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate scenarios",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getAgentIcon = (agentId: string) => {
     switch (agentId) {
       case 'competitive': return AlertTriangle;
@@ -116,6 +141,28 @@ export default function Agents() {
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">AI Agents</h1>
           <p className="text-slate-400 max-w-2xl mx-auto">Manage and monitor your intelligent revenue management agents</p>
+          
+          {/* Enhanced Scenarios Button */}
+          <div className="mt-4">
+            <Button
+              onClick={() => generateScenariosMutation.mutate(5)}
+              disabled={generateScenariosMutation.isPending}
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {generateScenariosMutation.isPending ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating Scenarios...
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  Generate Enhanced Alert Scenarios
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-slate-500 mt-2">Generate realistic airline intelligence scenarios for testing</p>
+          </div>
         </div>
         
         {/* Agent Overview Cards */}

@@ -274,6 +274,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced alert generation endpoint
+  app.post("/api/agents/generate-scenarios", async (req, res) => {
+    try {
+      const { count = 5 } = req.body;
+      console.log(`[API] Generating ${count} enhanced alert scenarios...`);
+      
+      await agentService.generateEnhancedScenarios(count);
+      
+      // Get scenario statistics
+      const stats = agentService.getScenarioStats();
+      
+      res.json({ 
+        success: true, 
+        message: `Generated ${count} enhanced alert scenarios`,
+        stats: stats
+      });
+    } catch (error) {
+      console.error('[API] Error generating enhanced scenarios:', error);
+      res.status(500).json({ error: 'Failed to generate enhanced scenarios' });
+    }
+  });
+
   // LLM endpoints
   app.post("/api/llm/query", async (req, res) => {
     const startTime = Date.now();

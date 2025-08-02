@@ -3,19 +3,22 @@ import { alerts, agents, feedback, routePerformance, activities } from '@shared/
 import { eq, desc, and, gte } from 'drizzle-orm';
 import { llmService } from './llm';
 import { storage } from '../storage';
+import { enhancedAlertGenerator } from './enhancedAlertGenerator';
+import { enhancedAlertGenerator } from './enhancedAlertGenerator';
 
 export class AgentService {
   
   async runCompetitiveAgent(): Promise<void> {
     try {
-      // Simulate competitive intelligence analysis
+      // Enhanced competitive intelligence analysis
       console.log('Running Competitive Agent analysis...');
       
-      // In real implementation, this would:
-      // 1. Connect to Infare API for competitor pricing
-      // 2. Analyze price changes and patterns
-      // 3. Calculate revenue impact
-      // 4. Generate alerts based on thresholds
+      // Use enhanced alert generator for more realistic scenarios
+      if (Math.random() > 0.4) { // 60% chance to use enhanced scenarios
+        await enhancedAlertGenerator.generateAlertsByType('competitive', 1);
+        await this.updateAgentMetrics('competitive', 1);
+        return;
+      }
       
       const competitiveAlerts = await this.detectCompetitiveChanges();
       
@@ -55,7 +58,14 @@ export class AgentService {
     try {
       console.log('Running Performance Agent analysis...');
       
-      // Analyze route performance vs forecasts
+      // Use enhanced alert generator for demand and system scenarios
+      if (Math.random() > 0.5) { // 50% chance to use enhanced scenarios
+        const scenarioType = Math.random() > 0.5 ? 'demand' : 'system';
+        await enhancedAlertGenerator.generateAlertsByType(scenarioType, 1);
+        await this.updateAgentMetrics('performance', 1);
+        return;
+      }
+      
       const performanceAlerts = await this.analyzeRoutePerformance();
       
       for (const alert of performanceAlerts) {
@@ -93,7 +103,14 @@ export class AgentService {
     try {
       console.log('Running Network Agent analysis...');
       
-      // Analyze network-wide optimization opportunities
+      // Use enhanced alert generator for operational and economic scenarios
+      if (Math.random() > 0.6) { // 40% chance to use enhanced scenarios
+        const scenarioType = Math.random() > 0.5 ? 'operational' : 'economic';
+        await enhancedAlertGenerator.generateAlertsByType(scenarioType, 1);
+        await this.updateAgentMetrics('network', 1);
+        return;
+      }
+      
       const networkAlerts = await this.analyzeNetworkOptimization();
       
       for (const alert of networkAlerts) {
@@ -318,6 +335,35 @@ export class AgentService {
         // Agent already exists
       }
     }
+  }
+
+  // Method to generate multiple enhanced scenario alerts
+  async generateEnhancedScenarios(count: number = 5): Promise<void> {
+    try {
+      console.log(`[AgentService] Generating ${count} enhanced scenario alerts...`);
+      await enhancedAlertGenerator.generateScenarioAlerts(count);
+      
+      // Create a summary activity
+      await storage.createActivity({
+        type: 'analysis',
+        title: `Enhanced Alert Scenarios Generated`,
+        description: `Generated ${count} realistic airline intelligence scenarios across competitive, demand, operational, system, and economic categories`,
+        agentId: 'system',
+        metadata: {
+          scenario_count: count,
+          generation_type: 'enhanced_batch'
+        }
+      });
+      
+      console.log(`[AgentService] Successfully generated ${count} enhanced scenario alerts`);
+    } catch (error) {
+      console.error('[AgentService] Error generating enhanced scenarios:', error);
+    }
+  }
+
+  // Method to get scenario statistics
+  getScenarioStats() {
+    return enhancedAlertGenerator.getScenarioStats();
   }
 }
 
