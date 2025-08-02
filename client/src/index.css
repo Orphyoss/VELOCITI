@@ -61,6 +61,14 @@
 .greeting-text {
   color: #ffffff !important;
   font-weight: 600 !important;
+  background-color: rgba(255, 0, 0, 0.3) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+}
+
+/* Alternative approach - force all text in this card to be visible */
+.analyst-context-card * {
+  color: #ffffff !important;
 }
 
 .dark {
