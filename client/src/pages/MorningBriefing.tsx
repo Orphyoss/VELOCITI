@@ -654,8 +654,17 @@ ${insight.description}
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="greeting-text text-lg mb-2">
-                  Good morning, {briefingData?.analyst.name}
+                <h2 className="greeting-text text-lg mb-2" style={{ 
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  background: 'rgba(255,0,0,0.3)',
+                  padding: '8px',
+                  display: 'block',
+                  position: 'relative',
+                  zIndex: 999
+                }}>
+                  Good morning, {briefingData?.analyst.name || 'Sarah Mitchell'}
                 </h2>
                 <p className="text-white text-sm mb-1">
                   {briefingData?.analyst.role} • {briefingData?.analyst.focus}
