@@ -625,7 +625,8 @@ export default function TelosIntelligence() {
                       <div className="text-right space-y-1">
                         <div className="text-xl font-bold">£{route.yield.toFixed(2)}</div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={route.change > 10 ? 'default' : route.change > 5 ? 'secondary' : 'outline'}>
+                          <Badge variant={route.change > 10 ? 'secondary' : route.change > 5 ? 'secondary' : 'outline'} 
+                                 className={route.change > 5 ? 'bg-green-600 dark:bg-green-700 text-white dark:text-green-100 font-medium' : ''}>
                             {formatPercentage(route.change)}
                           </Badge>
                           {route.change > 5 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
@@ -714,8 +715,10 @@ export default function TelosIntelligence() {
                           <div className="text-sm text-muted-foreground">
                             Range: £{parseFloat(comp.minPrice || '0').toFixed(0)} - £{parseFloat(comp.maxPrice || '0').toFixed(0)}
                           </div>
-                          <Badge variant={comp.airlineCode === 'EZY' ? 'default' : 
-                                       parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}>
+                          <Badge variant={comp.airlineCode === 'EZY' ? 'secondary' : 
+                                       parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}
+                                 className={comp.airlineCode === 'EZY' ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-blue-100 font-medium' : 
+                                           parseFloat(comp.avgPrice || '0') > 150 ? 'bg-purple-600 dark:bg-purple-700 text-white dark:text-purple-100 font-medium' : ''}>
                             {parseFloat(comp.avgPrice || '0') > 150 ? 'Premium' : parseFloat(comp.avgPrice || '0') < 100 ? 'Budget' : 'Competitive'}
                           </Badge>
                         </div>
