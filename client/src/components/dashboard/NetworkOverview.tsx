@@ -56,7 +56,7 @@ export default function NetworkOverview() {
 
   return (
     <Card className="bg-dark-900 border-dark-800">
-      <CardHeader className="pb-3 sm:pb-6">
+      <CardHeader className="pb-2 sm:pb-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
             <Globe className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
@@ -100,25 +100,24 @@ export default function NetworkOverview() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             {/* Top Performing Routes */}
             <div>
-              <h5 className="text-xs sm:text-sm font-medium text-green-400 mb-2 sm:mb-3 flex items-center">
+              <h5 className="text-xs sm:text-sm font-medium text-green-400 mb-2 flex items-center">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Top Performing Routes
               </h5>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {topRoutes.map((route, index) => (
-                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 sm:p-3 hover:bg-dark-700 transition-colors">
+                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-dark-50 text-sm sm:text-base">{route.code}</span>
-                      <p className="text-xs text-dark-400 truncate">{route.name}</p>
+                      <span className="font-medium text-dark-50 text-sm">{route.code}</span>
                     </div>
-                    <div className="text-right ml-2">
-                      <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs">
+                    <div className="text-right ml-2 flex items-center gap-2">
+                      <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs px-1.5 py-0.5">
                         {route.performance}%
                       </Badge>
-                      <p className="text-xs text-dark-400 mt-1">£{route.yield.toFixed(2)}</p>
+                      <span className="text-xs text-dark-400">£{route.yield.toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
@@ -127,22 +126,21 @@ export default function NetworkOverview() {
             
             {/* Underperforming Routes */}
             <div>
-              <h5 className="text-xs sm:text-sm font-medium text-red-400 mb-2 sm:mb-3 flex items-center">
+              <h5 className="text-xs sm:text-sm font-medium text-red-400 mb-2 flex items-center">
                 <TrendingDown className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                 Underperforming Routes
               </h5>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {bottomRoutes.map((route, index) => (
-                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 sm:p-3 hover:bg-dark-700 transition-colors">
+                  <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <span className="font-medium text-dark-50 text-sm sm:text-base">{route.code}</span>
-                      <p className="text-xs text-dark-400 truncate">{route.name}</p>
+                      <span className="font-medium text-dark-50 text-sm">{route.code}</span>
                     </div>
-                    <div className="text-right ml-2">
-                      <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs">
+                    <div className="text-right ml-2 flex items-center gap-2">
+                      <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs px-1.5 py-0.5">
                         {route.performance}%
                       </Badge>
-                      <p className="text-xs text-dark-400 mt-1">£{route.yield.toFixed(2)}</p>
+                      <span className="text-xs text-dark-400">£{route.yield.toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
