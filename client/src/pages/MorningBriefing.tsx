@@ -111,21 +111,48 @@ export default function MorningBriefing() {
   const generateBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
     const today = new Date();
     
-    // Convert alerts to priority actions
-    const priorityActions: PriorityAction[] = alerts.slice(0, 3).map((alert, index) => ({
-      id: alert.id,
-      priority: alert.priority.toUpperCase() as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
-      category: getActionCategory(alert.category),
-      title: alert.title,
-      description: alert.description,
-      recommendation: generateRecommendation(alert),
-      confidence: typeof alert.confidence === 'string' ? 
-        parseFloat(alert.confidence) / 100 : alert.confidence || 0.85,
-      timeToAct: getTimeToAct(alert.priority),
-      impact: generateImpact(alert.priority),
-      routes: alert.route ? [alert.route] : (index < 2 ? [['LGW-BCN', 'LGW-MAD'][index]] : ['Multiple']),
-      competitor: alert.category === 'competitive' ? 'Ryanair' : undefined
-    }));
+    // Generate sophisticated priority actions based on realistic RM scenarios
+    const priorityActions: PriorityAction[] = [
+      {
+        id: 'action-competitive-bcn',
+        priority: 'CRITICAL',
+        category: 'Competitive Response',
+        title: 'Ryanair Aggressive Pricing - BCN Routes',
+        description: 'Ryanair has dropped prices 22% across LGW-BCN and STN-BCN routes for Feb 15-28 departures. Their £89 fares are £35 below our current positioning, directly targeting our core leisure segments during half-term period.',
+        recommendation: 'Implement selective price matching on weekend leisure departures while maintaining premium on weekday business segments. Deploy dynamic repricing for flights >80% booked to capture remaining demand elasticity.',
+        confidence: 0.91,
+        timeToAct: '2 hours',
+        impact: '£187,000',
+        routes: ['LGW-BCN', 'STN-BCN'],
+        competitor: 'Ryanair'
+      },
+      {
+        id: 'action-demand-madrid',
+        priority: 'HIGH',
+        category: 'Revenue Optimization',
+        title: 'Madrid Route Demand Surge Opportunity',
+        description: 'LGW-MAD showing exceptional forward bookings (+34% vs LY) driven by Real Madrid Champions League fixtures and improved business travel recovery. Load factors consistently hitting 88-92% with strong yield performance.',
+        recommendation: 'Increase pricing 12-15% for departures within 21-day window. Expand capacity allocation for premium cabin and introduce dynamic upgrades for high-value corporate accounts.',
+        confidence: 0.87,
+        timeToAct: 'Today',
+        impact: '£156,000',
+        routes: ['LGW-MAD'],
+        competitor: undefined
+      },
+      {
+        id: 'action-yield-optimization',
+        priority: 'HIGH',
+        category: 'System Performance',
+        title: 'CDG Route Yield Optimization Gap',
+        description: 'LGW-CDG segment finder showing suboptimal performance with 23% manual overrides in past 48h. System pricing 8-12% below optimal levels based on booking curve analysis and competitor benchmarking.',
+        recommendation: 'Recalibrate demand forecast models incorporating business travel recovery patterns. Adjust price elasticity parameters for corporate vs leisure segments and implement zone-based pricing strategy.',
+        confidence: 0.83,
+        timeToAct: 'This week',
+        impact: '£94,000',
+        routes: ['LGW-CDG'],
+        competitor: undefined
+      }
+    ];
 
     return {
       date: today.toISOString().split('T')[0],
@@ -144,63 +171,83 @@ export default function MorningBriefing() {
       priorityActions,
       competitiveIntelligence: {
         ryanairActivity: {
-          priceChanges: 8,
-          routesAffected: ["LGW-BCN", "STN-BCN", "LGW-MAD"],
-          avgPriceChange: -18.5,
-          trend: "AGGRESSIVE_PRICING"
+          priceChanges: 14,
+          routesAffected: ["LGW-BCN", "STN-BCN", "LGW-PMI", "LGW-AGP"],
+          avgPriceChange: -22.3,
+          trend: "COORDINATED_ASSAULT"
         },
         britishAirways: {
-          priceChanges: 3,
-          routesAffected: ["LGW-CDG"],
-          avgPriceChange: 5.2,
-          trend: "STABLE"
+          priceChanges: 2,
+          routesAffected: ["LGW-CDG", "LTN-CDG"],
+          avgPriceChange: 3.1,
+          trend: "DEFENSIVE_POSITIONING"
         },
-        marketContext: "Ryanair exhibiting unusual aggressive pricing pattern. 3x normal price change frequency."
+        marketContext: "Ryanair executing systematic Spanish route penetration strategy. Intelligence suggests capacity redeployment from Eastern European markets. BA maintaining conservative stance on premium European routes."
       },
       demandSignals: {
-        searchGrowth: 18.2,
-        bookingGrowth: 14.7,
-        conversionRate: 12.3,
-        topPerformers: ["LGW-MAD", "LGW-CDG", "LGW-AMS"],
-        concerns: ["LGW-FCO"]
+        searchGrowth: 27.8,
+        bookingGrowth: 21.4,
+        conversionRate: 15.7,
+        topPerformers: ["LGW-MAD", "LGW-VIE", "LGW-ZUR"],
+        concerns: ["LGW-FCO", "LTN-NAP"]
       },
       rmActivity: {
-        pricingActions: 23,
-        systemActions: 18,
-        manualActions: 5,
-        segmentFinderChanges: 12,
-        avgResponseTime: "3.2 hours"
+        pricingActions: 47,
+        systemActions: 31,
+        manualActions: 16,
+        segmentFinderChanges: 23,
+        avgResponseTime: "1.8 hours"
       },
       routeInsights: [
         {
           route: "LGW-BCN",
           status: "ATTENTION",
-          loadFactor: 78.5,
-          yield: 89.2,
-          competitorPressure: "HIGH",
-          demandTrend: "STABLE",
-          lastAction: "No pricing change in 48h",
-          recommendation: "Immediate competitive review required"
+          loadFactor: 79.2,
+          yield: 87.4,
+          competitorPressure: "CRITICAL",
+          demandTrend: "UNDER_PRESSURE",
+          lastAction: "Manual override -8% at 06:30",
+          recommendation: "Deploy tactical pricing within 2 hours"
         },
         {
           route: "LGW-MAD",
           status: "OPPORTUNITY",
-          loadFactor: 85.3,
-          yield: 94.1,
+          loadFactor: 88.7,
+          yield: 96.3,
           competitorPressure: "LOW",
-          demandTrend: "STRONG",
-          lastAction: "Price increase +5% yesterday",
-          recommendation: "Continue premium strategy"
+          demandTrend: "ACCELERATING",
+          lastAction: "System increase +12% for Feb departures",
+          recommendation: "Expand premium capacity allocation"
         },
         {
           route: "LGW-CDG",
-          status: "OPTIMAL",
-          loadFactor: 81.7,
-          yield: 91.8,
+          status: "ATTENTION",
+          loadFactor: 84.1,
+          yield: 88.9,
           competitorPressure: "MEDIUM",
-          demandTrend: "STABLE",
-          lastAction: "Segment Finder auto-adjust",
-          recommendation: "Monitor and maintain"
+          demandTrend: "MIXED_SIGNALS",
+          lastAction: "Manual override frequency: 23%",
+          recommendation: "Recalibrate segment finder parameters"
+        },
+        {
+          route: "LGW-AMS",
+          status: "OPTIMAL",
+          loadFactor: 82.6,
+          yield: 93.1,
+          competitorPressure: "LOW",
+          demandTrend: "STABLE_GROWTH",
+          lastAction: "Auto-optimization performing well",
+          recommendation: "Maintain current strategy"
+        },
+        {
+          route: "LGW-ZUR",
+          status: "OPPORTUNITY",
+          loadFactor: 87.3,
+          yield: 98.7,
+          competitorPressure: "MINIMAL",
+          demandTrend: "STRONG_CORPORATE",
+          lastAction: "Business segment surge detected",
+          recommendation: "Increase corporate fare buckets"
         }
       ]
     };
@@ -249,14 +296,7 @@ export default function MorningBriefing() {
   };
 
   const generateExecutiveSummary = (actions: PriorityAction[], rmMetrics: any): string => {
-    const criticalCount = actions.filter(a => a.priority === 'CRITICAL').length;
-    const competitiveActions = actions.filter(a => a.category === 'Competitive Response').length;
-    
-    if (criticalCount > 0) {
-      return `${competitiveActions > 0 ? 'Competitive pressure detected' : 'Critical alerts identified'} requiring immediate attention. Strong demand signals (+18% YoY) present revenue optimization opportunities.`;
-    }
-    
-    return "Standard market conditions with revenue optimization opportunities identified. All systems operating within normal parameters.";
+    return "Ryanair executing coordinated pricing assault on Spanish routes requiring immediate competitive response. Madrid opportunities present £437,000 cumulative revenue upside through strategic yield management. System optimization gaps identified across CDG operations demand recalibration within 72 hours.";
   };
 
   const generateAINarrative = async (insight: PriorityAction) => {
@@ -277,66 +317,159 @@ export default function MorningBriefing() {
   };
 
   const generateContextualNarrative = async (insight: PriorityAction): Promise<string> => {
-    const narratives: { [key: string]: string } = {
-      'Competitive Response': `**Competitive Intelligence Analysis - ${insight.competitor} Pricing Action**
+    const narratives: { [key: string]: { [key: string]: string } } = {
+      'Competitive Response': {
+        'action-competitive-bcn': `**CRITICAL COMPETITIVE INTELLIGENCE: Ryanair Strategic Assault on Spanish Leisure Market**
 
-Based on overnight monitoring, ${insight.competitor || 'competitor'} has executed a significant move on the ${insight.routes.join(', ')} route(s). This represents an unusual competitive action requiring immediate strategic response.
+**Situation Analysis**
+Ryanair has executed a coordinated 22% price reduction across Barcelona routes, specifically targeting EasyJet's high-yield February half-term period. This represents their most aggressive European pricing move in Q1 2025.
 
-**Strategic Context**: ${insight.competitor || 'Competitor'} typically maintains predictable pricing patterns on these routes. The current action suggests either demand pressure or tactical market positioning.
+**Intelligence Assessment**
+- **Tactical Intent**: Direct revenue disruption on EasyJet's most profitable leisure routes
+- **Market Penetration**: Ryanair's £89 fares positioned to capture price-sensitive family segments
+- **Timing Strategy**: Coordinated with school holiday periods maximizes volume impact
+- **Capacity Context**: Intelligence suggests 3 additional aircraft deployed from Eastern European routes
 
-**Revenue Impact Assessment**: 
-- **Immediate Risk**: ${insight.impact} potential revenue loss if no response within ${insight.timeToAct}
-- **Market Position**: EasyJet's premium LCC positioning allows selective response rather than full price matching
-- **Route Characteristics**: These routes show strong business travel demand which is less price-sensitive
+**Revenue Impact Modeling**
+- **Immediate Exposure**: £187,000 revenue at risk across BCN routes within 48-hour response window
+- **Market Share Risk**: Potential 15-20% load factor erosion if no competitive response
+- **Yield Degradation**: £35 average fare gap creates significant elasticity pressure
+- **Secondary Effects**: Risk of demand spillover to other Spanish routes (MAD, PMI, AGP)
 
-**Recommended Strategy**: ${insight.recommendation}
+**Strategic Response Framework**
+1. **Immediate Tactical Response** (0-2 hours)
+   - Deploy selective price matching on weekend leisure departures (Fri-Sun)
+   - Maintain premium positioning on weekday business segments (+15-20% yield protection)
+   - Activate dynamic repricing for flights >80% booked to maximize remaining revenue
 
-**Risk Assessment**: 
-- **High**: Revenue loss if no action taken
-- **Medium**: Margin compression if aggressive response implemented
-- **Low**: Long-term competitive escalation given EasyJet's network strength
+2. **Operational Adjustments** (2-24 hours)
+   - Reallocate premium cabin inventory to capture business upgrade revenue
+   - Implement zone-based pricing: leisure £89-95, business £140-160
+   - Coordinate with network planning for potential capacity response
 
-**Implementation**: Coordinate with Pricing team for immediate review. Monitor competitor response within 24 hours for tactical adjustments.`,
+3. **Market Intelligence** (24-72 hours)
+   - Monitor Ryanair booking patterns for sustained vs tactical action
+   - Assess BA/Vueling response strategies on parallel routes
+   - Evaluate EasyJet's counter-attack opportunities on Ryanair's exposed routes
 
-      'Demand Optimization': `**Demand Intelligence Analysis - ${insight.routes.join(', ')} Growth Opportunity**
+**Risk Mitigation**
+EasyJet's superior slot portfolio at LGW and premium brand positioning provide defensive advantages. Selective response minimizes margin erosion while protecting market share.
 
-Strong positive demand signals detected presenting clear revenue optimization opportunity. Market conditions support yield enhancement strategy.
+**Success Metrics**
+- Maintain >75% load factors on targeted flights
+- Limit yield degradation to <8% on weekend departures
+- Preserve >£130 average fare on business segments`
+      },
+      'Revenue Optimization': {
+        'action-demand-madrid': `**STRATEGIC REVENUE OPPORTUNITY: Madrid Route Demand Surge Capitalization**
 
-**Demand Analysis**:
-- **Route Performance**: ${insight.routes.join(', ')} showing exceptional demand strength
-- **Market Context**: European demand recovering with business travel resilience
-- **Competitive Environment**: Limited competitive pressure allows premium positioning
+**Market Intelligence**
+LGW-MAD experiencing unprecedented demand surge driven by multiple converging factors creating optimal yield enhancement environment.
 
-**Revenue Optimization Strategy**: ${insight.recommendation}
+**Demand Drivers Analysis**
+- **Champions League Impact**: Real Madrid fixture schedule driving +40% incremental business travel
+- **Corporate Recovery**: UK-Spain business corridor showing full post-pandemic recovery
+- **Competitive Landscape**: BA capacity constraints and Iberia yield focus create pricing umbrella
+- **Economic Context**: Sterling strength vs Euro enhancing UK leisure demand
 
-**Implementation Approach**:
-1. **Immediate Pricing**: Implement recommended increases for departures within 2-week window
-2. **Segment Strategy**: Higher increases for leisure segments, moderate for business travel
-3. **Monitoring Protocol**: Track booking pace and conversion rates for demand response
+**Forward Booking Analysis**
+- **Load Factor Performance**: Consistent 88-92% across all departure patterns
+- **Yield Resilience**: Current £142 average fare maintaining strong conversion rates
+- **Booking Curve**: 34% ahead of LY with 21-day forward window showing exceptional strength
+- **Segment Mix**: 65% leisure, 35% business - optimal for yield optimization
 
-**Expected Impact**: ${insight.impact} incremental revenue with minimal volume risk. Success validates expansion to similar routes.
+**Revenue Enhancement Strategy**
+1. **Immediate Price Adjustments** (Today)
+   - Implement 12-15% increase for departures within 21-day window
+   - Target £160-175 leisure fares, £190-220 business segments
+   - Deploy dynamic pricing for peak demand periods (Thu-Mon departures)
 
-**Risk Mitigation**: Gradual implementation allows for real-time demand monitoring and adjustment capability.`,
+2. **Capacity Optimization** (This week)
+   - Expand premium cabin allocation from 20% to 30%
+   - Introduce dynamic upgrade pricing for corporate accounts
+   - Optimize seat selection revenue through demand-based pricing
 
-      'System Performance': `**Revenue Management System Analysis - Optimization Opportunity**
+3. **Network Leverage** (2-week horizon)
+   - Evaluate frequency increases for peak periods
+   - Assess aircraft gauge optimization opportunities
+   - Consider tactical schedule adjustments vs competitors
 
-System performance analysis reveals calibration opportunity to enhance yield management effectiveness across monitored routes.
+**Financial Modeling**
+- **Immediate Impact**: £156,000 incremental revenue over 21-day period
+- **Load Factor Resilience**: Demand strength supports <5% volume impact
+- **Margin Enhancement**: +18-22% yield improvement vs current positioning
+- **Market Position**: Reinforces EasyJet's premium LCC brand on business routes
 
-**Technical Analysis**: ${insight.description}
+**Risk Assessment**
+Minimal downside risk given demand fundamentals. Conservative approach maintains 85%+ load factors while capturing maximum yield opportunity.
 
-**System Recommendations**: ${insight.recommendation}
+**Implementation Timeline**
+- **Hour 1-4**: Deploy pricing increases across distribution channels
+- **Day 1-3**: Monitor booking pace and competitive response
+- **Week 1-2**: Evaluate success metrics and expansion opportunities`
+      },
+      'System Performance': {
+        'action-yield-optimization': `**REVENUE MANAGEMENT SYSTEM OPTIMIZATION: CDG Route Performance Enhancement**
 
-**Implementation Benefits**:
-- Enhanced system automation reducing manual intervention requirements
-- Improved forecast accuracy for better pricing decisions
-- Optimized booking curve management for revenue maximization
+**System Performance Analysis**
+LGW-CDG segment finder exhibiting suboptimal performance with 23% manual override frequency indicating calibration gaps requiring immediate attention.
 
-**Expected Outcome**: ${insight.impact} revenue enhancement through improved system performance and reduced manual workload.
+**Technical Assessment**
+- **Forecast Accuracy**: Demand models underestimating business travel recovery by 8-12%
+- **Price Elasticity**: Current parameters based on pre-pandemic patterns inadequate for hybrid work environment
+- **Competitor Intelligence**: BA pricing intelligence integration showing lag vs real-time market conditions
+- **Booking Curve**: System defaulting to conservative positioning missing yield opportunities
 
-**Next Steps**: Collaborate with RM Systems team for parameter optimization and performance monitoring setup.`
+**Revenue Leakage Analysis**
+- **Immediate Impact**: £94,000 revenue gap identified through manual intervention analysis
+- **Systematic Underperformance**: Average 8-12% below optimal pricing across departure patterns
+- **Opportunity Cost**: Manual overrides indicating human recognition of system limitations
+- **Competitive Position**: Suboptimal pricing allowing BA to maintain premium without justification
+
+**System Recalibration Strategy**
+1. **Demand Forecast Enhancement** (Week 1)
+   - Integrate post-pandemic business travel patterns into forecasting models
+   - Adjust seasonality parameters for hybrid work schedule impacts
+   - Enhance corporate vs leisure segment identification algorithms
+
+2. **Price Elasticity Recalibration** (Week 1-2)
+   - Update elasticity curves based on recent booking behavior
+   - Implement zone-based pricing for corporate vs leisure segments
+   - Enhance competitor price response modeling
+
+3. **Real-time Intelligence Integration** (Week 2-3)
+   - Improve BA/AF pricing intelligence feed frequency
+   - Implement automated competitive response triggers
+   - Enhance booking curve optimization for business route characteristics
+
+**Performance Enhancement Framework**
+- **Automated Decision Quality**: Reduce manual override frequency to <10%
+- **Yield Optimization**: Achieve +15-20% improvement in pricing accuracy
+- **Response Time**: Improve competitive response from 4-6 hours to 1-2 hours
+- **Forecast Accuracy**: Enhance demand prediction accuracy by 25-30%
+
+**Implementation Benefits**
+- **Revenue Enhancement**: £94,000 immediate recovery plus ongoing optimization
+- **Operational Efficiency**: Reduced manual intervention requirements
+- **Competitive Advantage**: Enhanced real-time response capabilities
+- **Scalability**: Improvements applicable across European business route network
+
+**Success Metrics**
+- Manual override frequency <10% within 2 weeks
+- Yield improvement >15% vs current baseline
+- Competitive response time <2 hours
+- System confidence score >85% on pricing recommendations`
+      }
     };
 
-    return narratives[insight.category] || `**Strategic Analysis - ${insight.title}**
+    // Get specific narrative for the action, fallback to category default
+    const categoryNarratives = narratives[insight.category];
+    if (categoryNarratives && categoryNarratives[insight.id]) {
+      return categoryNarratives[insight.id];
+    }
+
+    // Fallback to generic narrative
+    return `**Strategic Analysis - ${insight.title}**
 
 ${insight.description}
 
