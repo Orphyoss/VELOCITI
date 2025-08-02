@@ -405,7 +405,7 @@ export default function TelosIntelligence() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <div className="text-sm text-muted-foreground">Current Yield</div>
-                    <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield}</div>
+                    <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield.toFixed(2)}</div>
                     <Progress value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} className="h-2" />
                     <div className="text-xs text-muted-foreground">
                       {rmMetrics.yieldOptimization.currentYield && rmMetrics.yieldOptimization.targetYield 
@@ -416,7 +416,7 @@ export default function TelosIntelligence() {
                   </div>
                   <div className="space-y-2">
                     <div className="text-sm text-muted-foreground">Load Factor</div>
-                    <div className="text-xl sm:text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
+                    <div className="text-xl sm:text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</div>
                     <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
                     <div className="text-xs text-muted-foreground">Network average</div>
                   </div>
@@ -429,7 +429,7 @@ export default function TelosIntelligence() {
                       <div key={index} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded">
                         <span className="font-medium">{route.route}</span>
                         <div className="text-right">
-                          <div className="font-bold">£{route.yield}</div>
+                          <div className="font-bold">£{route.yield.toFixed(2)}</div>
                           <div className="text-xs text-green-600">{formatPercentage(route.change)}</div>
                         </div>
                       </div>
@@ -463,7 +463,7 @@ export default function TelosIntelligence() {
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Market Share</span>
-                    <span className="text-lg font-bold">{rmMetrics.competitiveIntelligence.marketShare}%</span>
+                    <span className="text-lg font-bold">{rmMetrics.competitiveIntelligence.marketShare.toFixed(1)}%</span>
                   </div>
                   <Progress value={rmMetrics.competitiveIntelligence.marketShare} className="h-2" />
                   
@@ -500,7 +500,7 @@ export default function TelosIntelligence() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs sm:text-sm">Volatility Index</span>
                         <span className={`font-bold ${getRiskLevel(rmMetrics.riskMetrics.volatilityIndex).color}`}>
-                          {rmMetrics.riskMetrics.volatilityIndex}
+                          {rmMetrics.riskMetrics.volatilityIndex.toFixed(1)}
                         </span>
                       </div>
                     </div>
@@ -564,7 +564,7 @@ export default function TelosIntelligence() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs sm:text-sm">Demand Prediction Accuracy</span>
                     <div className="text-right">
-                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
+                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy.toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground">Target: &gt;90%</div>
                     </div>
                   </div>
@@ -572,7 +572,7 @@ export default function TelosIntelligence() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs sm:text-sm">Load Factor Variance</span>
                     <div className="text-right">
-                      <div className="font-bold text-blue-600">{rmMetrics.operationalEfficiency.loadFactorVariance}%</div>
+                      <div className="font-bold text-blue-600">{rmMetrics.operationalEfficiency.loadFactorVariance.toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground">Lower is better</div>
                     </div>
                   </div>
@@ -580,7 +580,7 @@ export default function TelosIntelligence() {
                   <div className="flex items-center justify-between">
                     <span className="text-xs sm:text-sm">Booking Pace Variance</span>
                     <div className="text-right">
-                      <div className="font-bold text-yellow-600">{rmMetrics.operationalEfficiency.bookingPaceVariance}%</div>
+                      <div className="font-bold text-yellow-600">{rmMetrics.operationalEfficiency.bookingPaceVariance.toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground">Weekly average</div>
                     </div>
                   </div>
@@ -588,7 +588,7 @@ export default function TelosIntelligence() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Capacity Utilization</span>
                     <div className="text-right">
-                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.capacityUtilization}%</div>
+                      <div className="font-bold text-green-600">{rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground">Network wide</div>
                     </div>
                   </div>
