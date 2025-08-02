@@ -57,18 +57,10 @@
   --alert-low: hsl(142, 76%, 36%);
 }
 
-/* Force visible text for Morning Briefing */
-.morning-briefing-text {
-  color: #000000 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  font-weight: bold !important;
-  text-shadow: none !important;
-}
-
-.morning-briefing-card {
-  background-color: #f8fafc !important;
-  border: 2px solid #334155 !important;
+/* Morning Briefing greeting fix */
+.greeting-text {
+  color: #ffffff !important;
+  font-weight: 600 !important;
 }
 
 .dark {

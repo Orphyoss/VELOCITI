@@ -650,17 +650,17 @@ ${insight.description}
         </div>
 
         {/* Analyst Context */}
-        <Card className="morning-briefing-card">
+        <Card className="bg-dark-900 border-dark-800">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="morning-briefing-text text-lg font-bold mb-2">
+                <h2 className="greeting-text text-lg mb-2">
                   Good morning, {briefingData?.analyst.name}
                 </h2>
-                <p className="morning-briefing-text text-sm mb-1">
+                <p className="text-dark-100 text-sm mb-1">
                   {briefingData?.analyst.role} • {briefingData?.analyst.focus}
                 </p>
-                <p className="morning-briefing-text text-xs mt-1">
+                <p className="text-dark-400 text-xs mt-1">
                   Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}
                 </p>
               </div>
