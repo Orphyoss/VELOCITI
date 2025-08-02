@@ -528,10 +528,10 @@ ${insight.description}
 
   const getPriorityColor = (priority: string) => {
     switch(priority) {
-      case 'CRITICAL': return 'bg-red-50 border-red-200 text-red-800';
-      case 'HIGH': return 'bg-orange-50 border-orange-200 text-orange-800';
-      case 'MEDIUM': return 'bg-yellow-50 border-yellow-200 text-yellow-800';
-      default: return 'bg-gray-50 border-gray-200 text-gray-800';
+      case 'CRITICAL': return 'bg-red-900 text-red-200';
+      case 'HIGH': return 'bg-orange-900 text-orange-200';
+      case 'MEDIUM': return 'bg-yellow-900 text-yellow-200';
+      default: return 'bg-gray-700 text-gray-200';
     }
   };
 
@@ -546,10 +546,10 @@ ${insight.description}
 
   const getRouteStatusColor = (status: string) => {
     switch(status) {
-      case 'ATTENTION': return 'bg-red-100 text-red-800';
-      case 'OPPORTUNITY': return 'bg-green-100 text-green-800';
-      case 'OPTIMAL': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'ATTENTION': return 'bg-red-900 text-red-200';
+      case 'OPPORTUNITY': return 'bg-green-900 text-green-200';
+      case 'OPTIMAL': return 'bg-blue-900 text-blue-200';
+      default: return 'bg-gray-700 text-gray-200';
     }
   };
 
