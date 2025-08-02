@@ -145,15 +145,15 @@ export default function TelosIntelligence() {
   // Mock RM metrics data (to be integrated with real data)
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: businessMetrics?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500,
-      weekly: (businessMetrics?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500) * 7,
-      monthly: businessMetrics?.data?.revenueImpact?.monthlyRevenue || 82450000,
+      daily: (businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500,
+      weekly: ((businessMetrics as any)?.data?.revenueImpact?.totalAIDrivenRevenue || 2847500) * 7,
+      monthly: (businessMetrics as any)?.data?.revenueImpact?.monthlyRevenue || 82450000,
       trend: 8.3
     },
     yieldOptimization: {
-      currentYield: businessMetrics?.data?.analystTimeSavings?.avgDailySavingsMinutes || 127.45,
+      currentYield: (businessMetrics as any)?.data?.analystTimeSavings?.avgDailySavingsMinutes || 127.45,
       targetYield: 135.20,
-      improvement: businessMetrics?.data?.analystTimeSavings?.productivityGain || 6.1,
+      improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 6.1,
       topRoutes: [
         { route: 'LGW→BCN', yield: 142.30, change: 12.4 },
         { route: 'LTN→AMS', yield: 138.75, change: 9.8 },
@@ -165,14 +165,14 @@ export default function TelosIntelligence() {
     competitiveIntelligence: {
       priceAdvantageRoutes: 142,
       priceDisadvantageRoutes: 89,
-      responseTime: businessMetrics?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 3.2,
+      responseTime: (businessMetrics as any)?.data?.competitiveResponseSpeed?.avgResponseTimeHours || 3.2,
       marketShare: 24.7
     },
     operationalEfficiency: {
       loadFactorVariance: 4.2,
-      demandPredictionAccuracy: aiMetrics?.data?.insightAccuracyRate?.overallAccuracy || 91.3,
+      demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 91.3,
       bookingPaceVariance: 12.8,
-      capacityUtilization: systemMetrics?.data?.systemAvailability?.availabilityPercent || 87.9
+      capacityUtilization: (systemMetrics as any)?.data?.systemAvailability?.availabilityPercent || 87.9
     },
     riskMetrics: {
       routesAtRisk: 23,
@@ -200,7 +200,23 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
+  // Fetch route performance data
+  const { data: performance, isLoading: performanceLoading } = useQuery({
+    queryKey: ['/api/routes/performance'],
+    enabled: true,
+  });
 
+  // Fetch competitive position data
+  const { data: positions, isLoading: positionsLoading } = useQuery({
+    queryKey: ['/api/telos/competitive-position'],
+    enabled: true,
+  });
+
+  // Fetch intelligence summary
+  const { data: summary, isLoading: summaryLoading } = useQuery({
+    queryKey: ['/api/telos/insights'],
+    enabled: true,
+  });
 
   // Fetch available routes
   const { data: routes } = useQuery<string[]>({
@@ -664,7 +680,7 @@ export default function TelosIntelligence() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {competitive?.slice(0, 6).map((comp, index) => (
+                    {(competitive as any)?.slice(0, 6).map((comp: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
                           <div className="font-medium">{comp.routeId}</div>
@@ -766,7 +782,7 @@ export default function TelosIntelligence() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {performance?.slice(0, 8).map((perf, index) => (
+                    {(performance as any)?.slice(0, 8).map((perf: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="space-y-1">
                           <div className="font-medium">{perf.routeId}</div>
@@ -962,9 +978,9 @@ export default function TelosIntelligence() {
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ) : competitive && competitive.length > 0 ? (
+              ) : competitive && (competitive as any).length > 0 ? (
                 <div className="space-y-4">
-                  {competitive.slice(0, 15).map((position, index) => (
+                  {(competitive as any).slice(0, 15).map((position: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="font-semibold">{position.routeId}</div>
@@ -1013,9 +1029,9 @@ export default function TelosIntelligence() {
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ) : performance && performance.length > 0 ? (
+              ) : performance && (performance as any).length > 0 ? (
                 <div className="space-y-4">
-                  {performance.slice(0, 15).map((perf, index) => (
+                  {(performance as any).slice(0, 15).map((perf: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="font-semibold flex items-center gap-2">
@@ -1062,9 +1078,9 @@ export default function TelosIntelligence() {
                 <div className="flex items-center justify-center py-8">
                   <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
-              ) : summary?.insights && summary.insights.length > 0 ? (
+              ) : (summary as any)?.insights && (summary as any).insights.length > 0 ? (
                 <div className="space-y-6">
-                  {summary.insights.map((insight) => (
+                  {(summary as any).insights.map((insight: any) => (
                     <div key={insight.id} className="border rounded-lg p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold">{insight.title}</h3>
