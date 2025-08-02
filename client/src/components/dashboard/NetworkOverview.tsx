@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function NetworkOverview() {
-  const [timeframe, setTimeframe] = useState('3');
+  const [timeframe, setTimeframe] = useState('7');
 
   const { data: routeData, isLoading } = useQuery({
     queryKey: ['/api/routes/performance', timeframe],
@@ -16,6 +16,7 @@ export default function NetworkOverview() {
 
   // Calculate top and bottom performing routes from real data
   const allRoutes = (routeData as any) || [];
+  console.log('NetworkOverview - routeData:', routeData, 'allRoutes:', allRoutes, 'timeframe:', timeframe);
   const sortedByPerformance = [...allRoutes].sort((a: any, b: any) => 
     parseFloat(b.avgLoadFactor || '0') - parseFloat(a.avgLoadFactor || '0')
   );
@@ -35,7 +36,7 @@ export default function NetworkOverview() {
   }));
 
   const timeframes = [
-    { value: '3', label: '24h' },
+    { value: '2', label: '24h' },
     { value: '7', label: '7d' },
     { value: '30', label: '30d' },
   ];
