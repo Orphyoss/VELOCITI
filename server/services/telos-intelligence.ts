@@ -98,19 +98,18 @@ export class TelosIntelligenceService {
           )
         );
 
-      // Get EasyJet's capacity
+      // Get EasyJet's authentic flight performance data
       const ezyCapacity = await db
         .select({
-          totalSeats: sql<string>`SUM(${marketCapacity.numSeats}::numeric)`,
+          totalSeats: sql<string>`SUM(${flightPerformance.totalSeats}::numeric)`,
           totalFlights: count(),
-          avgLoadFactor: sql<string>`75.0` // Default load factor estimate
+          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric) * 100`
         })
-        .from(marketCapacity)
+        .from(flightPerformance)
         .where(
           and(
-            eq(marketCapacity.routeId, routeId),
-            eq(marketCapacity.airlineCode, 'EZY'),
-            gte(marketCapacity.flightDate, cutoffDate.toISOString().slice(0, 10))
+            eq(flightPerformance.routeId, routeId),
+            gte(flightPerformance.flightDate, cutoffDate.toISOString().slice(0, 10))
           )
         );
 
