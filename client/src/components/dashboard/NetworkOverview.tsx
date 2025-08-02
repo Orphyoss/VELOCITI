@@ -115,9 +115,9 @@ export default function NetworkOverview() {
                     </div>
                     <div className="text-right ml-2 flex items-center gap-2">
                       <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs px-1.5 py-0.5">
-                        {route.performance}%
+                        {Math.round(route.performance)}%
                       </Badge>
-                      <span className="text-xs text-dark-400">£{route.yield.toFixed(2)}</span>
+                      <span className="text-xs text-dark-400">£{Math.round(route.yield)}</span>
                     </div>
                   </div>
                 ))}
@@ -138,9 +138,9 @@ export default function NetworkOverview() {
                     </div>
                     <div className="text-right ml-2 flex items-center gap-2">
                       <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs px-1.5 py-0.5">
-                        {route.performance}%
-                      </Badge>
-                      <span className="text-xs text-dark-400">£{route.yield.toFixed(2)}</span>
+                        {Math.round(route.performance)}%
+                      </Badge>  
+                      <span className="text-xs text-dark-400">£{Math.round(route.yield)}</span>
                     </div>
                   </div>
                 ))}
