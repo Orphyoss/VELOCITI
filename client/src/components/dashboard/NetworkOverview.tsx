@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function NetworkOverview() {
-  const [timeframe, setTimeframe] = useState('7d');
+  const [timeframe, setTimeframe] = useState('7');
 
   const { data: routeData, isLoading } = useQuery({
     queryKey: ['/api/routes/performance', timeframe],
@@ -35,7 +35,7 @@ export default function NetworkOverview() {
   }));
 
   const timeframes = [
-    { value: '1', label: '24h' },
+    { value: '3', label: '24h' },
     { value: '7', label: '7d' },
     { value: '30', label: '30d' },
   ];
