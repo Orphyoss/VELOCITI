@@ -122,7 +122,13 @@ export default function AlertCard({ alert, showDetails = false }: AlertCardProps
               <span className="text-foreground font-medium">{formatCurrency(alert.impact)}</span>
             )}
             {alert.confidence && (
-              <span className="text-foreground font-medium">{Math.round(alert.confidence * 100)}%</span>
+              <span className="text-foreground font-medium">
+                {(() => {
+                  const conf = typeof alert.confidence === 'string' ? parseFloat(alert.confidence) : alert.confidence;
+                  // If confidence is already a percentage (>1), display as-is, otherwise multiply by 100
+                  return conf > 1 ? Math.round(conf) : Math.round(conf * 100);
+                })()}%
+              </span>
             )}
           </div>
           
