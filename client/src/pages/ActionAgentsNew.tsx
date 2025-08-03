@@ -896,14 +896,33 @@ AND route_id = ANY($1);`}
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h2>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Enterprise-grade AI agent control panel for EasyJet revenue optimization
           </p>
         </div>
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="agent-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">Agent:</Label>
+            <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
+              <SelectTrigger className="w-[280px]" id="agent-select">
+                <SelectValue placeholder="Select an agent" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(actionAgentDefinitions).map((agent) => (
+                  <SelectItem key={agent.id} value={agent.id}>
+                    <div className="flex items-center space-x-2">
+                      <Brain className="h-4 w-4" />
+                      <span>{agent.name}</span>
+                      <StatusBadge status={agent.status} />
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-sm text-gray-600 dark:text-gray-400">System Active</span>
@@ -911,38 +930,17 @@ AND route_id = ANY($1);`}
         </div>
       </div>
 
-      {/* Agent Selection Tabs */}
-      <Card>
-          <CardHeader>
-            <CardTitle>Action Agents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeAgentTab} onValueChange={setActiveAgentTab}>
-              <TabsList className="grid grid-cols-3 w-full">
-                {Object.values(actionAgentDefinitions).map((agent) => (
-                  <TabsTrigger key={agent.id} value={agent.id} className="flex items-center space-x-2">
-                    <Brain className="h-4 w-4" />
-                    <span>{agent.name}</span>
-                    <StatusBadge status={agent.status} />
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              
-              {Object.values(actionAgentDefinitions).map((agent) => (
-                <TabsContent key={agent.id} value={agent.id} className="mt-6">
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">{agent.className}</h3>
-                      <p className="text-blue-800 dark:text-blue-200 text-sm">{agent.description}</p>
-                    </div>
-                    
-                    <AgentSubTabs agent={agent} />
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          </CardContent>
-        </Card>
+      {/* Selected Agent Display */}
+      {currentAgent && (
+        <div className="space-y-4">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">{currentAgent.className}</h3>
+            <p className="text-blue-800 dark:text-blue-200 text-sm">{currentAgent.description}</p>
+          </div>
+          
+          <AgentSubTabs agent={currentAgent} />
+        </div>
+      )}
     </div>
   );
 }
