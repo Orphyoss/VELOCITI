@@ -1285,5 +1285,163 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const metricsRoutes = await import('./api/metrics.js');
   app.use('/api/metrics', metricsRoutes.default);
 
+  // ============================================================================
+  // DATA GENERATION ENDPOINTS
+  // ============================================================================
+
+  // Get recent data generation jobs
+  app.get('/api/admin/data-generation/jobs', async (req, res) => {
+    try {
+      // Mock data for now - would fetch from a jobs table in production
+      const jobs = [
+        {
+          id: 'job-001',
+          date: '2025-08-03',
+          scenario: 'competitive_attack',
+          status: 'completed',
+          recordCounts: {
+            competitive_pricing: 156,
+            market_capacity: 89,
+            web_search_data: 234,
+            rm_pricing_actions: 67,
+            flight_performance: 145,
+            market_events: 12,
+            economic_indicators: 8,
+            intelligence_insights: 23
+          },
+          startedAt: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+          completedAt: new Date(Date.now() - 600000).toISOString()  // 10 minutes ago
+        },
+        {
+          id: 'job-002',
+          date: '2025-08-02',
+          scenario: 'demand_surge',
+          status: 'completed',
+          recordCounts: {
+            competitive_pricing: 142,
+            market_capacity: 73,
+            web_search_data: 289,
+            rm_pricing_actions: 45,
+            flight_performance: 167,
+            market_events: 8,
+            economic_indicators: 6,
+            intelligence_insights: 31
+          },
+          startedAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+          completedAt: new Date(Date.now() - 86100000).toISOString()
+        }
+      ];
+      
+      res.json(jobs);
+    } catch (error) {
+      console.error('Error fetching data generation jobs:', error);
+      res.status(500).json({ error: 'Failed to fetch jobs' });
+    }
+  });
+
+  // Trigger data generation for a specific date
+  app.post('/api/admin/data-generation/generate', async (req, res) => {
+    try {
+      const { date, scenario } = req.body;
+      
+      if (!date) {
+        return res.status(400).json({ error: 'Date is required' });
+      }
+      
+      // Validate date format
+      const targetDate = new Date(date);
+      if (isNaN(targetDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+      
+      // Generate unique job ID
+      const jobId = `job-${Date.now()}`;
+      
+      logger.info('DataGeneration', 'generateData', `Starting data generation for ${date}`, {
+        date,
+        scenario,
+        jobId
+      });
+      
+      // In a real implementation, this would:
+      // 1. Queue the Python script execution
+      // 2. Store job status in database
+      // 3. Execute the script asynchronously
+      // 4. Update job status as it progresses
+      
+      // For now, we'll simulate the process
+      const simulatedJob = {
+        id: jobId,
+        date,
+        scenario: scenario || 'auto',
+        status: 'pending',
+        startedAt: new Date().toISOString()
+      };
+      
+      // Simulate async processing (in production, this would be handled by a job queue)
+      setTimeout(async () => {
+        try {
+          // Simulate Python script execution
+          const recordCounts = await simulateDataGeneration(date, scenario);
+          
+          logger.info('DataGeneration', 'completed', `Data generation completed for ${date}`, {
+            jobId,
+            recordCounts
+          });
+          
+        } catch (error) {
+          logger.error('DataGeneration', 'failed', `Data generation failed for ${date}`, {
+            jobId,
+            error: error.message
+          });
+        }
+      }, 2000); // 2 second delay to simulate processing
+      
+      res.json({
+        jobId,
+        message: `Data generation started for ${date}`,
+        status: 'pending'
+      });
+      
+    } catch (error) {
+      console.error('Error starting data generation:', error);
+      res.status(500).json({ error: 'Failed to start data generation' });
+    }
+  });
+
+  // Helper function to simulate data generation
+  async function simulateDataGeneration(date: string, scenario: string) {
+    // Simulate realistic record counts based on scenario type
+    const baseRecords = {
+      competitive_pricing: 120 + Math.floor(Math.random() * 80),
+      market_capacity: 60 + Math.floor(Math.random() * 40),
+      web_search_data: 200 + Math.floor(Math.random() * 100),
+      rm_pricing_actions: 40 + Math.floor(Math.random() * 30),
+      flight_performance: 130 + Math.floor(Math.random() * 50),
+      market_events: 5 + Math.floor(Math.random() * 15),
+      economic_indicators: 3 + Math.floor(Math.random() * 8),
+      intelligence_insights: 15 + Math.floor(Math.random() * 25)
+    };
+    
+    // Adjust counts based on scenario
+    if (scenario === 'competitive_attack') {
+      baseRecords.competitive_pricing *= 1.5;
+      baseRecords.market_events *= 2;
+    } else if (scenario === 'demand_surge') {
+      baseRecords.web_search_data *= 1.8;
+      baseRecords.rm_pricing_actions *= 1.3;
+    } else if (scenario === 'operational_disruption') {
+      baseRecords.flight_performance *= 0.7;
+      baseRecords.market_events *= 3;
+    }
+    
+    // Round all values
+    Object.keys(baseRecords).forEach(key => {
+      baseRecords[key] = Math.floor(baseRecords[key]);
+    });
+    
+    return baseRecords;
+  }
+
   return httpServer;
 }

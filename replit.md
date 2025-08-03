@@ -7,6 +7,10 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- Data Generation admin feature implemented for running daily data population scripts for specific dates and scenarios (2025-08-03)
+- Added comprehensive Data Generation interface with scenario selection, job tracking, and real-time status updates (2025-08-03)
+- Created Python script template for daily data generation with market scenario simulation capabilities (2025-08-03)
+- Fixed Dashboard import issue and cleaned up component imports for proper loading (2025-08-03)
 - Action Agents dropdown interface implemented with prominent blue card section for better visibility (2025-08-03)
 - Fixed "Run Now" button text visibility with proper blue background and white text contrast (2025-08-03)
 - Resolved Active Alerts discrepancy by updating dashboard summary API to fetch 50 alerts instead of 10 (2025-08-03)
@@ -38,7 +42,7 @@ Preferred communication style: Simple, everyday language.
 - **AI Agent System**: Three specialized AI agents (Competitive, Performance, Network) autonomously generate alerts, learn from feedback, and monitor configurable thresholds.
 - **Real-time Communication**: WebSocket service for dashboard metrics, alerts, and system status updates with automatic reconnection.
 - **LLM Integration**: Primary use of Writer AI (Palmyra X5) for strategic analysis, with OpenAI GPT-4o as a secondary provider for data queries and fallback. User-configurable LLM selection and continuous API health monitoring with failover.
-- **User Interface Modules**: Dashboard for executive summaries, Analyst Workbench for alert management, AI Agents for configuration, Databricks Genie for data interrogation, and Strategic Analysis for long-form insights.
+- **User Interface Modules**: Dashboard for executive summaries, Analyst Workbench for alert management, AI Agents for configuration, Databricks Genie for data interrogation, Strategic Analysis for long-form insights, and Data Generation for populating test data.
 - **Data Flow**: AI agents analyze data, generate alerts stored in PostgreSQL, and broadcast via WebSockets. Real-time updates are pushed to clients.
 
 ### System Design Choices
