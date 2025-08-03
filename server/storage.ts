@@ -244,174 +244,526 @@ export class MemoryStorage implements IStorage {
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
-    const id = `alert-${Date.now()}`;
-    const newAlert: Alert = {
-      id,
-      type: alert.type || 'alert',
-      priority: alert.priority,
-      title: alert.title,
-      description: alert.description,
-      route: alert.route || null,
-      route_name: alert.route_name || null,
-      metric_value: alert.metric_value || null,
-      threshold_value: alert.threshold_value || null,
-      impact_score: alert.impact_score || null,
-      confidence: alert.confidence || null,
-      agent_id: alert.agent_id,
-      metadata: alert.metadata || {},
-      status: alert.status || 'active',
-      created_at: new Date(),
-      acknowledged_at: null,
-      resolved_at: null,
-      category: alert.category
-    };
-    memoryStore.alerts.set(newAlert.id, newAlert);
-    return newAlert;
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { alerts } = await import('@shared/schema');
+      
+      const alertData = {
+        type: alert.type || 'alert',
+        priority: alert.priority,
+        title: alert.title,
+        description: alert.description,
+        route: alert.route || null,
+        route_name: alert.route_name || null,
+        metric_value: alert.metric_value || null,
+        threshold_value: alert.threshold_value || null,
+        impact_score: alert.impact_score || null,
+        confidence: alert.confidence || null,
+        agent_id: alert.agent_id,
+        metadata: alert.metadata || {},
+        status: alert.status || 'active',
+        category: alert.category
+      };
+      
+      const result = await db.insert(alerts).values([alertData]).returning();
+      
+      return {
+        id: result[0].id,
+        type: result[0].type || 'alert',
+        priority: result[0].priority,
+        title: result[0].title,
+        description: result[0].description,
+        route: result[0].route,
+        route_name: result[0].route_name,
+        metric_value: result[0].metric_value,
+        threshold_value: result[0].threshold_value,
+        impact_score: result[0].impact_score,
+        confidence: result[0].confidence,
+        agent_id: result[0].agent_id,
+        metadata: result[0].metadata || {},
+        status: result[0].status,
+        created_at: result[0].created_at || new Date(),
+        acknowledged_at: result[0].acknowledged_at,
+        resolved_at: result[0].resolved_at,
+        category: result[0].category
+      };
+    } catch (error) {
+      console.error('[Storage] Error creating alert in database:', error);
+      // Fallback to memory store
+      const id = `alert-${Date.now()}`;
+      const newAlert: Alert = {
+        id,
+        type: alert.type || 'alert',
+        priority: alert.priority,
+        title: alert.title,
+        description: alert.description,
+        route: alert.route || null,
+        route_name: alert.route_name || null,
+        metric_value: alert.metric_value || null,
+        threshold_value: alert.threshold_value || null,
+        impact_score: alert.impact_score || null,
+        confidence: alert.confidence || null,
+        agent_id: alert.agent_id,
+        metadata: alert.metadata || {},
+        status: alert.status || 'active',
+        created_at: new Date(),
+        acknowledged_at: null,
+        resolved_at: null,
+        category: alert.category
+      };
+      memoryStore.alerts.set(newAlert.id, newAlert);
+      return newAlert;
+    }
   }
 
   async updateAlertStatus(id: string, status: string): Promise<void> {
-    const alert = memoryStore.alerts.get(id);
-    if (alert) {
-      alert.status = status;
-      memoryStore.alerts.set(id, alert);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { alerts } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      await db.update(alerts)
+        .set({ status })
+        .where(eq(alerts.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating alert status in database:', error);
+      // Fallback to memory store
+      const alert = memoryStore.alerts.get(id);
+      if (alert) {
+        alert.status = status;
+        memoryStore.alerts.set(id, alert);
+      }
     }
   }
 
   async getAgents(): Promise<Agent[]> {
-    return Array.from(memoryStore.agents.values());
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { agents } = await import('@shared/schema');
+      
+      const result = await db.select().from(agents);
+      
+      return result.map((agent: any) => ({
+        id: agent.id,
+        name: agent.name,
+        status: agent.status,
+        accuracy: agent.accuracy || '0.00',
+        totalAnalyses: agent.totalAnalyses || 0,
+        successfulPredictions: agent.successfulPredictions || 0,
+        configuration: agent.configuration || {},
+        lastActive: agent.lastActive || new Date(),
+        updatedAt: agent.updatedAt || new Date()
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching agents from database:', error);
+      // Fallback to memory store
+      return Array.from(memoryStore.agents.values());
+    }
   }
 
   async getAgent(id: string): Promise<Agent | undefined> {
-    return memoryStore.agents.get(id);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { agents } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const result = await db.select().from(agents).where(eq(agents.id, id));
+      
+      if (result.length === 0) return undefined;
+      
+      const agent = result[0];
+      return {
+        id: agent.id,
+        name: agent.name,
+        status: agent.status,
+        accuracy: agent.accuracy || '0.00',
+        totalAnalyses: agent.totalAnalyses || 0,
+        successfulPredictions: agent.successfulPredictions || 0,
+        configuration: agent.configuration || {},
+        lastActive: agent.lastActive || new Date(),
+        updatedAt: agent.updatedAt || new Date()
+      };
+    } catch (error) {
+      console.error('[Storage] Error fetching agent from database:', error);
+      return memoryStore.agents.get(id);
+    }
   }
 
   async updateAgent(id: string, updates: Partial<Agent>): Promise<void> {
-    const agent = memoryStore.agents.get(id);
-    if (agent) {
-      Object.assign(agent, updates, { updatedAt: new Date() });
-      memoryStore.agents.set(id, agent);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { agents } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      await db.update(agents)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(agents.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating agent in database:', error);
+      // Fallback to memory store
+      const agent = memoryStore.agents.get(id);
+      if (agent) {
+        Object.assign(agent, updates, { updatedAt: new Date() });
+        memoryStore.agents.set(id, agent);
+      }
     }
   }
 
   async createFeedback(feedbackData: InsertFeedback): Promise<void> {
-    const feedback = {
-      id: `feedback-${Date.now()}`,
-      ...feedbackData,
-      createdAt: new Date()
-    };
-    memoryStore.feedback.set(feedback.id, feedback);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { feedback } = await import('@shared/schema');
+      
+      await db.insert(feedback).values([feedbackData]);
+    } catch (error) {
+      console.error('[Storage] Error creating feedback in database:', error);
+      // Fallback to memory store
+      const feedbackRecord = {
+        id: `feedback-${Date.now()}`,
+        ...feedbackData,
+        createdAt: new Date()
+      };
+      memoryStore.feedback.set(feedbackRecord.id, feedbackRecord);
+    }
   }
 
   async getFeedbackByAgent(agentId: string): Promise<any[]> {
-    return Array.from(memoryStore.feedback.values())
-      .filter(feedback => feedback.agentId === agentId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { feedback } = await import('@shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      
+      const result = await db.select().from(feedback)
+        .where(eq(feedback.agent_id, agentId))
+        .orderBy(desc(feedback.created_at));
+      
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching feedback from database:', error);
+      // Fallback to memory store
+      return Array.from(memoryStore.feedback.values())
+        .filter(feedback => feedback.agentId === agentId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
   }
 
   async getRoutePerformance(route?: string, days = 7): Promise<RoutePerformance[]> {
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    
-    let routes = Array.from(memoryStore.routePerformance.values())
-      .filter(rp => new Date(rp.date) >= since);
-    
-    if (route) {
-      routes = routes.filter(rp => rp.route === route);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { routePerformance } = await import('@shared/schema');
+      const { gte, eq, desc, and } = await import('drizzle-orm');
+      
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      
+      let query = db.select().from(routePerformance)
+        .where(gte(routePerformance.date, since))
+        .orderBy(desc(routePerformance.date));
+      
+      if (route) {
+        query = db.select().from(routePerformance)
+          .where(and(
+            gte(routePerformance.date, since),
+            eq(routePerformance.route, route)
+          ))
+          .orderBy(desc(routePerformance.date));
+      }
+      
+      const result = await query;
+      
+      return result.map((rp: any) => ({
+        id: rp.id,
+        route: rp.route,
+        routeName: rp.routeName,
+        date: rp.date,
+        performance: rp.performance,
+        yield: rp.yield,
+        loadFactor: rp.loadFactor,
+        competitorPrice: rp.competitorPrice,
+        ourPrice: rp.ourPrice,
+        demandIndex: rp.demandIndex,
+        createdAt: rp.createdAt
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching route performance from database:', error);
+      // Fallback to memory store
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      
+      let routes = Array.from(memoryStore.routePerformance.values())
+        .filter(rp => new Date(rp.date).getTime() >= since.getTime());
+      
+      if (route) {
+        routes = routes.filter(rp => rp.route === route);
+      }
+      
+      return routes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
-    
-    return routes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   async createRoutePerformance(data: InsertRoutePerformance): Promise<void> {
-    const routePerf: RoutePerformance = {
-      id: data.id || `route-${Date.now()}`,
-      ...data,
-      createdAt: new Date(),
-      loadFactor: data.loadFactor ?? null,
-      yield: data.yield ?? null,
-      performance: data.performance ?? null,
-      competitorPrice: data.competitorPrice ?? null,
-      ourPrice: data.ourPrice ?? null,
-      demandIndex: data.demandIndex ?? null,
-    };
-    memoryStore.routePerformance.set(routePerf.id, routePerf);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { routePerformance } = await import('@shared/schema');
+      
+      await db.insert(routePerformance).values([{
+        route: data.route,
+        routeName: data.routeName,
+        date: data.date,
+        performance: data.performance ?? null,
+        yield: data.yield ?? null,
+        loadFactor: data.loadFactor ?? null,
+        competitorPrice: data.competitorPrice ?? null,
+        ourPrice: data.ourPrice ?? null,
+        demandIndex: data.demandIndex ?? null
+      }]);
+    } catch (error) {
+      console.error('[Storage] Error creating route performance in database:', error);
+      // Fallback to memory store
+      const routePerf: RoutePerformance = {
+        id: `route-${Date.now()}`,
+        route: data.route,
+        routeName: data.routeName,
+        date: data.date,
+        createdAt: new Date(),
+        loadFactor: data.loadFactor ?? null,
+        yield: data.yield ?? null,
+        performance: data.performance ?? null,
+        competitorPrice: data.competitorPrice ?? null,
+        ourPrice: data.ourPrice ?? null,
+        demandIndex: data.demandIndex ?? null,
+      };
+      memoryStore.routePerformance.set(routePerf.id, routePerf);
+    }
   }
 
   async getConversations(userId: string): Promise<Conversation[]> {
-    return Array.from(memoryStore.conversations.values())
-      .filter(conv => conv.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { conversations } = await import('@shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
+      
+      const result = await db.select().from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.createdAt));
+      
+      return result.map((conv: any) => ({
+        id: conv.id,
+        type: conv.type,
+        title: conv.title,
+        userId: conv.userId,
+        messages: conv.messages || {},
+        context: conv.context || {},
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching conversations from database:', error);
+      // Fallback to memory store
+      return Array.from(memoryStore.conversations.values())
+        .filter(conv => conv.userId === userId)
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    }
   }
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
-    const newConv: Conversation = {
-      id: conversation.id || `conv-${Date.now()}`,
-      ...conversation,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      title: conversation.title ?? null,
-      userId: conversation.userId ?? null,
-      messages: conversation.messages ?? {},
-      context: conversation.context ?? {},
-    };
-    memoryStore.conversations.set(newConv.id, newConv);
-    return newConv;
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { conversations } = await import('@shared/schema');
+      
+      const result = await db.insert(conversations).values([{
+        type: conversation.type,
+        title: conversation.title ?? null,
+        userId: conversation.userId ?? null,
+        messages: conversation.messages ?? {},
+        context: conversation.context ?? {}
+      }]).returning();
+      
+      return {
+        id: result[0].id,
+        type: result[0].type,
+        title: result[0].title,
+        userId: result[0].userId,
+        messages: result[0].messages || {},
+        context: result[0].context || {},
+        createdAt: result[0].createdAt,
+        updatedAt: result[0].updatedAt
+      };
+    } catch (error) {
+      console.error('[Storage] Error creating conversation in database:', error);
+      // Fallback to memory store
+      const newConv: Conversation = {
+        id: `conv-${Date.now()}`,
+        type: conversation.type,
+        title: conversation.title ?? null,
+        userId: conversation.userId ?? null,
+        messages: conversation.messages ?? {},
+        context: conversation.context ?? {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      memoryStore.conversations.set(newConv.id, newConv);
+      return newConv;
+    }
   }
 
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-    const conv = memoryStore.conversations.get(id);
-    if (conv) {
-      Object.assign(conv, updates, { 
-        updatedAt: new Date(),
-        createdAt: conv.createdAt || new Date() 
-      });
-      memoryStore.conversations.set(id, conv);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { conversations } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      await db.update(conversations)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(conversations.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating conversation in database:', error);
+      // Fallback to memory store
+      const conv = memoryStore.conversations.get(id);
+      if (conv) {
+        Object.assign(conv, updates, { 
+          updatedAt: new Date(),
+          createdAt: conv.createdAt || new Date() 
+        });
+        memoryStore.conversations.set(id, conv);
+      }
     }
   }
 
   async getSystemMetrics(type?: string, hours = 24): Promise<SystemMetric[]> {
-    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-    
-    let metrics = Array.from(memoryStore.systemMetrics.values())
-      .filter(metric => metric.timestamp && new Date(metric.timestamp) >= since);
-    
-    if (type) {
-      metrics = metrics.filter(metric => metric.metricType === type);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { systemMetrics } = await import('@shared/schema');
+      const { gte, eq, desc, and } = await import('drizzle-orm');
+      
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+      
+      let query = db.select().from(systemMetrics)
+        .where(gte(systemMetrics.timestamp, since))
+        .orderBy(desc(systemMetrics.timestamp));
+      
+      if (type) {
+        query = db.select().from(systemMetrics)
+          .where(and(
+            gte(systemMetrics.timestamp, since),
+            eq(systemMetrics.metricType, type)
+          ))
+          .orderBy(desc(systemMetrics.timestamp));
+      }
+      
+      const result = await query;
+      
+      return result.map((metric: any) => ({
+        id: metric.id,
+        metricType: metric.metricType,
+        value: metric.value,
+        timestamp: metric.timestamp,
+        metadata: metric.metadata || {}
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching system metrics from database:', error);
+      // Fallback to memory store
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+      
+      let metrics = Array.from(memoryStore.systemMetrics.values())
+        .filter(metric => metric.timestamp && new Date(metric.timestamp) >= since);
+      
+      if (type) {
+        metrics = metrics.filter(metric => metric.metricType === type);
+      }
+      
+      return metrics.sort((a, b) => {
+        const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+        const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+        return bTime - aTime;
+      });
     }
-    
-    return metrics.sort((a, b) => {
-      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-      return bTime - aTime;
-    });
   }
 
   async createSystemMetric(metric: InsertSystemMetric): Promise<void> {
-    const newMetric: SystemMetric = {
-      id: `metric-${Date.now()}`,
-      ...metric,
-      timestamp: metric.timestamp || new Date(),
-      metadata: metric.metadata ?? {},
-    };
-    memoryStore.systemMetrics.set(newMetric.id, newMetric);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { systemMetrics } = await import('@shared/schema');
+      
+      await db.insert(systemMetrics).values([{
+        metricType: metric.metricType,
+        value: metric.value,
+        metadata: metric.metadata ?? {}
+      }]);
+    } catch (error) {
+      console.error('[Storage] Error creating system metric in database:', error);
+      // Fallback to memory store
+      const newMetric: SystemMetric = {
+        id: `metric-${Date.now()}`,
+        metricType: metric.metricType,
+        value: metric.value,
+        timestamp: new Date(),
+        metadata: metric.metadata ?? {},
+      };
+      memoryStore.systemMetrics.set(newMetric.id, newMetric);
+    }
   }
 
   async getRecentActivities(limit = 20): Promise<Activity[]> {
-    return Array.from(memoryStore.activities.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { activities } = await import('@shared/schema');
+      const { desc } = await import('drizzle-orm');
+      
+      const result = await db.select().from(activities)
+        .orderBy(desc(activities.createdAt))
+        .limit(limit);
+      
+      return result.map((activity: any) => ({
+        id: activity.id,
+        type: activity.type,
+        title: activity.title,
+        description: activity.description,
+        metadata: activity.metadata || {},
+        userId: activity.userId,
+        agentId: activity.agentId,
+        createdAt: activity.createdAt
+      }));
+    } catch (error) {
+      console.error('[Storage] Error fetching activities from database:', error);
+      // Fallback to memory store
+      return Array.from(memoryStore.activities.values())
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, limit);
+    }
   }
 
   async createActivity(activity: InsertActivity): Promise<void> {
-    const newActivity: Activity = {
-      id: `activity-${Date.now()}`,
-      ...activity,
-      createdAt: new Date(),
-      description: activity.description ?? null,
-      metadata: activity.metadata ?? {},
-      userId: activity.userId ?? null,
-      agentId: activity.agentId ?? null,
-    };
-    memoryStore.activities.set(newActivity.id, newActivity);
+    try {
+      const { db } = await import('./services/supabase.js');
+      const { activities } = await import('@shared/schema');
+      
+      await db.insert(activities).values([{
+        type: activity.type,
+        title: activity.title,
+        description: activity.description ?? null,
+        metadata: activity.metadata ?? {},
+        userId: activity.userId ?? null,
+        agentId: activity.agentId ?? null
+      }]);
+    } catch (error) {
+      console.error('[Storage] Error creating activity in database:', error);
+      // Fallback to memory store
+      const newActivity: Activity = {
+        id: `activity-${Date.now()}`,
+        ...activity,
+        createdAt: new Date(),
+        description: activity.description ?? null,
+        metadata: activity.metadata ?? {},
+        userId: activity.userId ?? null,
+        agentId: activity.agentId ?? null,
+      };
+      memoryStore.activities.set(newActivity.id, newActivity);
+    }
   }
 }
 
