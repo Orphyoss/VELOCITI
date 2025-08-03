@@ -138,20 +138,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard endpoints
   app.get("/api/dashboard/summary", async (req, res) => {
     try {
-      const alerts = await storage.getAlerts(10);
+      const allAlerts = await storage.getAlerts(50); // Get more alerts to count all critical ones properly
       const agents = await storage.getAgents();
       const metrics = await storage.getSystemMetrics();
       const activities = await storage.getRecentActivities(5);
 
-      // Calculate summary metrics
-      const criticalAlerts = alerts.filter(a => a.priority === 'critical');
+      // Calculate summary metrics from all alerts
+      const criticalAlerts = allAlerts.filter(a => a.priority === 'critical');
       const agentAccuracy = agents.reduce((sum, a) => sum + parseFloat(a.accuracy || '0'), 0) / agents.length;
 
       res.json({
         alerts: {
-          total: alerts.length,
+          total: allAlerts.length,
           critical: criticalAlerts.length,
-          recent: alerts.slice(0, 3)
+          recent: allAlerts.slice(0, 3)
         },
         agents: agents.map(a => ({
           id: a.id,
@@ -159,7 +159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: a.status,
           accuracy: a.accuracy
         })),
-        metrics: await calculateRealDashboardMetrics(alerts, agents, activities),
+        metrics: await calculateRealDashboardMetrics(allAlerts, agents, activities),
         activities: activities
       });
     } catch (error) {
