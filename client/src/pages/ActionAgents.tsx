@@ -245,7 +245,7 @@ export default function ActionAgents() {
                   Select Action Agent:
                 </Label>
                 <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger className="w-[400px] h-14 text-lg border-3 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
+                  <SelectTrigger className="w-[400px] h-14 text-lg border-4 border-white dark:border-white bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
                     <SelectValue placeholder="Choose an Action Agent">
                       {selectedAgent && agents.find(a => a.id === selectedAgent) && (() => {
                         const agent = agents.find(a => a.id === selectedAgent)!;
@@ -316,7 +316,11 @@ export default function ActionAgents() {
             <CardContent>
               <div className="space-y-4">
                 {alerts
-                  .filter(alert => alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' ')))
+                  .filter(alert => {
+                    const agentName = agents.find(a => a.id === selectedAgent)?.name.toLowerCase() || '';
+                    return alert.agentName.toLowerCase().includes(agentName) || 
+                           alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '));
+                  })
                   .map((alert) => (
                   <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -390,7 +394,11 @@ export default function ActionAgents() {
                     </div>
                   </div>
                 ))}
-                {alerts.filter(alert => alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '))).length === 0 && (
+                {alerts.filter(alert => {
+                  const agentName = agents.find(a => a.id === selectedAgent)?.name.toLowerCase() || '';
+                  return alert.agentName.toLowerCase().includes(agentName) || 
+                         alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '));
+                }).length === 0 && (
                   <div className="text-center py-8 text-dark-400">
                     No active alerts for this agent
                   </div>
