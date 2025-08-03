@@ -908,16 +908,20 @@ AND route_id = ANY($1);`}
             <Label htmlFor="agent-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">Agent:</Label>
             <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
               <SelectTrigger className="w-[280px]" id="agent-select">
-                <SelectValue placeholder="Select an agent" />
+                <SelectValue placeholder="Select an agent">
+                  {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
+                    <div className="flex items-center space-x-2">
+                      <Brain className="h-4 w-4" />
+                      <span>{actionAgentDefinitions[activeAgentTab].name}</span>
+                      <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
+                    </div>
+                  )}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {Object.values(actionAgentDefinitions).map((agent) => (
                   <SelectItem key={agent.id} value={agent.id}>
-                    <div className="flex items-center space-x-2">
-                      <Brain className="h-4 w-4" />
-                      <span>{agent.name}</span>
-                      <StatusBadge status={agent.status} />
-                    </div>
+                    {agent.name}
                   </SelectItem>
                 ))}
               </SelectContent>
