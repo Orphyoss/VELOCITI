@@ -1,220 +1,206 @@
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { useVelocitiStore } from '@/stores/useVelocitiStore';
+import AppShell from '@/components/layout/AppShell';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  Play, 
-  Settings, 
+  Zap, 
   TrendingUp, 
   AlertTriangle, 
-  Zap,
-  BarChart3,
-  Route,
-  Brain
+  Play, 
+  Pause, 
+  Settings,
+  Target,
+  Clock,
+  DollarSign,
+  Activity,
+  Brain,
+  Radar
 } from 'lucide-react';
 
-interface ActionAgent {
+interface Agent {
   id: string;
   name: string;
   description: string;
-  status: 'active' | 'inactive' | 'error';
-  type: 'surge_detector' | 'booking_curve' | 'elasticity_change';
+  status: 'ACTIVE' | 'PROCESSING' | 'SLEEPING' | 'ERROR';
+  icon: React.ComponentType<any>;
   lastRun: string;
   nextRun: string;
   alertsGenerated: number;
+  avgConfidence: number;
   revenueImpact: number;
-  confidence: number;
-  routes: string[];
 }
 
-interface AgentAlert {
+interface Alert {
   id: string;
-  agentId: string;
-  type: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
+  agentName: string;
+  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW';
   title: string;
   description: string;
-  route: string;
-  revenueImpact: number;
-  confidence: number;
-  timeToAct: string;
   recommendation: string;
+  confidenceScore: number;
+  revenueImpact: number;
+  timeToAct: string;
+  affectedRoutes: string[];
   createdAt: string;
-  status: 'new' | 'reviewing' | 'acted' | 'dismissed';
-}
-
-interface AgentPerformance {
-  agentId: string;
-  totalAlerts: number;
-  actionRate: number;
-  avgRevenueImpact: number;
-  accuracy: number;
-  lastWeekTrend: number;
+  expiresAt?: string;
 }
 
 export default function ActionAgents() {
-  const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
+  const { setCurrentModule } = useVelocitiStore();
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<string>('surge-detector');
+  const [isRunning, setIsRunning] = useState<Record<string, boolean>>({});
 
-  // Mock data for demonstration - in real implementation, these would come from API
-  const [actionAgents] = useState<ActionAgent[]>([
-    {
-      id: 'surge-detector',
-      name: 'Surge Event Detector',
-      description: 'Monitors market events, viral demand surges, and competitive signals in real-time',
-      status: 'active',
-      type: 'surge_detector',
-      lastRun: '2025-08-02T23:15:00Z',
-      nextRun: '2025-08-02T23:30:00Z',
-      alertsGenerated: 12,
-      revenueImpact: 458000,
-      confidence: 87,
-      routes: ['LGW-AMS', 'LGW-BCN', 'LGW-MAD', 'LGW-FCO']
-    },
-    {
-      id: 'booking-curve',
-      name: 'Booking Curve Alerting',
-      description: 'Analyzes booking patterns vs historical curves to detect anomalies',
-      status: 'active',
-      type: 'booking_curve',
-      lastRun: '2025-08-02T23:10:00Z',
-      nextRun: '2025-08-02T23:25:00Z',
-      alertsGenerated: 8,
-      revenueImpact: 234000,
-      confidence: 92,
-      routes: ['LGW-CDG', 'LGW-DUB', 'LGW-BRU']
-    },
-    {
-      id: 'elasticity-change',
-      name: 'Elasticity Change Alert',
-      description: 'Detects changes in price elasticity and demand sensitivity',
-      status: 'active',
-      type: 'elasticity_change',
-      lastRun: '2025-08-02T23:12:00Z',
-      nextRun: '2025-08-02T23:27:00Z',
-      alertsGenerated: 6,
-      revenueImpact: 186000,
-      confidence: 84,
-      routes: ['LGW-MXP', 'LGW-VCE', 'LGW-NAP']
-    }
-  ]);
+  useEffect(() => {
+    setCurrentModule('action-agents');
+    initializeAgents();
+    generateMockAlerts();
+  }, [setCurrentModule]);
 
-  const [recentAlerts] = useState<AgentAlert[]>([
-    {
-      id: 'alert-1',
-      agentId: 'surge-detector',
-      type: 'viral_demand_surge',
-      priority: 'critical',
-      title: 'Viral Demand Surge Detected - LGW-BCN',
-      description: 'Search volume increased 127% in last 48 hours. Conversion rate up 23%.',
-      route: 'LGW-BCN',
-      revenueImpact: 89000,
-      confidence: 89,
-      timeToAct: 'IMMEDIATE',
-      recommendation: 'VIRAL SURGE DETECTED: Test 12-18% price increase immediately. Monitor conversion rates hourly.',
-      createdAt: '2025-08-02T22:45:00Z',
-      status: 'new'
-    },
-    {
-      id: 'alert-2',
-      agentId: 'booking-curve',
-      type: 'booking_anomaly',
-      priority: 'high',
-      title: 'Booking Curve Deviation - LGW-CDG',
-      description: 'Bookings 31% below historical curve for 45-day advance window.',
-      route: 'LGW-CDG',
-      revenueImpact: 67000,
-      confidence: 94,
-      timeToAct: 'TODAY',
-      recommendation: 'BOOKING UNDERPERFORMANCE: Consider promotional pricing or capacity adjustment.',
-      createdAt: '2025-08-02T22:30:00Z',
-      status: 'reviewing'
-    },
-    {
-      id: 'alert-3',
-      agentId: 'elasticity-change',
-      type: 'elasticity_shift',
-      priority: 'medium',
-      title: 'Elasticity Shift - LGW-MXP',
-      description: 'Price sensitivity decreased 18% over last 14 days.',
-      route: 'LGW-MXP',
-      revenueImpact: 45000,
-      confidence: 78,
-      timeToAct: 'THIS WEEK',
-      recommendation: 'ELASTICITY IMPROVEMENT: Test 8-12% price increase on select flights.',
-      createdAt: '2025-08-02T22:15:00Z',
-      status: 'acted'
-    }
-  ]);
-
-  const [performance] = useState<AgentPerformance[]>([
-    {
-      agentId: 'surge-detector',
-      totalAlerts: 47,
-      actionRate: 68,
-      avgRevenueImpact: 72000,
-      accuracy: 84,
-      lastWeekTrend: 12
-    },
-    {
-      agentId: 'booking-curve',
-      totalAlerts: 32,
-      actionRate: 78,
-      avgRevenueImpact: 58000,
-      accuracy: 91,
-      lastWeekTrend: 8
-    },
-    {
-      agentId: 'elasticity-change',
-      totalAlerts: 28,
-      actionRate: 71,
-      avgRevenueImpact: 49000,
-      accuracy: 86,
-      lastWeekTrend: -3
-    }
-  ]);
-
-  const toggleAgent = (agentId: string, enabled: boolean) => {
-    console.log(`Toggle agent ${agentId}: ${enabled}`);
-    // In real implementation, this would call the API
+  const initializeAgents = () => {
+    const agentData: Agent[] = [
+      {
+        id: 'surge-detector',
+        name: 'Surge Event Detector',
+        description: 'Monitors external events and correlates with historical demand patterns to predict revenue opportunities before competitors notice.',
+        status: 'ACTIVE',
+        icon: Radar,
+        lastRun: '12 minutes ago',
+        nextRun: 'In 18 minutes',
+        alertsGenerated: 23,
+        avgConfidence: 0.87,
+        revenueImpact: 2450000
+      },
+      {
+        id: 'booking-curve',
+        name: 'Advance Booking Curve Alert',
+        description: 'Predictive booking pace intelligence that detects anomalies in advance booking patterns and recommends dynamic pricing adjustments.',
+        status: 'ACTIVE',
+        icon: TrendingUp,
+        lastRun: '8 minutes ago',
+        nextRun: 'In 22 minutes',
+        alertsGenerated: 41,
+        avgConfidence: 0.92,
+        revenueImpact: 1890000
+      },
+      {
+        id: 'elasticity-detector',
+        name: 'Elasticity Change Alert',
+        description: 'Detects fundamental demand shift patterns and price elasticity changes to optimize revenue management strategies.',
+        status: 'PROCESSING',
+        icon: Brain,
+        lastRun: '2 minutes ago',
+        nextRun: 'In 28 minutes',
+        alertsGenerated: 17,
+        avgConfidence: 0.84,
+        revenueImpact: 1340000
+      }
+    ];
+    setAgents(agentData);
   };
 
-  const runAgent = (agentId: string) => {
-    console.log(`Run agent ${agentId}`);
-    // In real implementation, this would trigger the agent
+  const generateMockAlerts = () => {
+    const mockAlerts: Alert[] = [
+      {
+        id: 'alert-surge-001',
+        agentName: 'Surge Event Detector',
+        priority: 'CRITICAL',
+        title: 'Champions League Final Announced - Madrid Route Surge Expected',
+        description: 'UEFA just announced Champions League Final 2025 at Santiago Bernabéu. Historical data shows 35% demand increase for similar events.',
+        recommendation: 'Increase MAD route prices by 18% immediately. Set up hourly booking pace alerts. Expected 72-hour booking surge window.',
+        confidenceScore: 0.94,
+        revenueImpact: 287000,
+        timeToAct: 'IMMEDIATE (within 4 hours)',
+        affectedRoutes: ['LGW-MAD', 'LTN-MAD', 'STN-MAD'],
+        createdAt: '2 hours ago',
+        expiresAt: '22 hours from now'
+      },
+      {
+        id: 'alert-booking-002',
+        agentName: 'Advance Booking Curve Alert',
+        priority: 'HIGH',
+        title: 'BCN Route Booking Pace 40% Above Forecast',
+        description: 'Barcelona routes showing unprecedented advance booking acceleration. Current pace suggests capacity constraints by week 8.',
+        recommendation: 'Implement progressive pricing strategy. Increase prices 12% for departures in next 6 weeks. Consider capacity reallocation.',
+        confidenceScore: 0.89,
+        revenueImpact: 156000,
+        timeToAct: 'TODAY',
+        affectedRoutes: ['LGW-BCN', 'LTN-BCN'],
+        createdAt: '45 minutes ago'
+      },
+      {
+        id: 'alert-elasticity-003',
+        agentName: 'Elasticity Change Alert',
+        priority: 'HIGH',
+        title: 'AMS Route Elasticity Shift Detected',
+        description: 'Price elasticity for Amsterdam routes has decreased by 23% over past 14 days. Market appears less price-sensitive.',
+        recommendation: 'Test aggressive pricing strategy. Implement 15% price increase and monitor conversion rates closely.',
+        confidenceScore: 0.86,
+        revenueImpact: 198000,
+        timeToAct: 'THIS WEEK',
+        affectedRoutes: ['LGW-AMS', 'STN-AMS'],
+        createdAt: '1 hour ago'
+      }
+    ];
+    setAlerts(mockAlerts);
   };
 
-  const updateAlertStatus = (alertId: string, status: string) => {
-    console.log(`Update alert ${alertId} status: ${status}`);
-    // In real implementation, this would update alert status
+  const toggleAgent = async (agentId: string) => {
+    setIsRunning(prev => ({ ...prev, [agentId]: true }));
+    
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setAgents(prev => prev.map(agent => 
+      agent.id === agentId 
+        ? { ...agent, status: agent.status === 'ACTIVE' ? 'SLEEPING' : 'ACTIVE' }
+        : agent
+    ));
+    
+    setIsRunning(prev => ({ ...prev, [agentId]: false }));
   };
 
-  const getAgentIcon = (type: string) => {
-    switch (type) {
-      case 'surge_detector': return <Zap className="w-5 h-5" />;
-      case 'booking_curve': return <BarChart3 className="w-5 h-5" />;
-      case 'elasticity_change': return <TrendingUp className="w-5 h-5" />;
-      default: return <Brain className="w-5 h-5" />;
-    }
+  const runAgent = async (agentId: string) => {
+    setIsRunning(prev => ({ ...prev, [agentId]: true }));
+    
+    // Simulate processing
+    setAgents(prev => prev.map(agent => 
+      agent.id === agentId 
+        ? { ...agent, status: 'PROCESSING' }
+        : agent
+    ));
+    
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    setAgents(prev => prev.map(agent => 
+      agent.id === agentId 
+        ? { ...agent, status: 'ACTIVE', lastRun: 'Just now' }
+        : agent
+    ));
+    
+    setIsRunning(prev => ({ ...prev, [agentId]: false }));
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-600';
-      case 'inactive': return 'bg-gray-600';
-      case 'error': return 'bg-red-600';
-      default: return 'bg-gray-600';
+      case 'ACTIVE': return 'bg-green-500';
+      case 'PROCESSING': return 'bg-blue-500 animate-pulse';
+      case 'SLEEPING': return 'bg-gray-500';
+      case 'ERROR': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'bg-red-600/20 text-red-400 border-red-500/40';
-      case 'high': return 'bg-orange-600/20 text-orange-400 border-orange-500/40';
-      case 'medium': return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/40';
-      case 'low': return 'bg-green-600/20 text-green-400 border-green-500/40';
+      case 'CRITICAL': return 'bg-red-600/20 text-red-400 border-red-500/40';
+      case 'HIGH': return 'bg-orange-600/20 text-orange-400 border-orange-500/40';
+      case 'MEDIUM': return 'bg-yellow-600/20 text-yellow-400 border-yellow-500/40';
+      case 'LOW': return 'bg-green-600/20 text-green-400 border-green-500/40';
       default: return 'bg-gray-600/20 text-gray-400 border-gray-500/40';
     }
   };
@@ -228,293 +214,211 @@ export default function ActionAgents() {
     }).format(amount);
   };
 
-  const formatTimeAgo = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  };
-
   return (
-    <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-dark-50">Action Agents</h1>
-          <p className="text-sm text-dark-400 mt-1">Real-time intelligence agents monitoring revenue opportunities</p>
-        </div>
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-            <Settings className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Global </span>Settings
-          </Button>
-        </div>
-      </div>
-
-      {/* Agent Status Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        {actionAgents.map((agent) => {
-          const agentPerf = performance.find(p => p.agentId === agent.id);
-          
-          return (
-            <Card key={agent.id} className="bg-dark-900/50 border-dark-800 hover:bg-dark-900/70 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-aviation-600/20">
-                      {getAgentIcon(agent.type)}
-                    </div>
-                    <div>
-                      <CardTitle className="text-sm font-semibold text-dark-50">{agent.name}</CardTitle>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`} />
-                        <span className="text-xs text-dark-400 capitalize">{agent.status}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={agent.status === 'active'}
-                    onCheckedChange={(checked) => toggleAgent(agent.id, checked)}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-xs text-dark-400">{agent.description}</p>
-                
-                {/* Key Metrics */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className="text-xs text-dark-500 mb-1">Alerts Today</div>
-                    <div className="text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-dark-500 mb-1">Revenue Impact</div>
-                    <div className="text-lg font-semibold text-aviation-400">{formatCurrency(agent.revenueImpact)}</div>
-                  </div>
-                </div>
-
-                {/* Confidence and Routes */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-dark-500">Confidence</span>
-                    <span className="text-xs text-dark-300">{agent.confidence}%</span>
-                  </div>
-                  <Progress value={agent.confidence} className="h-1" />
-                </div>
-
-                <div>
-                  <div className="text-xs text-dark-500 mb-1">Monitoring Routes</div>
-                  <div className="flex flex-wrap gap-1">
-                    {agent.routes.slice(0, 3).map((route) => (
-                      <Badge key={route} variant="outline" className="text-xs px-1.5 py-0.5 text-dark-400 border-dark-700">
-                        {route}
-                      </Badge>
-                    ))}
-                    {agent.routes.length > 3 && (
-                      <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-dark-400 border-dark-700">
-                        +{agent.routes.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-2 pt-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="flex-1 text-xs"
-                    onClick={() => runAgent(agent.id)}
-                  >
-                    <Play className="w-3 h-3 mr-1" />
-                    Run Now
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    onClick={() => setSelectedAgent(agent.id)}
-                  >
-                    <Settings className="w-3 h-3" />
-                  </Button>
-                </div>
-
-                {/* Last Run Info */}
-                <div className="flex items-center justify-between text-xs text-dark-500 pt-2 border-t border-dark-800">
-                  <span>Last: {formatTimeAgo(agent.lastRun)}</span>
-                  <span>Next: {formatTimeAgo(agent.nextRun)}</span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="alerts" className="space-y-3 sm:space-y-4 lg:space-y-6">
-        <TabsList className="bg-dark-900/50 border border-dark-800 grid w-full grid-cols-3 h-auto">
-          <TabsTrigger value="alerts" className="data-[state=active]:bg-aviation-600/20 flex-col sm:flex-row gap-1 sm:gap-2 py-2 sm:py-3">
-            <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm">Recent Alerts</span>
-          </TabsTrigger>
-          <TabsTrigger value="performance" className="data-[state=active]:bg-aviation-600/20 flex-col sm:flex-row gap-1 sm:gap-2 py-2 sm:py-3">
-            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm">Performance</span>
-          </TabsTrigger>
-          <TabsTrigger value="routes" className="data-[state=active]:bg-aviation-600/20 flex-col sm:flex-row gap-1 sm:gap-2 py-2 sm:py-3">
-            <Route className="w-3 h-3 sm:w-4 sm:h-4" />
-            <span className="text-xs sm:text-sm">Routes</span>
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Recent Alerts Tab */}
-        <TabsContent value="alerts" className="space-y-3 sm:space-y-4">
-          <Card className="bg-dark-900/50 border-dark-800">
-            <CardHeader className="pb-3 sm:pb-4">
-              <CardTitle className="text-base sm:text-lg text-dark-50">Recent Agent Alerts</CardTitle>
-              <CardDescription className="text-sm text-dark-400">
-                Real-time alerts generated by intelligence agents
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-6">
-              <div className="h-80 sm:h-96 overflow-y-auto">
-                <div className="space-y-3 sm:space-y-4">
-                  {recentAlerts.map((alert) => (
-                    <div key={alert.id} className="border border-dark-800 rounded-lg p-3 sm:p-4 hover:bg-dark-800/30 transition-colors">
-                      <div className="space-y-3">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Badge variant="outline" className={`text-xs px-2 py-0.5 ${getPriorityColor(alert.priority)}`}>
-                            {alert.priority.toUpperCase()}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs px-2 py-0.5 text-aviation-400 border-aviation-500/40">
-                            {alert.route}
-                          </Badge>
-                          <span className="text-xs text-dark-500">{formatTimeAgo(alert.createdAt)}</span>
-                        </div>
-                        
-                        <div>
-                          <h4 className="text-sm font-semibold text-dark-50 mb-1">{alert.title}</h4>
-                          <p className="text-xs text-dark-400 mb-3">{alert.description}</p>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 text-xs">
-                          <div>
-                            <span className="text-dark-500">Revenue Impact:</span>
-                            <div className="font-semibold text-aviation-400">{formatCurrency(alert.revenueImpact)}</div>
-                          </div>
-                          <div>
-                            <span className="text-dark-500">Confidence:</span>
-                            <div className="font-semibold text-dark-300">{alert.confidence}%</div>
-                          </div>
-                          <div>
-                            <span className="text-dark-500">Time to Act:</span>
-                            <div className="font-semibold text-yellow-400">{alert.timeToAct}</div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-dark-800/50 rounded p-2 mb-3">
-                          <div className="text-xs text-dark-500 mb-1">Recommendation:</div>
-                          <div className="text-xs text-dark-300">{alert.recommendation}</div>
-                        </div>
-                        
-                        <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-2">
-                          <Button 
-                            size="sm" 
-                            variant={alert.status === 'new' ? 'default' : 'outline'}
-                            className="text-xs flex-1"
-                            onClick={() => updateAlertStatus(alert.id, 'reviewing')}
-                          >
-                            {alert.status === 'new' ? 'Review' : 'Update'}
-                          </Button>
-                          <Button size="sm" variant="ghost" className="text-xs flex-1">
-                            Dismiss
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Performance Tab */}
-        <TabsContent value="performance" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {performance.map((perf) => {
-              const agent = actionAgents.find(a => a.id === perf.agentId);
-              if (!agent) return null;
-              
-              return (
-                <Card key={perf.agentId} className="bg-dark-900/50 border-dark-800">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold text-dark-50 flex items-center space-x-2">
-                      {getAgentIcon(agent.type)}
-                      <span>{agent.name}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-xs text-dark-500 mb-1">Total Alerts</div>
-                        <div className="text-2xl font-bold text-dark-50">{perf.totalAlerts}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs text-dark-500 mb-1">Action Rate</div>
-                        <div className="text-2xl font-bold text-aviation-400">{perf.actionRate}%</div>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <div className="text-xs text-dark-500 mb-1">Avg Revenue Impact</div>
-                      <div className="text-lg font-semibold text-dark-50">{formatCurrency(perf.avgRevenueImpact)}</div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-dark-500">Accuracy</span>
-                        <span className="text-xs text-dark-300">{perf.accuracy}%</span>
-                      </div>
-                      <Progress value={perf.accuracy} className="h-1" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-2 border-t border-dark-800">
-                      <span className="text-xs text-dark-500">Last Week Trend</span>
-                      <div className={`flex items-center text-xs ${perf.lastWeekTrend > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        <TrendingUp className={`w-3 h-3 mr-1 ${perf.lastWeekTrend < 0 ? 'rotate-180' : ''}`} />
-                        {Math.abs(perf.lastWeekTrend)}%
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
+    <AppShell>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-dark-50">Action Agents</h1>
+            <p className="text-dark-400 mt-1">
+              Advanced Predictive Analytics Suite - Mission Control for Revenue Intelligence
+            </p>
           </div>
-        </TabsContent>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+              <span className="text-sm text-dark-300">System Active</span>
+            </div>
+          </div>
+        </div>
 
-        {/* Route Analysis Tab */}
-        <TabsContent value="routes" className="space-y-4">
-          <Card className="bg-dark-900/50 border-dark-800">
-            <CardHeader>
-              <CardTitle className="text-lg text-dark-50">Route-Level Agent Activity</CardTitle>
-              <CardDescription className="text-dark-400">
-                Intelligence agent monitoring across route network
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12 text-dark-500">
-                <Route className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Route analysis dashboard will be implemented here</p>
-                <p className="text-sm mt-2">Real-time route-level agent performance and alert distribution</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        {/* Agent Overview Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {agents.map((agent) => {
+            const IconComponent = agent.icon;
+            return (
+              <Card key={agent.id} className="bg-dark-900 border-dark-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-aviation-600/20 rounded-lg">
+                        <IconComponent className="w-5 h-5 text-aviation-500" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-semibold text-dark-50">
+                          {agent.name}
+                        </CardTitle>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
+                          <span className="text-xs text-dark-400">{agent.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-dark-400 mb-4 line-clamp-3">
+                    {agent.description}
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                      <div className="text-xs text-dark-500">Alerts Generated</div>
+                      <div className="text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-dark-500">Avg Confidence</div>
+                      <div className="text-lg font-semibold text-green-400">
+                        {(agent.avgConfidence * 100).toFixed(0)}%
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-dark-500">Revenue Impact</div>
+                      <div className="text-sm font-semibold text-aviation-400">
+                        {formatCurrency(agent.revenueImpact)}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-dark-500">Next Run</div>
+                      <div className="text-sm text-dark-300">{agent.nextRun}</div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => runAgent(agent.id)}
+                      disabled={isRunning[agent.id] || agent.status === 'PROCESSING'}
+                      className="flex-1 bg-dark-800 border-dark-600 hover:bg-dark-700"
+                    >
+                      {isRunning[agent.id] || agent.status === 'PROCESSING' ? (
+                        <>
+                          <Activity className="w-4 h-4 mr-2 animate-spin" />
+                          Running...
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Run Now
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => toggleAgent(agent.id)}
+                      disabled={isRunning[agent.id]}
+                      className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+                    >
+                      {agent.status === 'ACTIVE' ? (
+                        <Pause className="w-4 h-4" />
+                      ) : (
+                        <Play className="w-4 h-4" />
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Active Alerts */}
+        <Card className="bg-dark-900 border-dark-800">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+              <AlertTriangle className="w-5 h-5 text-aviation-500 mr-2" />
+              Active Intelligence Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {alerts.map((alert) => (
+                <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs px-2 py-0.5 ${getPriorityColor(alert.priority)}`}
+                        >
+                          {alert.priority}
+                        </Badge>
+                        <span className="text-xs text-dark-400">{alert.agentName}</span>
+                        <div className="flex items-center space-x-1">
+                          <Target className="w-3 h-3 text-green-400" />
+                          <span className="text-xs text-green-400">
+                            {(alert.confidenceScore * 100).toFixed(0)}% confidence
+                          </span>
+                        </div>
+                      </div>
+                      <h3 className="text-base font-semibold text-dark-50 mb-2">
+                        {alert.title}
+                      </h3>
+                      <p className="text-sm text-dark-400 mb-3">
+                        {alert.description}
+                      </p>
+                    </div>
+                    <div className="text-right ml-4">
+                      <div className="flex items-center text-green-400 mb-1">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        <span className="font-semibold">{formatCurrency(alert.revenueImpact)}</span>
+                      </div>
+                      <div className="flex items-center text-orange-400">
+                        <Clock className="w-3 h-3 mr-1" />
+                        <span className="text-xs">{alert.timeToAct}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-dark-800/50 rounded-lg p-3 mb-3">
+                    <h4 className="text-sm font-medium text-dark-50 mb-2">Recommended Actions:</h4>
+                    <p className="text-sm text-dark-300 whitespace-pre-line">
+                      {alert.recommendation}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <span className="text-xs text-dark-500">Affected Routes:</span>
+                        <div className="flex space-x-1 mt-1">
+                          {alert.affectedRoutes.map((route) => (
+                            <Badge key={route} variant="outline" className="text-xs bg-aviation-600/10 text-aviation-400 border-aviation-500/30">
+                              {route}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs text-dark-500">Created:</span>
+                        <div className="text-xs text-dark-400">{alert.createdAt}</div>
+                      </div>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button size="sm" className="bg-aviation-600 hover:bg-aviation-700">
+                        Take Action
+                      </Button>
+                      <Button size="sm" variant="outline" className="bg-dark-800 border-dark-600 hover:bg-dark-700">
+                        Dismiss
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </AppShell>
   );
 }

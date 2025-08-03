@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target, Zap, Sunrise } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgentStatus from '../agents/AgentStatus';
 
@@ -19,12 +19,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'Dashboard',
       icon: ChartLine,
       path: '/'
-    },
-    {
-      id: 'briefing',
-      label: 'Morning Briefing',
-      icon: Sunrise,
-      path: '/briefing'
     },
     {
       id: 'telos',
@@ -112,8 +106,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               
               return (
                 <Link key={item.id} href={item.path}>
-                  <div
-                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                  <a
+                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-aviation-600/20 text-aviation-400 border-l-2 border-aviation-500'
                         : 'text-dark-300 hover:text-white hover:bg-dark-800'
@@ -125,7 +119,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
-                  </div>
+                  </a>
                 </Link>
               );
             })}

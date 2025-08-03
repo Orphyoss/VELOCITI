@@ -57,12 +57,12 @@ export default function NetworkOverview() {
   return (
     <Card className="bg-dark-900 border-dark-800">
       <CardHeader className="pb-2 sm:pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <CardTitle className="text-base sm:text-lg font-semibold text-dark-50 flex items-center">
             <Globe className="text-aviation-500 w-4 h-4 sm:w-5 sm:h-5 mr-2" />
             Network Performance
           </CardTitle>
-          <div className="flex space-x-1 w-full sm:w-auto justify-center sm:justify-end">
+          <div className="flex space-x-1 sm:space-x-2">
             {timeframes.map((tf) => {
               const isSelected = timeframe === tf.value;
               
