@@ -735,7 +735,7 @@ export default function ActionAgentsNew() {
                 >
                   {isRunning ? (
                     <>
-                      <Loader className="h-4 w-4 mr-2 animate-spin" />
+                      <div className="w-4 h-4 mr-2 border-2 border-gray-200 rounded-full animate-spin border-t-blue-600"></div>
                       Running...
                     </>
                   ) : (
