@@ -15,10 +15,20 @@ import MorningBriefing from "@/pages/MorningBriefing";
 import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
+function TestComponent() {
+  return (
+    <div className="min-h-screen bg-red-500 text white p-8">
+      <h1 className="text-4xl font-bold text-white">Test Component Loading</h1>
+      <p className="text-white mt-4">If you see this, React is working!</p>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={TestComponent} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/workbench" component={AnalystWorkbench} />
       <Route path="/agents" component={Agents} />
       <Route path="/action-agents" component={ActionAgents} />
@@ -37,7 +47,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="dark">
+        <div className="dark min-h-screen bg-background text-foreground">
           <Toaster />
           <Router />
         </div>
