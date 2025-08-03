@@ -18,8 +18,8 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const { data: alerts } = useQuery({
-    queryKey: ['/api/alerts'],
-    queryFn: () => api.getAlerts(undefined, 5), // Get latest 5 alerts (priority=undefined, limit=5)
+    queryKey: ['/api/alerts', 'critical'],
+    queryFn: () => api.getAlerts('critical', 10), // Get critical alerts to match the bell count
     enabled: showNotifications, // Only fetch when dropdown is open
   });
 
