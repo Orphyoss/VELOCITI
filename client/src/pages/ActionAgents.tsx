@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
+import { useLocation } from 'wouter';
 import AppShell from '@/components/layout/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -55,6 +56,7 @@ interface Alert {
 
 export default function ActionAgents() {
   const { setCurrentModule } = useVelocitiStore();
+  const [, setLocation] = useLocation();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<string>('performance');
@@ -210,6 +212,12 @@ export default function ActionAgents() {
     setIsRunning(prev => ({ ...prev, [agentId]: false }));
   };
 
+  const handleOpenSettings = (agentId: string) => {
+    // Navigate to the admin page with the agents tab active
+    // The admin page will handle focusing on the specific agent
+    setLocation('/admin?tab=agents&agent=' + agentId);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'ACTIVE': return 'bg-green-500';
@@ -358,6 +366,7 @@ export default function ActionAgents() {
             onToggleAgent={toggleAgent}
             formatCurrency={formatCurrency}
             getStatusColor={getStatusColor}
+            onOpenSettings={handleOpenSettings}
           />
         )}
 
@@ -555,9 +564,10 @@ interface SelectedAgentCardProps {
   onToggleAgent: (agentId: string) => void;
   formatCurrency: (amount: number) => string;
   getStatusColor: (status: string) => string;
+  onOpenSettings: (agentId: string) => void;
 }
 
-function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, formatCurrency, getStatusColor }: SelectedAgentCardProps) {
+function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, formatCurrency, getStatusColor, onOpenSettings }: SelectedAgentCardProps) {
   const IconComponent = agent.icon;
   
   return (
@@ -644,7 +654,9 @@ function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, format
           <Button
             size="sm"
             variant="outline"
+            onClick={() => onOpenSettings(agent.id)}
             className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+            title={`Configure ${agent.name} settings`}
           >
             <Settings className="w-4 h-4" />
           </Button>

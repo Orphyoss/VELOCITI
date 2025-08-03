@@ -85,75 +85,86 @@ interface ExecutionHistory {
   error_message?: string;
 }
 
-export default function ActionAgentsNew() {
+interface ActionAgentsNewProps {
+  selectedAgentId?: string | null;
+}
+
+export default function ActionAgentsNew({ selectedAgentId }: ActionAgentsNewProps = {}) {
   const { setCurrentModule } = useVelocitiStore();
-  const [activeAgentTab, setActiveAgentTab] = useState('surge-detector');
+  const [activeAgentTab, setActiveAgentTab] = useState(selectedAgentId || 'performance');
   const [activeSubTab, setActiveSubTab] = useState('overview');
   const [agentData, setAgentData] = useState<Record<string, any>>({});
+
+  // Update activeAgentTab when selectedAgentId changes
+  useEffect(() => {
+    if (selectedAgentId) {
+      setActiveAgentTab(selectedAgentId);
+    }
+  }, [selectedAgentId]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Action Agents from the real implementation
+  // Action Agents matching database agent IDs
   const actionAgentDefinitions: Record<string, ActionAgent> = {
-    'surge-detector': {
-      id: 'surge-detector',
-      name: 'RealSurgeEventDetector',
-      className: 'RealSurgeEventDetector',
-      description: 'Detects viral demand surges, events, and unusual market patterns from real database data',
+    'performance': {
+      id: 'performance',
+      name: 'Performance Agent',
+      className: 'PerformanceAgent',
+      description: 'Monitors route performance metrics and identifies optimization opportunities for network efficiency and revenue enhancement',
       status: 'active',
-      dbTables: ['market_events', 'web_search_data', 'competitive_pricing'],
+      dbTables: ['route_performance', 'flight_performance', 'load_factors'],
       configParams: [
-        { key: 'search_growth_threshold', type: 'float', default: 0.50, description: '50% search growth threshold' },
-        { key: 'booking_conversion_threshold', type: 'float', default: 0.15, description: '15% conversion rate spike' },
-        { key: 'confidence_threshold', type: 'float', default: 0.75, description: 'Minimum confidence threshold' }
+        { key: 'performance_threshold', type: 'float', default: 0.85, description: 'Performance score threshold for alerts' },
+        { key: 'load_factor_threshold', type: 'float', default: 0.75, description: 'Load factor threshold for optimization' },
+        { key: 'confidence_threshold', type: 'float', default: 0.80, description: 'Minimum confidence threshold' }
       ],
       methods: [
-        'detect_surge_events(routes)',
-        '_detect_market_events(conn, routes)',
-        '_detect_viral_demand_surges(conn, routes)', 
-        '_detect_competitive_event_signals(conn, routes)'
+        'analyze_route_performance(routes)',
+        '_get_performance_metrics(conn, route)',
+        '_calculate_optimization_opportunities(conn, route)',
+        '_detect_underperforming_routes(conn, routes)'
       ],
       schedule: { frequency: 'daily', time: '02:00' }
     },
     
-    'booking-curve': {
-      id: 'booking-curve',
-      name: 'RealAdvanceBookingCurveAlerting',
-      className: 'RealAdvanceBookingCurveAlerting',
-      description: 'Analyzes booking patterns vs historical curves using real flight performance data',
+    'competitive': {
+      id: 'competitive',
+      name: 'Competitive Agent',
+      className: 'CompetitiveAgent',
+      description: 'Analyzes competitor pricing strategies and market positioning to identify competitive opportunities and threats',
       status: 'active',
-      dbTables: ['flight_performance'],
+      dbTables: ['competitive_pricing', 'market_share', 'competitor_analysis'],
       configParams: [
-        { key: 'anomaly_threshold', type: 'float', default: 0.15, description: '15% deviation from expected' },
-        { key: 'sustained_anomaly_days', type: 'int', default: 3, description: '3+ days of deviation' },
+        { key: 'price_variance_threshold', type: 'float', default: 0.15, description: 'Price variance threshold for alerts' },
+        { key: 'market_share_threshold', type: 'float', default: 0.10, description: 'Market share change threshold' },
         { key: 'confidence_threshold', type: 'float', default: 0.75, description: 'Minimum confidence threshold' }
       ],
       methods: [
-        'analyze_booking_curves(routes)',
-        '_get_current_booking_performance(conn, route)',
-        '_get_historical_booking_curves(conn, route)',
-        '_detect_booking_anomalies(conn, route, current, historical)'
+        'analyze_competitive_landscape(routes)',
+        '_get_competitor_pricing(conn, route)',
+        '_calculate_price_positioning(conn, route)',
+        '_detect_competitive_threats(conn, routes)'
       ],
       schedule: { frequency: 'daily', time: '03:00' }
     },
 
-    'elasticity-monitor': {
-      id: 'elasticity-monitor', 
-      name: 'RealElasticityChangeAlert',
-      className: 'RealElasticityChangeAlert',
-      description: 'Monitors price elasticity changes from real pricing actions and booking responses',
+    'network': {
+      id: 'network', 
+      name: 'Network Agent',
+      className: 'NetworkAgent',
+      description: 'Evaluates network capacity, route profitability, and identifies expansion or optimization opportunities across the route network',
       status: 'active',
-      dbTables: ['rm_pricing_actions', 'flight_performance'],
+      dbTables: ['network_analysis', 'capacity_utilization', 'route_profitability'],
       configParams: [
-        { key: 'elasticity_change_threshold', type: 'float', default: 0.20, description: '20% change in elasticity' },
-        { key: 'min_price_actions', type: 'int', default: 3, description: 'Need at least 3 pricing actions' },
+        { key: 'capacity_threshold', type: 'float', default: 0.90, description: 'Capacity utilization threshold' },
+        { key: 'profitability_threshold', type: 'float', default: 0.15, description: 'Route profitability threshold' },
         { key: 'confidence_threshold', type: 'float', default: 0.70, description: 'Minimum confidence threshold' }
       ],
       methods: [
-        'detect_elasticity_changes(routes)',
-        '_get_recent_pricing_actions(conn, route)',
-        '_calculate_current_elasticity(conn, route, actions)',
-        '_get_historical_elasticity(conn, route)'
+        'analyze_network_optimization(routes)',
+        '_get_capacity_metrics(conn, route)',
+        '_calculate_network_efficiency(conn, route)',
+        '_identify_expansion_opportunities(conn, routes)'
       ],
       schedule: { frequency: 'hourly', time: '00' }
     }
@@ -814,43 +825,47 @@ export default function ActionAgentsNew() {
           <CardContent>
             <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
               <pre className="text-green-400 text-sm font-mono">
-{agent.id === 'surge-detector' && `-- RealSurgeEventDetector Queries
-SELECT event_name, event_type, affected_routes, impact_level
-FROM market_events 
-WHERE event_date >= CURRENT_DATE - INTERVAL '7 days'
-AND affected_routes::text LIKE ANY($1);
+{agent.id === 'performance' && `-- Performance Agent Queries
+SELECT route_id, load_factor, yield_per_pax, 
+       revenue_per_flight, cost_per_flight
+FROM route_performance 
+WHERE performance_date >= CURRENT_DATE - INTERVAL '30 days'
+AND route_id = ANY($1)
+ORDER BY performance_date DESC;
 
-SELECT route_id, AVG(web_ty_searches) as recent_avg_searches,
-       AVG(conversion_rate) as recent_conversion_rate
-FROM web_search_data 
-WHERE search_dt >= CURRENT_DATE - INTERVAL '7 days'
-GROUP BY route_id;`}
-
-{agent.id === 'booking-curve' && `-- RealAdvanceBookingCurveAlerting Queries
 SELECT route_id, flight_dt, load_factor, bookings_count,
-       days_to_departure
+       cancellation_rate, delay_minutes
 FROM flight_performance 
-WHERE flight_dt >= CURRENT_DATE - INTERVAL '30 days'
+WHERE flight_dt >= CURRENT_DATE - INTERVAL '7 days'
+GROUP BY route_id, flight_dt;`}
+
+{agent.id === 'competitive' && `-- Competitive Agent Queries
+SELECT route_id, competitor_code, price_difference_pct,
+       market_share_change, price_position
+FROM competitive_pricing 
+WHERE analysis_date >= CURRENT_DATE - INTERVAL '14 days'
 AND route_id = ANY($1)
-ORDER BY flight_dt DESC;
+ORDER BY analysis_date DESC;
 
-SELECT route_id, days_to_departure, 
-       AVG(load_factor) as historical_load_factor
-FROM flight_performance 
-WHERE flight_dt >= CURRENT_DATE - INTERVAL '365 days'
-GROUP BY route_id, days_to_departure;`}
+SELECT route_id, competitor_code, 
+       AVG(price_difference_pct) as avg_price_diff,
+       COUNT(*) as monitoring_days
+FROM competitive_pricing 
+WHERE analysis_date >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY route_id, competitor_code;`}
 
-{agent.id === 'elasticity-monitor' && `-- RealElasticityChangeAlert Queries  
-SELECT route_id, price_change_pct, booking_response,
-       action_dt, rm_analyst
-FROM rm_pricing_actions 
-WHERE action_dt >= CURRENT_DATE - INTERVAL '14 days'
+{agent.id === 'network' && `-- Network Agent Queries  
+SELECT route_id, capacity_utilization, profitability_score,
+       expansion_potential, optimization_opportunities
+FROM network_analysis 
+WHERE analysis_date >= CURRENT_DATE - INTERVAL '14 days'
 AND route_id = ANY($1)
-ORDER BY action_dt DESC;
+ORDER BY analysis_date DESC;
 
-SELECT route_id, flight_dt, yield_per_pax, bookings_count
-FROM flight_performance 
-WHERE flight_dt >= CURRENT_DATE - INTERVAL '14 days'
+SELECT route_id, total_capacity, utilized_capacity,
+       frequency_per_week, demand_forecast
+FROM capacity_utilization 
+WHERE analysis_date >= CURRENT_DATE - INTERVAL '7 days'
 AND route_id = ANY($1);`}
               </pre>
             </div>
