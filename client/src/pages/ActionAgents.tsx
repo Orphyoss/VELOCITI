@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { 
   Zap, 
   TrendingUp, 
@@ -233,192 +235,277 @@ export default function ActionAgents() {
           </div>
         </div>
 
-        {/* Agent Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {agents.map((agent) => {
-            const IconComponent = agent.icon;
-            return (
-              <Card key={agent.id} className="bg-dark-900 border-dark-800">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-aviation-600/20 rounded-lg">
-                        <IconComponent className="w-5 h-5 text-aviation-500" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-base font-semibold text-dark-50">
-                          {agent.name}
-                        </CardTitle>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
-                          <span className="text-xs text-dark-400">{agent.status}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-dark-400 mb-4 line-clamp-3">
-                    {agent.description}
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                      <div className="text-xs text-dark-500">Alerts Generated</div>
-                      <div className="text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-dark-500">Avg Confidence</div>
-                      <div className="text-lg font-semibold text-green-400">
-                        {(agent.avgConfidence * 100).toFixed(0)}%
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-dark-500">Revenue Impact</div>
-                      <div className="text-sm font-semibold text-aviation-400">
-                        {formatCurrency(agent.revenueImpact)}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-dark-500">Next Run</div>
-                      <div className="text-sm text-dark-300">{agent.nextRun}</div>
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => runAgent(agent.id)}
-                      disabled={isRunning[agent.id] || agent.status === 'PROCESSING'}
-                      className="flex-1 bg-dark-800 border-dark-600 hover:bg-dark-700"
-                    >
-                      {isRunning[agent.id] || agent.status === 'PROCESSING' ? (
-                        <>
-                          <Activity className="w-4 h-4 mr-2 animate-spin text-blue-500" />
-                          Running...
-                        </>
-                      ) : (
-                        <>
-                          <Play className="w-4 h-4 mr-2" />
-                          Run Now
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleAgent(agent.id)}
-                      disabled={isRunning[agent.id]}
-                      className="bg-dark-800 border-dark-600 hover:bg-dark-700"
-                    >
-                      {agent.status === 'ACTIVE' ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-dark-800 border-dark-600 hover:bg-dark-700"
-                    >
-                      <Settings className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Active Alerts */}
-        <Card className="bg-dark-900 border-dark-800">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-              <AlertTriangle className="w-5 h-5 text-aviation-500 mr-2" />
-              Active Intelligence Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {alerts.map((alert) => (
-                <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-xs px-2 py-0.5 ${getPriorityColor(alert.priority)}`}
-                        >
-                          {alert.priority}
-                        </Badge>
-                        <span className="text-xs text-dark-400">{alert.agentName}</span>
-                        <div className="flex items-center space-x-1">
-                          <Target className="w-3 h-3 text-green-400" />
-                          <span className="text-xs text-green-400">
-                            {(alert.confidenceScore * 100).toFixed(0)}% confidence
-                          </span>
-                        </div>
-                      </div>
-                      <h3 className="text-base font-semibold text-dark-50 mb-2">
-                        {alert.title}
-                      </h3>
-                      <p className="text-sm text-dark-400 mb-3">
-                        {alert.description}
-                      </p>
-                    </div>
-                    <div className="text-right ml-4">
-                      <div className="flex items-center text-green-400 mb-1">
-                        <DollarSign className="w-4 h-4 mr-1" />
-                        <span className="font-semibold">{formatCurrency(alert.revenueImpact)}</span>
-                      </div>
-                      <div className="flex items-center text-orange-400">
-                        <Clock className="w-3 h-3 mr-1" />
-                        <span className="text-xs">{alert.timeToAct}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-dark-800/50 rounded-lg p-3 mb-3">
-                    <h4 className="text-sm font-medium text-dark-50 mb-2">Recommended Actions:</h4>
-                    <p className="text-sm text-dark-300 whitespace-pre-line">
-                      {alert.recommendation}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div>
-                        <span className="text-xs text-dark-500">Affected Routes:</span>
-                        <div className="flex space-x-1 mt-1">
-                          {alert.affectedRoutes.map((route) => (
-                            <Badge key={route} variant="outline" className="text-xs bg-aviation-600/10 text-aviation-400 border-aviation-500/30">
-                              {route}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-xs text-dark-500">Created:</span>
-                        <div className="text-xs text-dark-400">{alert.createdAt}</div>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button size="sm" className="bg-aviation-600 hover:bg-aviation-700">
-                        Take Action
-                      </Button>
-                      <Button size="sm" variant="outline" className="bg-dark-800 border-dark-600 hover:bg-dark-700">
-                        Dismiss
-                      </Button>
-                    </div>
-                  </div>
+        {/* Agent Selection - Prominent Position */}
+        <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-950 dark:via-indigo-950 dark:to-blue-950 border-2 border-blue-300 dark:border-blue-700 shadow-lg">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Label htmlFor="agent-select" className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
+                  <Zap className="h-6 w-6 mr-2 text-blue-600" />
+                  Select Action Agent:
+                </Label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger className="w-[400px] h-14 text-lg border-3 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
+                    <SelectValue placeholder="Choose an Action Agent">
+                      {selectedAgent && agents.find(a => a.id === selectedAgent) && (() => {
+                        const agent = agents.find(a => a.id === selectedAgent)!;
+                        const IconComponent = agent.icon;
+                        return (
+                          <div className="flex items-center space-x-2">
+                            <IconComponent className="h-5 w-5 text-blue-600" />
+                            <span className="font-medium">{agent.name}</span>
+                            <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
+                          </div>
+                        );
+                      })()}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent className="w-[400px]">
+                    {agents.map((agent) => {
+                      const IconComponent = agent.icon;
+                      return (
+                        <SelectItem key={agent.id} value={agent.id} className="text-base py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center space-x-3">
+                              <IconComponent className="h-5 w-5 text-blue-600" />
+                              <div>
+                                <div className="font-medium">{agent.name}</div>
+                                <div className="text-sm text-gray-500 dark:text-gray-400">{agent.description.substring(0, 60)}...</div>
+                              </div>
+                            </div>
+                            <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedAgent && agents.find(a => a.id === selectedAgent) && (
+                <div className="text-right">
+                  <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">Current Status</div>
+                  <div className={`w-2 h-2 rounded-full ${getStatusColor(agents.find(a => a.id === selectedAgent)!.status)} inline-block mr-2`}></div>
+                  <span className="text-sm font-medium">{agents.find(a => a.id === selectedAgent)!.status}</span>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Selected Agent Display */}
+        {selectedAgent && agents.find(a => a.id === selectedAgent) && (
+          <SelectedAgentCard 
+            agent={agents.find(a => a.id === selectedAgent)!} 
+            isRunning={isRunning}
+            onRunAgent={runAgent}
+            onToggleAgent={toggleAgent}
+            formatCurrency={formatCurrency}
+            getStatusColor={getStatusColor}
+          />
+        )}
+
+        {/* Active Alerts for Selected Agent */}
+        {selectedAgent && (
+          <Card className="bg-dark-900 border-dark-800">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+                <AlertTriangle className="w-5 h-5 text-aviation-500 mr-2" />
+                Active Intelligence Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {alerts
+                  .filter(alert => alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' ')))
+                  .map((alert) => (
+                  <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs px-2 py-0.5 ${getPriorityColor(alert.priority)}`}
+                          >
+                            {alert.priority}
+                          </Badge>
+                          <span className="text-xs text-dark-400">{alert.agentName}</span>
+                          <div className="flex items-center space-x-1">
+                            <Target className="w-3 h-3 text-green-400" />
+                            <span className="text-xs text-green-400">
+                              {(alert.confidenceScore * 100).toFixed(0)}% confidence
+                            </span>
+                          </div>
+                        </div>
+                        <h3 className="text-base font-semibold text-dark-50 mb-2">
+                          {alert.title}
+                        </h3>
+                        <p className="text-sm text-dark-400 mb-3">
+                          {alert.description}
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <div className="flex items-center text-green-400 mb-1">
+                          <DollarSign className="w-4 h-4 mr-1" />
+                          <span className="font-semibold">{formatCurrency(alert.revenueImpact)}</span>
+                        </div>
+                        <div className="flex items-center text-orange-400">
+                          <Clock className="w-3 h-3 mr-1" />
+                          <span className="text-xs">{alert.timeToAct}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-dark-800/50 rounded-lg p-3 mb-3">
+                      <h4 className="text-sm font-medium text-dark-50 mb-2">Recommended Actions:</h4>
+                      <p className="text-sm text-dark-300 whitespace-pre-line">
+                        {alert.recommendation}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <span className="text-xs text-dark-500">Affected Routes:</span>
+                          <div className="flex space-x-1 mt-1">
+                            {alert.affectedRoutes.map((route) => (
+                              <Badge key={route} variant="outline" className="text-xs bg-aviation-600/10 text-aviation-400 border-aviation-500/30">
+                                {route}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs text-dark-500">Created:</span>
+                          <div className="text-xs text-dark-400">{alert.createdAt}</div>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button size="sm" className="bg-aviation-600 hover:bg-aviation-700">
+                          Take Action
+                        </Button>
+                        <Button size="sm" variant="outline" className="bg-dark-800 border-dark-600 hover:bg-dark-700">
+                          Dismiss
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {alerts.filter(alert => alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '))).length === 0 && (
+                  <div className="text-center py-8 text-dark-400">
+                    No active alerts for this agent
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AppShell>
+  );
+}
+
+interface SelectedAgentCardProps {
+  agent: Agent;
+  isRunning: Record<string, boolean>;
+  onRunAgent: (agentId: string) => void;
+  onToggleAgent: (agentId: string) => void;
+  formatCurrency: (amount: number) => string;
+  getStatusColor: (status: string) => string;
+}
+
+function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, formatCurrency, getStatusColor }: SelectedAgentCardProps) {
+  const IconComponent = agent.icon;
+  
+  return (
+    <Card className="bg-dark-900 border-dark-800">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-aviation-600/20 rounded-lg">
+              <IconComponent className="w-5 h-5 text-aviation-500" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold text-dark-50">
+                {agent.name}
+              </CardTitle>
+              <div className="flex items-center space-x-2 mt-1">
+                <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
+                <span className="text-xs text-dark-400">{agent.status}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <p className="text-sm text-dark-400 mb-4 line-clamp-3">
+          {agent.description}
+        </p>
+        
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <div className="text-xs text-dark-500">Alerts Generated</div>
+            <div className="text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
+          </div>
+          <div>
+            <div className="text-xs text-dark-500">Avg Confidence</div>
+            <div className="text-lg font-semibold text-green-400">
+              {(agent.avgConfidence * 100).toFixed(0)}%
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-dark-500">Revenue Impact</div>
+            <div className="text-sm font-semibold text-aviation-400">
+              {formatCurrency(agent.revenueImpact)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-dark-500">Next Run</div>
+            <div className="text-sm text-dark-300">{agent.nextRun}</div>
+          </div>
+        </div>
+
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onRunAgent(agent.id)}
+            disabled={isRunning[agent.id] || agent.status === 'PROCESSING'}
+            className="flex-1 bg-dark-800 border-dark-600 hover:bg-dark-700"
+          >
+            {isRunning[agent.id] || agent.status === 'PROCESSING' ? (
+              <>
+                <Activity className="w-4 h-4 mr-2 animate-spin text-blue-500" />
+                Running...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 mr-2" />
+                Run Now
+              </>
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onToggleAgent(agent.id)}
+            disabled={isRunning[agent.id]}
+            className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+          >
+            {agent.status === 'ACTIVE' ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4" />
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
