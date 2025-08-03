@@ -5,66 +5,9 @@ import {
   type InsertRoutePerformance, type InsertConversation,
   type InsertSystemMetric, type InsertActivity, type InsertFeedback
 } from '@shared/schema';
-
-// Temporary memory storage while database connection is being established
-const memoryStore = {
-  users: new Map<string, User>(),
-  alerts: new Map<string, Alert>(),
-  agents: new Map<string, Agent>(),
-  feedback: new Map<string, any>(),
-  routePerformance: new Map<string, RoutePerformance>(),
-  conversations: new Map<string, Conversation>(),
-  systemMetrics: new Map<string, SystemMetric>(),
-  activities: new Map<string, Activity>()
-};
-
-// Initialize agents with real configuration
-const initializeAgents = () => {
-  // Initialize required agents for system operation
-  const requiredAgents: Agent[] = [
-    {
-      id: 'competitive',
-      name: 'Competitive Intelligence Agent',
-      status: 'active',
-      accuracy: '0.00',
-      totalAnalyses: 0,
-      successfulPredictions: 0,
-      configuration: { threshold: 0.05, monitoring_frequency: 'hourly' },
-      lastActive: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: 'performance',
-      name: 'Route Performance Agent',
-      status: 'active',
-      accuracy: '0.00',
-      totalAnalyses: 0,
-      successfulPredictions: 0,
-      configuration: { variance_threshold: 0.03, lookback_days: 7 },
-      lastActive: new Date(),
-      updatedAt: new Date()
-    },
-    {
-      id: 'network',
-      name: 'Network Optimization Agent',
-      status: 'active',
-      accuracy: '0.00',
-      totalAnalyses: 0,
-      successfulPredictions: 0,
-      configuration: { efficiency_threshold: 0.02, analysis_depth: 'comprehensive' },
-      lastActive: new Date(),
-      updatedAt: new Date()
-    }
-  ];
-
-  // Only populate agents if store is empty
-  if (memoryStore.agents.size === 0) {
-    requiredAgents.forEach(agent => memoryStore.agents.set(agent.id, agent));
-  }
-};
-
-// Initialize only essential system components
-initializeAgents();
+import { db } from './services/supabase';
+import { eq, desc, gte, lte, and } from 'drizzle-orm';
+import { alerts, agents, users, feedback, routePerformance, conversations, systemMetrics, activities } from '@shared/schema';
 
 export interface IStorage {
   // Users
@@ -105,29 +48,45 @@ export interface IStorage {
   createActivity(activity: InsertActivity): Promise<void>;
 }
 
-export class MemoryStorage implements IStorage {
+export class PostgreSQLStorage implements IStorage {
   
   async getUser(id: string): Promise<User | undefined> {
-    return memoryStore.users.get(id);
+    try {
+      const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('[Storage] Error fetching user:', error);
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const users = Array.from(memoryStore.users.values());
-    return users.find(user => user.email === username);
+    try {
+      const result = await db.select().from(users).where(eq(users.email, username)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('[Storage] Error fetching user by username:', error);
+      return undefined;
+    }
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const id = `user-${Date.now()}`;
-    const newUser: User = {
-      id,
-      username: user.username,
-      email: user.email,
-      role: user.role || 'analyst',
-      preferences: user.preferences || {},
-      createdAt: new Date()
-    };
-    memoryStore.users.set(newUser.id, newUser);
-    return newUser;
+    try {
+      const newUser = {
+        id: `user-${Date.now()}`,
+        username: user.username,
+        email: user.email,
+        role: user.role || 'analyst',
+        preferences: user.preferences || {},
+        createdAt: new Date()
+      };
+      
+      await db.insert(users).values(newUser);
+      return newUser as User;
+    } catch (error) {
+      console.error('[Storage] Error creating user:', error);
+      throw error;
+    }
   }
 
   async getAlerts(limit = 50): Promise<Alert[]> {
@@ -139,15 +98,9 @@ export class MemoryStorage implements IStorage {
       `Fetching ${limit} alerts from database`,
       async () => {
         try {
-          const { client } = await import('./services/supabase.js');
+          const result = await db.select().from(alerts).orderBy(desc(alerts.created_at)).limit(limit);
           
-          const result = await client`
-            SELECT * FROM alerts 
-            ORDER BY created_at DESC 
-            LIMIT ${limit}
-          `;
-          
-          const alerts = result.map((alert: any) => ({
+          const alertsData = result.map((alert: any) => ({
             id: alert.id,
             type: alert.type || 'alert',
             priority: alert.priority,
@@ -169,33 +122,22 @@ export class MemoryStorage implements IStorage {
           }));
           
           logger.debug('Storage', 'getAlerts', `Successfully fetched alerts from database`, {
-            alertCount: alerts.length,
-            enhancedScenarios: alerts.filter(a => a.metadata?.scenario_generated).length,
-            priorities: alerts.reduce((acc: any, alert) => {
+            alertCount: alertsData.length,
+            enhancedScenarios: alertsData.filter(a => a.metadata?.scenario_generated).length,
+            priorities: alertsData.reduce((acc: any, alert) => {
               acc[alert.priority] = (acc[alert.priority] || 0) + 1;
               return acc;
             }, {}),
-            agents: alerts.reduce((acc: any, alert) => {
+            agents: alertsData.reduce((acc: any, alert) => {
               acc[alert.agent_id] = (acc[alert.agent_id] || 0) + 1;
               return acc;
             }, {})
           });
           
-          return alerts;
-          
+          return alertsData;
         } catch (error) {
-          logger.error('Storage', 'getAlerts', 'Database query failed, falling back to memory store', error, { limit });
-          
-          // Fallback to memory store
-          const allAlerts = Array.from(memoryStore.alerts.values())
-            .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
-            .slice(0, limit);
-          
-          logger.warn('Storage', 'getAlerts', `Using memory store fallback`, {
-            memoryAlertCount: allAlerts.length
-          });
-          
-          return allAlerts;
+          logger.error('Storage', 'getAlerts', 'Database query failed', error, { limit });
+          throw error;
         }
       },
       { limit }
@@ -204,16 +146,10 @@ export class MemoryStorage implements IStorage {
 
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
     try {
-      // Query database directly using raw SQL for priority alerts
-      const { client } = await import('./services/supabase.js');
+      const result = await db.select().from(alerts)
+        .where(eq(alerts.priority, priority))
+        .orderBy(desc(alerts.created_at));
       
-      const result = await client`
-        SELECT * FROM alerts 
-        WHERE priority = ${priority}
-        ORDER BY created_at DESC
-      `;
-      
-      // Convert database format to expected format
       return result.map((alert: any) => ({
         id: alert.id,
         type: alert.type || 'alert',
@@ -236,183 +172,262 @@ export class MemoryStorage implements IStorage {
       }));
     } catch (error) {
       console.error('[Storage] Error fetching priority alerts from database:', error);
-      // Fallback to memory store
-      return Array.from(memoryStore.alerts.values())
-        .filter(alert => alert.priority === priority)
-        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      throw error;
     }
   }
 
   async createAlert(alert: InsertAlert): Promise<Alert> {
-    const id = `alert-${Date.now()}`;
-    const newAlert: Alert = {
-      id,
-      type: alert.type || 'alert',
-      priority: alert.priority,
-      title: alert.title,
-      description: alert.description,
-      route: alert.route || null,
-      route_name: alert.route_name || null,
-      metric_value: alert.metric_value || null,
-      threshold_value: alert.threshold_value || null,
-      impact_score: alert.impact_score || null,
-      confidence: alert.confidence || null,
-      agent_id: alert.agent_id,
-      metadata: alert.metadata || {},
-      status: alert.status || 'active',
-      created_at: new Date(),
-      acknowledged_at: null,
-      resolved_at: null,
-      category: alert.category
-    };
-    memoryStore.alerts.set(newAlert.id, newAlert);
-    return newAlert;
+    try {
+      const newAlert = {
+        id: `alert-${Date.now()}`,
+        type: alert.type || 'alert',
+        priority: alert.priority,
+        title: alert.title,
+        description: alert.description,
+        route: alert.route || null,
+        route_name: alert.route_name || null,
+        metric_value: alert.metric_value || null,
+        threshold_value: alert.threshold_value || null,
+        impact_score: alert.impact_score || null,
+        confidence: alert.confidence || null,
+        agent_id: alert.agent_id,
+        metadata: alert.metadata || {},
+        status: alert.status || 'active',
+        created_at: new Date(),
+        acknowledged_at: null,
+        resolved_at: null,
+        category: alert.category
+      };
+      
+      await db.insert(alerts).values(newAlert);
+      return newAlert as Alert;
+    } catch (error) {
+      console.error('[Storage] Error creating alert:', error);
+      throw error;
+    }
   }
 
   async updateAlertStatus(id: string, status: string): Promise<void> {
-    const alert = memoryStore.alerts.get(id);
-    if (alert) {
-      alert.status = status;
-      memoryStore.alerts.set(id, alert);
+    try {
+      await db.update(alerts)
+        .set({ status })
+        .where(eq(alerts.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating alert status:', error);
+      throw error;
     }
   }
 
   async getAgents(): Promise<Agent[]> {
-    return Array.from(memoryStore.agents.values());
+    try {
+      const result = await db.select().from(agents);
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching agents:', error);
+      throw error;
+    }
   }
 
   async getAgent(id: string): Promise<Agent | undefined> {
-    return memoryStore.agents.get(id);
+    try {
+      const result = await db.select().from(agents).where(eq(agents.id, id)).limit(1);
+      return result[0];
+    } catch (error) {
+      console.error('[Storage] Error fetching agent:', error);
+      return undefined;
+    }
   }
 
   async updateAgent(id: string, updates: Partial<Agent>): Promise<void> {
-    const agent = memoryStore.agents.get(id);
-    if (agent) {
-      Object.assign(agent, updates, { updatedAt: new Date() });
-      memoryStore.agents.set(id, agent);
+    try {
+      await db.update(agents)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(agents.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating agent:', error);
+      throw error;
     }
   }
 
   async createFeedback(feedbackData: InsertFeedback): Promise<void> {
-    const feedback = {
-      id: `feedback-${Date.now()}`,
-      ...feedbackData,
-      createdAt: new Date()
-    };
-    memoryStore.feedback.set(feedback.id, feedback);
+    try {
+      const feedbackRecord = {
+        id: `feedback-${Date.now()}`,
+        ...feedbackData,
+        createdAt: new Date()
+      };
+      await db.insert(feedback).values(feedbackRecord);
+    } catch (error) {
+      console.error('[Storage] Error creating feedback:', error);
+      throw error;
+    }
   }
 
   async getFeedbackByAgent(agentId: string): Promise<any[]> {
-    return Array.from(memoryStore.feedback.values())
-      .filter(feedback => feedback.agentId === agentId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    try {
+      const result = await db.select().from(feedback)
+        .where(eq(feedback.agent_id, agentId))
+        .orderBy(desc(feedback.created_at));
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching feedback by agent:', error);
+      return [];
+    }
   }
 
   async getRoutePerformance(route?: string, days = 7): Promise<RoutePerformance[]> {
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-    
-    let routes = Array.from(memoryStore.routePerformance.values())
-      .filter(rp => new Date(rp.date) >= since);
-    
-    if (route) {
-      routes = routes.filter(rp => rp.route === route);
+    try {
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      
+      let query = db.select().from(routePerformance)
+        .where(gte(routePerformance.date, since))
+        .orderBy(desc(routePerformance.date));
+      
+      if (route) {
+        query = db.select().from(routePerformance)
+          .where(and(
+            gte(routePerformance.date, since),
+            eq(routePerformance.route, route)
+          ))
+          .orderBy(desc(routePerformance.date));
+      }
+      
+      const result = await query;
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching route performance:', error);
+      return [];
     }
-    
-    return routes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   async createRoutePerformance(data: InsertRoutePerformance): Promise<void> {
-    const routePerf: RoutePerformance = {
-      id: data.id || `route-${Date.now()}`,
-      ...data,
-      createdAt: new Date(),
-      loadFactor: data.loadFactor ?? null,
-      yield: data.yield ?? null,
-      performance: data.performance ?? null,
-      competitorPrice: data.competitorPrice ?? null,
-      ourPrice: data.ourPrice ?? null,
-      demandIndex: data.demandIndex ?? null,
-    };
-    memoryStore.routePerformance.set(routePerf.id, routePerf);
+    try {
+      const routePerf = {
+        ...data,
+        createdAt: new Date(),
+        loadFactor: data.loadFactor ?? null,
+        yield: data.yield ?? null,
+        performance: data.performance ?? null,
+        competitorPrice: data.competitorPrice ?? null,
+        ourPrice: data.ourPrice ?? null,
+        demandIndex: data.demandIndex ?? null,
+      };
+      await db.insert(routePerformance).values(routePerf);
+    } catch (error) {
+      console.error('[Storage] Error creating route performance:', error);
+      throw error;
+    }
   }
 
   async getConversations(userId: string): Promise<Conversation[]> {
-    return Array.from(memoryStore.conversations.values())
-      .filter(conv => conv.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    try {
+      const result = await db.select().from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.createdAt));
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching conversations:', error);
+      return [];
+    }
   }
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
-    const newConv: Conversation = {
-      id: conversation.id || `conv-${Date.now()}`,
-      ...conversation,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      title: conversation.title ?? null,
-      userId: conversation.userId ?? null,
-      messages: conversation.messages ?? {},
-      context: conversation.context ?? {},
-    };
-    memoryStore.conversations.set(newConv.id, newConv);
-    return newConv;
+    try {
+      const newConv = {
+        ...conversation,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        title: conversation.title ?? null,
+        userId: conversation.userId ?? null,
+        messages: conversation.messages ?? {},
+        context: conversation.context ?? {},
+      };
+      await db.insert(conversations).values(newConv);
+      return newConv as Conversation;
+    } catch (error) {
+      console.error('[Storage] Error creating conversation:', error);
+      throw error;
+    }
   }
 
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-    const conv = memoryStore.conversations.get(id);
-    if (conv) {
-      Object.assign(conv, updates, { 
-        updatedAt: new Date(),
-        createdAt: conv.createdAt || new Date() 
-      });
-      memoryStore.conversations.set(id, conv);
+    try {
+      await db.update(conversations)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(conversations.id, id));
+    } catch (error) {
+      console.error('[Storage] Error updating conversation:', error);
+      throw error;
     }
   }
 
   async getSystemMetrics(type?: string, hours = 24): Promise<SystemMetric[]> {
-    const since = new Date(Date.now() - hours * 60 * 60 * 1000);
-    
-    let metrics = Array.from(memoryStore.systemMetrics.values())
-      .filter(metric => metric.timestamp && new Date(metric.timestamp) >= since);
-    
-    if (type) {
-      metrics = metrics.filter(metric => metric.metricType === type);
+    try {
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+      
+      let query = db.select().from(systemMetrics)
+        .where(gte(systemMetrics.timestamp, since))
+        .orderBy(desc(systemMetrics.timestamp));
+      
+      if (type) {
+        query = db.select().from(systemMetrics)
+          .where(and(
+            gte(systemMetrics.timestamp, since),
+            eq(systemMetrics.metricType, type)
+          ))
+          .orderBy(desc(systemMetrics.timestamp));
+      }
+      
+      const result = await query;
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching system metrics:', error);
+      return [];
     }
-    
-    return metrics.sort((a, b) => {
-      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-      return bTime - aTime;
-    });
   }
 
   async createSystemMetric(metric: InsertSystemMetric): Promise<void> {
-    const newMetric: SystemMetric = {
-      id: `metric-${Date.now()}`,
-      ...metric,
-      timestamp: metric.timestamp || new Date(),
-      metadata: metric.metadata ?? {},
-    };
-    memoryStore.systemMetrics.set(newMetric.id, newMetric);
+    try {
+      const newMetric = {
+        ...metric,
+        metadata: metric.metadata ?? {},
+      };
+      await db.insert(systemMetrics).values(newMetric);
+    } catch (error) {
+      console.error('[Storage] Error creating system metric:', error);
+      throw error;
+    }
   }
 
   async getRecentActivities(limit = 20): Promise<Activity[]> {
-    return Array.from(memoryStore.activities.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, limit);
+    try {
+      const result = await db.select().from(activities)
+        .orderBy(desc(activities.createdAt))
+        .limit(limit);
+      return result;
+    } catch (error) {
+      console.error('[Storage] Error fetching recent activities:', error);
+      return [];
+    }
   }
 
   async createActivity(activity: InsertActivity): Promise<void> {
-    const newActivity: Activity = {
-      id: `activity-${Date.now()}`,
-      ...activity,
-      createdAt: new Date(),
-      description: activity.description ?? null,
-      metadata: activity.metadata ?? {},
-      userId: activity.userId ?? null,
-      agentId: activity.agentId ?? null,
-    };
-    memoryStore.activities.set(newActivity.id, newActivity);
+    try {
+      const newActivity = {
+        id: `activity-${Date.now()}`,
+        ...activity,
+        createdAt: new Date(),
+        description: activity.description ?? null,
+        metadata: activity.metadata ?? {},
+        userId: activity.userId ?? null,
+        agentId: activity.agentId ?? null,
+      };
+      await db.insert(activities).values(newActivity);
+    } catch (error) {
+      console.error('[Storage] Error creating activity:', error);
+      throw error;
+    }
   }
 }
 
-export const storage = new MemoryStorage();
+export const storage = new PostgreSQLStorage();

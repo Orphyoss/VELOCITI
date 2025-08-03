@@ -123,7 +123,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize WebSocket service
   const wsService = new WebSocketService(httpServer);
   
-  // Initialize agents
+  // Initialize database and agents
+  const { DatabaseInitializer } = await import('./services/dbInitializer');
+  await DatabaseInitializer.initializeDatabase();
   await agentService.initializeAgents();
 
   // Initialize metrics monitoring
