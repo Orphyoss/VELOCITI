@@ -910,15 +910,17 @@ AND route_id = ANY($1);`}
           </div>
         </div>
         
-        {/* Agent Selection - Prominent Position */}
-        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+        {/* Agent Selection - Enhanced Prominent Position */}
+        <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-950 dark:via-indigo-950 dark:to-blue-950 border-2 border-blue-300 dark:border-blue-700 shadow-lg">
           <CardContent className="pt-6">
-            <div className="flex items-center space-x-4">
-              <Label htmlFor="agent-select" className="text-lg font-semibold text-blue-900 dark:text-blue-100">
-                Select Agent:
-              </Label>
-              <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
-                <SelectTrigger className="w-[320px] h-12 text-lg border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800" id="agent-select">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Label htmlFor="agent-select" className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
+                  <Zap className="h-6 w-6 mr-2 text-blue-600" />
+                  Select Action Agent:
+                </Label>
+                <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
+                  <SelectTrigger className="w-[400px] h-14 text-lg border-3 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
                   <SelectValue placeholder="Choose an Action Agent">
                     {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
                       <div className="flex items-center space-x-2">
@@ -929,20 +931,27 @@ AND route_id = ANY($1);`}
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="w-[320px]">
+                <SelectContent className="w-[400px]">
                   {Object.values(actionAgentDefinitions).map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id} className="text-base py-3">
-                      <div className="flex items-center space-x-2">
-                        <Brain className="h-4 w-4 text-blue-600" />
-                        <span>{agent.name}</span>
+                    <SelectItem key={agent.id} value={agent.id} className="text-base py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center space-x-3">
+                          <Brain className="h-5 w-5 text-blue-600" />
+                          <div>
+                            <div className="font-medium">{agent.name}</div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">{agent.description.substring(0, 60)}...</div>
+                          </div>
+                        </div>
+                        <StatusBadge status={agent.status} />
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              </div>
               {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-blue-700 dark:text-blue-300">Status:</span>
+                <div className="text-right">
+                  <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">Current Status</div>
                   <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
                 </div>
               )}
