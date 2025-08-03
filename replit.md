@@ -7,6 +7,10 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- Action Agents dropdown interface implemented with prominent blue card section for better visibility (2025-08-03)
+- Fixed "Run Now" button text visibility with proper blue background and white text contrast (2025-08-03)
+- Resolved Active Alerts discrepancy by updating dashboard summary API to fetch 50 alerts instead of 10 (2025-08-03)
+- Enhanced loading spinner visibility across entire application with proper contrast colors (2025-08-03)
 - Action Agents moved above AI Strategic Analysis in sidebar navigation (2025-08-03)
 - Strategic Analysis renamed to "AI Strategic Analysis" for clarity (2025-08-03)
 - Action Agents fully integrated into Admin section as default first tab (2025-08-03)
