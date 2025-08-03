@@ -33,8 +33,14 @@ export default function Sidebar() {
       path: '/workbench'
     },
     {
+      id: 'action-agents',
+      label: 'Action Agents',
+      icon: Zap,
+      path: '/action-agents'
+    },
+    {
       id: 'strategic',
-      label: 'Strategic Analysis',
+      label: 'AI Strategic Analysis',
       icon: Brain,
       path: '/strategic'
     },
@@ -49,12 +55,6 @@ export default function Sidebar() {
       label: 'AI Agents',
       icon: Users,
       path: '/agents'
-    },
-    {
-      id: 'action-agents',
-      label: 'Action Agents',
-      icon: Zap,
-      path: '/action-agents'
     },
 
     {
