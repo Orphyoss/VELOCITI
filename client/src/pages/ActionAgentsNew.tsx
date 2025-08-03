@@ -732,6 +732,7 @@ export default function ActionAgentsNew() {
                 <Button
                   onClick={runAgent}
                   disabled={isRunning}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
                 >
                   {isRunning ? (
                     <>
