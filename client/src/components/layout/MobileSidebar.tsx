@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, X, Target, Zap, Sunrise } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AgentStatus from '../agents/AgentStatus';
 
@@ -19,6 +19,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'Dashboard',
       icon: ChartLine,
       path: '/'
+    },
+    {
+      id: 'briefing',
+      label: 'Morning Briefing',
+      icon: Sunrise,
+      path: '/briefing'
     },
     {
       id: 'telos',
@@ -49,6 +55,12 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'AI Agents',
       icon: Users,
       path: '/agents'
+    },
+    {
+      id: 'action-agents',
+      label: 'Action Agents',
+      icon: Zap,
+      path: '/action-agents'
     },
     {
       id: 'admin',
