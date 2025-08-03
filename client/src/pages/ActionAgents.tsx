@@ -19,7 +19,10 @@ import {
   DollarSign,
   Activity,
   Brain,
-  Radar
+  Radar,
+  Filter,
+  Search,
+  ArrowUpDown
 } from 'lucide-react';
 
 interface Agent {
@@ -57,6 +60,9 @@ export default function ActionAgents() {
   const [selectedAgent, setSelectedAgent] = useState<string>('performance');
   const [isRunning, setIsRunning] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<string>('created');
 
   useEffect(() => {
     setCurrentModule('action-agents');
@@ -233,6 +239,40 @@ export default function ActionAgents() {
     }).format(amount);
   };
 
+  // Filter and sort alerts for the selected agent
+  const getFilteredAndSortedAlerts = () => {
+    let filteredAlerts = alerts.filter(alert => alert.agentName.toLowerCase().includes(selectedAgent));
+    
+    // Apply priority filter
+    if (priorityFilter !== 'all') {
+      filteredAlerts = filteredAlerts.filter(alert => alert.priority.toLowerCase() === priorityFilter);
+    }
+    
+    // Apply search filter
+    if (searchQuery) {
+      filteredAlerts = filteredAlerts.filter(alert => 
+        alert.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        alert.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    
+    // Sort alerts
+    return filteredAlerts.sort((a, b) => {
+      switch (sortBy) {
+        case 'priority':
+          const priorityOrder = { 'CRITICAL': 4, 'HIGH': 3, 'MEDIUM': 2, 'LOW': 1 };
+          return (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - (priorityOrder[a.priority as keyof typeof priorityOrder] || 0);
+        case 'confidence':
+          return b.confidenceScore - a.confidenceScore;
+        case 'impact':
+          return b.revenueImpact - a.revenueImpact;
+        case 'created':
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
+  };
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -321,20 +361,98 @@ export default function ActionAgents() {
           />
         )}
 
-        {/* Active Alerts for Selected Agent */}
+        {/* Alert Management Controls */}
         {selectedAgent && (
           <Card className="bg-dark-900 border-dark-800">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
-                <AlertTriangle className="w-5 h-5 text-aviation-500 mr-2" />
-                Active Intelligence Alerts
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+                  <AlertTriangle className="w-5 h-5 text-aviation-500 mr-2" />
+                  Alert Management ({getFilteredAndSortedAlerts().length} alerts)
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="text-aviation-400 border-aviation-500/30">
+                    {agents.find(a => a.id === selectedAgent)?.name}
+                  </Badge>
+                </div>
+              </div>
+              
+              {/* Filters and Controls */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="search" className="text-sm text-dark-300 flex items-center">
+                    <Search className="h-4 w-4 mr-1" />
+                    Search Alerts
+                  </Label>
+                  <Input
+                    id="search"
+                    type="text"
+                    placeholder="Search by title or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="bg-dark-800 border-dark-600 text-dark-50 placeholder-dark-400"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="priority-filter" className="text-sm text-dark-300 flex items-center">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Priority
+                  </Label>
+                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50" id="priority-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="sort-by" className="text-sm text-dark-300 flex items-center">
+                    <ArrowUpDown className="h-4 w-4 mr-1" />
+                    Sort By
+                  </Label>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50" id="sort-by">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="created">Most Recent</SelectItem>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="confidence">Confidence</SelectItem>
+                      <SelectItem value="impact">Revenue Impact</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label className="text-sm text-dark-300">Quick Actions</Label>
+                  <div className="flex space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setPriorityFilter('all');
+                        setSearchQuery('');
+                        setSortBy('created');
+                      }}
+                      className="bg-dark-800 border-dark-600 hover:bg-dark-700 text-dark-300"
+                    >
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {alerts
-                  .filter(alert => alert.agentName.toLowerCase().includes(selectedAgent))
-                  .map((alert) => (
+                {getFilteredAndSortedAlerts().map((alert) => (
                   <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
@@ -407,9 +525,18 @@ export default function ActionAgents() {
                     </div>
                   </div>
                 ))}
-                {alerts.filter(alert => alert.agentName.toLowerCase().includes(selectedAgent)).length === 0 && (
+                {getFilteredAndSortedAlerts().length === 0 && !loading && (
                   <div className="text-center py-8 text-dark-400">
-                    {loading ? 'Loading alerts...' : 'No active alerts for this agent'}
+                    {searchQuery || priorityFilter !== 'all' 
+                      ? 'No alerts match the current filters' 
+                      : 'No active alerts for this agent'
+                    }
+                  </div>
+                )}
+                {loading && (
+                  <div className="text-center py-8 text-dark-400">
+                    <div className="animate-spin h-6 w-6 border-2 border-aviation-500 border-t-transparent rounded-full mx-auto mb-2"></div>
+                    Loading alerts...
                   </div>
                 )}
               </div>
