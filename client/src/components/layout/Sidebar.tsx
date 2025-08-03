@@ -91,7 +91,7 @@ export default function Sidebar() {
           return (
             <Link key={item.id} href={item.path}>
               <div 
-                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-base font-medium cursor-pointer`}
+                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer`}
                 onClick={() => setCurrentModule(item.id as any)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
@@ -113,7 +113,7 @@ export default function Sidebar() {
             return (
               <Link key={item.id} href={item.path}>
                 <div 
-                  className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-base font-medium cursor-pointer ml-2`}
+                  className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer ml-2`}
                   onClick={() => setCurrentModule(item.id as any)}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
