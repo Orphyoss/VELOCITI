@@ -17,7 +17,7 @@ import NotFound from "@/pages/not-found";
 
 function TestComponent() {
   return (
-    <div className="min-h-screen bg-red-500 text white p-8">
+    <div className="min-h-screen bg-red-500 text-white p-8">
       <h1 className="text-4xl font-bold text-white">Test Component Loading</h1>
       <p className="text-white mt-4">If you see this, React is working!</p>
     </div>
