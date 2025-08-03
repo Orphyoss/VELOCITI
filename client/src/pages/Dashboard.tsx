@@ -3,11 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
-import MorningBriefing from '@/components/dashboard/MorningBriefing';
+
 import MetricsOverview from '@/components/dashboard/MetricsOverview';
 
 import NetworkOverview from '@/components/dashboard/NetworkOverview';
-import RecentActivity from '@/components/dashboard/RecentActivity';
+import TodaysPriorities from '@/components/dashboard/TodaysPriorities';
 
 export default function Dashboard() {
   const { setDashboardSummary, setCurrentModule } = useVelocitiStore();
@@ -31,19 +31,14 @@ export default function Dashboard() {
   return (
     <AppShell>
       <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-        {/* Morning Briefing */}
-        <MorningBriefing />
-        
         {/* Key Metrics */}
         <MetricsOverview />
-        
-
         
         {/* Network Performance - Full width horizontal */}
         <NetworkOverview />
         
-        {/* Recent Activity - Below network performance */}
-        <RecentActivity />
+        {/* Today's Priorities - Critical alerts only */}
+        <TodaysPriorities />
       </div>
     </AppShell>
   );
