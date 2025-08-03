@@ -54,50 +54,111 @@ export default function ActionAgents() {
   const { setCurrentModule } = useVelocitiStore();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [selectedAgent, setSelectedAgent] = useState<string>('surge-detector');
+  const [selectedAgent, setSelectedAgent] = useState<string>('performance');
   const [isRunning, setIsRunning] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setCurrentModule('action-agents');
     initializeAgents();
-    generateMockAlerts();
+    loadRealAlerts();
   }, [setCurrentModule]);
+
+  const loadRealAlerts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/alerts');
+      const realAlerts = await response.json();
+      
+      // Transform database alerts to match our interface
+      const transformedAlerts: Alert[] = realAlerts.map((alert: any) => ({
+        id: alert.id,
+        agentName: getAgentDisplayName(alert.agent_id),
+        priority: alert.priority as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
+        title: alert.title,
+        description: alert.description,
+        recommendation: alert.recommendation || 'No specific recommendation provided.',
+        confidenceScore: alert.confidence_score,
+        revenueImpact: alert.revenue_impact || 0,
+        timeToAct: getTimeToAct(alert.priority),
+        affectedRoutes: alert.affected_routes || [],
+        createdAt: formatTimeAgo(alert.created_at),
+        expiresAt: alert.expires_at ? formatTimeAgo(alert.expires_at) : undefined
+      }));
+      
+      setAlerts(transformedAlerts);
+    } catch (error) {
+      console.error('Failed to load alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getAgentDisplayName = (agentId: string): string => {
+    const agentMapping: Record<string, string> = {
+      'network': 'Network Agent',
+      'performance': 'Performance Agent', 
+      'competitive': 'Competitive Agent'
+    };
+    return agentMapping[agentId] || agentId;
+  };
+
+  const getTimeToAct = (priority: string): string => {
+    switch (priority) {
+      case 'CRITICAL': return 'IMMEDIATE (within 4 hours)';
+      case 'HIGH': return 'TODAY';
+      case 'MEDIUM': return 'THIS WEEK';
+      case 'LOW': return 'THIS MONTH';
+      default: return 'WHEN CONVENIENT';
+    }
+  };
+
+  const formatTimeAgo = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  };
 
   const initializeAgents = () => {
     const agentData: Agent[] = [
       {
-        id: 'surge-detector',
-        name: 'Surge Event Detector',
-        description: 'Monitors external events and correlates with historical demand patterns to predict revenue opportunities before competitors notice.',
-        status: 'ACTIVE',
-        icon: Radar,
-        lastRun: '12 minutes ago',
-        nextRun: 'In 18 minutes',
-        alertsGenerated: 23,
-        avgConfidence: 0.87,
-        revenueImpact: 2450000
-      },
-      {
-        id: 'booking-curve',
-        name: 'Advance Booking Curve Alert',
-        description: 'Predictive booking pace intelligence that detects anomalies in advance booking patterns and recommends dynamic pricing adjustments.',
+        id: 'performance',
+        name: 'Performance Agent',
+        description: 'Monitors route performance metrics and identifies optimization opportunities for network efficiency and revenue enhancement.',
         status: 'ACTIVE',
         icon: TrendingUp,
         lastRun: '8 minutes ago',
         nextRun: 'In 22 minutes',
-        alertsGenerated: 41,
+        alertsGenerated: 38,
         avgConfidence: 0.92,
         revenueImpact: 1890000
       },
       {
-        id: 'elasticity-detector',
-        name: 'Elasticity Change Alert',
-        description: 'Detects fundamental demand shift patterns and price elasticity changes to optimize revenue management strategies.',
+        id: 'competitive',
+        name: 'Competitive Agent',
+        description: 'Analyzes competitor pricing strategies and market positioning to identify competitive opportunities and threats.',
+        status: 'ACTIVE',
+        icon: Radar,
+        lastRun: '12 minutes ago',
+        nextRun: 'In 18 minutes',
+        alertsGenerated: 37,
+        avgConfidence: 0.87,
+        revenueImpact: 2450000
+      },
+      {
+        id: 'network',
+        name: 'Network Agent',
+        description: 'Evaluates network capacity, route profitability, and identifies expansion or optimization opportunities across the route network.',
         status: 'PROCESSING',
         icon: Brain,
         lastRun: '2 minutes ago',
         nextRun: 'In 28 minutes',
-        alertsGenerated: 17,
+        alertsGenerated: 32,
         avgConfidence: 0.84,
         revenueImpact: 1340000
       }
@@ -105,51 +166,7 @@ export default function ActionAgents() {
     setAgents(agentData);
   };
 
-  const generateMockAlerts = () => {
-    const mockAlerts: Alert[] = [
-      {
-        id: 'alert-surge-001',
-        agentName: 'Surge Event Detector',
-        priority: 'CRITICAL',
-        title: 'Champions League Final Announced - Madrid Route Surge Expected',
-        description: 'UEFA just announced Champions League Final 2025 at Santiago Bernabéu. Historical data shows 35% demand increase for similar events.',
-        recommendation: 'Increase MAD route prices by 18% immediately. Set up hourly booking pace alerts. Expected 72-hour booking surge window.',
-        confidenceScore: 0.94,
-        revenueImpact: 287000,
-        timeToAct: 'IMMEDIATE (within 4 hours)',
-        affectedRoutes: ['LGW-MAD', 'LTN-MAD', 'STN-MAD'],
-        createdAt: '2 hours ago',
-        expiresAt: '22 hours from now'
-      },
-      {
-        id: 'alert-booking-002',
-        agentName: 'Advance Booking Curve Alert',
-        priority: 'HIGH',
-        title: 'BCN Route Booking Pace 40% Above Forecast',
-        description: 'Barcelona routes showing unprecedented advance booking acceleration. Current pace suggests capacity constraints by week 8.',
-        recommendation: 'Implement progressive pricing strategy. Increase prices 12% for departures in next 6 weeks. Consider capacity reallocation.',
-        confidenceScore: 0.89,
-        revenueImpact: 156000,
-        timeToAct: 'TODAY',
-        affectedRoutes: ['LGW-BCN', 'LTN-BCN'],
-        createdAt: '45 minutes ago'
-      },
-      {
-        id: 'alert-elasticity-003',
-        agentName: 'Elasticity Change Alert',
-        priority: 'HIGH',
-        title: 'AMS Route Elasticity Shift Detected',
-        description: 'Price elasticity for Amsterdam routes has decreased by 23% over past 14 days. Market appears less price-sensitive.',
-        recommendation: 'Test aggressive pricing strategy. Implement 15% price increase and monitor conversion rates closely.',
-        confidenceScore: 0.86,
-        revenueImpact: 198000,
-        timeToAct: 'THIS WEEK',
-        affectedRoutes: ['LGW-AMS', 'STN-AMS'],
-        createdAt: '1 hour ago'
-      }
-    ];
-    setAlerts(mockAlerts);
-  };
+
 
   const toggleAgent = async (agentId: string) => {
     setIsRunning(prev => ({ ...prev, [agentId]: true }));
@@ -316,11 +333,7 @@ export default function ActionAgents() {
             <CardContent>
               <div className="space-y-4">
                 {alerts
-                  .filter(alert => {
-                    const agentName = agents.find(a => a.id === selectedAgent)?.name.toLowerCase() || '';
-                    return alert.agentName.toLowerCase().includes(agentName) || 
-                           alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '));
-                  })
+                  .filter(alert => alert.agentName.toLowerCase().includes(selectedAgent))
                   .map((alert) => (
                   <div key={alert.id} className="border border-dark-800 rounded-lg p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -394,13 +407,9 @@ export default function ActionAgents() {
                     </div>
                   </div>
                 ))}
-                {alerts.filter(alert => {
-                  const agentName = agents.find(a => a.id === selectedAgent)?.name.toLowerCase() || '';
-                  return alert.agentName.toLowerCase().includes(agentName) || 
-                         alert.agentName.toLowerCase().includes(selectedAgent.replace('-', ' '));
-                }).length === 0 && (
+                {alerts.filter(alert => alert.agentName.toLowerCase().includes(selectedAgent)).length === 0 && (
                   <div className="text-center py-8 text-dark-400">
-                    No active alerts for this agent
+                    {loading ? 'Loading alerts...' : 'No active alerts for this agent'}
                   </div>
                 )}
               </div>
