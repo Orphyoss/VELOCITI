@@ -57,7 +57,66 @@
   --alert-low: hsl(142, 76%, 36%);
 }
 
-/* Clean up - removed temporary styling */
+/* Mobile optimizations */
+@layer utilities {
+  /* Touch-friendly interactions */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improved scrolling on mobile */
+  .mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .mobile-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Better text rendering on mobile */
+  @media screen and (max-width: 768px) {
+    body {
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Optimize for mobile performance */
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Better spacing for mobile */
+    .mobile-padding {
+      padding: 0.75rem;
+    }
+    
+    .mobile-margin {
+      margin: 0.5rem;
+    }
+  }
+  
+  /* Responsive text sizes */
+  .text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+  
+  .text-responsive-lg {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+  }
+}
+
+/* Custom mobile-first utilities */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
 .dark {
   --background: hsl(222, 84%, 4.9%);

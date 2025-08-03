@@ -30,14 +30,14 @@ export default function MetricsOverview() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6 lg:mb-8">
         {[...Array(8)].map((_, i) => (
           <Card key={i} className="bg-dark-900 border-dark-800">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="animate-pulse space-y-2 sm:space-y-4">
-                <div className="h-3 sm:h-4 bg-dark-800 rounded w-1/2"></div>
-                <div className="h-6 sm:h-8 bg-dark-800 rounded w-3/4"></div>
-                <div className="h-3 sm:h-4 bg-dark-800 rounded w-1/3"></div>
+            <CardContent className="p-2 sm:p-3 lg:p-4">
+              <div className="animate-pulse space-y-2">
+                <div className="h-3 bg-dark-800 rounded w-1/2"></div>
+                <div className="h-5 sm:h-6 bg-dark-800 rounded w-3/4"></div>
+                <div className="h-2 sm:h-3 bg-dark-800 rounded w-1/3"></div>
               </div>
             </CardContent>
           </Card>

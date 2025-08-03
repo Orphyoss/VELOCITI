@@ -100,8 +100,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               
               return (
                 <Link key={item.id} href={item.path}>
-                  <a
-                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  <div
+                    className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                       isActive
                         ? 'bg-aviation-600/20 text-aviation-400 border-l-2 border-aviation-500'
                         : 'text-dark-300 hover:text-white hover:bg-dark-800'
@@ -113,7 +113,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
-                  </a>
+                  </div>
                 </Link>
               );
             })}

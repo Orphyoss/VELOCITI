@@ -30,14 +30,12 @@ export default function Dashboard() {
 
   return (
     <AppShell>
-      <div className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <div className="space-y-3 sm:space-y-6 lg:space-y-8">
         {/* Morning Briefing */}
         <MorningBriefing />
         
         {/* Key Metrics */}
         <MetricsOverview />
-        
-
         
         {/* Network Performance - Full width horizontal */}
         <NetworkOverview />
