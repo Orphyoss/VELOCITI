@@ -7,7 +7,7 @@ export default function Sidebar() {
   const [location] = useLocation();
   const { currentModule, setCurrentModule } = useVelocitiStore();
 
-  const navigationItems = [
+  const mainNavigationItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
@@ -55,8 +55,10 @@ export default function Sidebar() {
       label: 'AI Agents',
       icon: Users,
       path: '/agents'
-    },
+    }
+  ];
 
+  const adminNavigationItems = [
     {
       id: 'admin',
       label: 'Admin',
@@ -80,16 +82,16 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
+      {/* Main Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navigationItems.map((item) => {
+        {mainNavigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = location === item.path;
           
           return (
             <Link key={item.id} href={item.path}>
               <div 
-                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-sm font-medium cursor-pointer`}
+                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-base font-medium cursor-pointer`}
                 onClick={() => setCurrentModule(item.id as any)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
@@ -98,6 +100,29 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        
+        {/* Admin Section - Separated */}
+        <div className="pt-6 mt-6 border-t border-gray-600 dark:border-gray-700">
+          <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 px-2">
+            System
+          </div>
+          {adminNavigationItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = location === item.path;
+            
+            return (
+              <Link key={item.id} href={item.path}>
+                <div 
+                  className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-base font-medium cursor-pointer ml-2`}
+                  onClick={() => setCurrentModule(item.id as any)}
+                  >
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
 
       {/* Agent Status */}

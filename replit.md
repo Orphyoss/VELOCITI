@@ -11,6 +11,7 @@ Preferred communication style: Simple, everyday language.
 - Strategic Analysis renamed to "AI Strategic Analysis" for clarity (2025-08-03)
 - Action Agents fully integrated into Admin section as default first tab (2025-08-03)
 - Dashboard landing page: changed Morning Briefing to "Today's Priorities", limited to critical alerts only, repositioned after Network Performance, and removed Recent Activity section (2025-08-03)
+- Sidebar Admin section separated with visual divider and "System" label, increased font size for all navigation items from text-sm to text-base (2025-08-03)
 
 ## System Architecture
 
