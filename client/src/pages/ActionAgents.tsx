@@ -295,7 +295,7 @@ export default function ActionAgents() {
                     >
                       {isRunning[agent.id] || agent.status === 'PROCESSING' ? (
                         <>
-                          <Activity className="w-4 h-4 mr-2 animate-spin" />
+                          <Activity className="w-4 h-4 mr-2 animate-spin text-blue-500" />
                           Running...
                         </>
                       ) : (

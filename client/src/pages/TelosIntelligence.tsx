@@ -304,7 +304,7 @@ export default function TelosIntelligence() {
           size="sm"
         >
           {runAnalysisMutation.isPending ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            <RefreshCw className="h-4 w-4 mr-2 animate-spin text-white" />
           ) : (
             <Activity className="h-4 w-4 mr-2" />
           )}
@@ -1009,7 +1009,10 @@ export default function TelosIntelligence() {
             <CardContent>
               {competitiveLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading competitive data...</p>
+                  </div>
                 </div>
               ) : competitive && (competitive as any).length > 0 ? (
                 <div className="space-y-4">
@@ -1060,7 +1063,10 @@ export default function TelosIntelligence() {
             <CardContent>
               {performanceLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading performance data...</p>
+                  </div>
                 </div>
               ) : performance && (performance as any).length > 0 ? (
                 <div className="space-y-4">
@@ -1111,7 +1117,10 @@ export default function TelosIntelligence() {
             <CardContent>
               {summaryLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading insights...</p>
+                  </div>
                 </div>
               ) : (summary as any)?.insights && (summary as any).insights.length > 0 ? (
                 <div className="space-y-6">

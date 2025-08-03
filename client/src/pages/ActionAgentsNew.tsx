@@ -284,8 +284,11 @@ export default function ActionAgentsNew() {
 
     if (loadingMetrics) {
       return (
-        <div className="flex justify-center items-center h-64">
-          <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        <div className="flex justify-center items-center h-64 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <div className="text-center">
+            <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
+            <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading metrics...</p>
+          </div>
         </div>
       );
     }
@@ -859,8 +862,13 @@ AND route_id = ANY($1);`}
   if (loading) {
     console.log('[ActionAgents] Rendering loading state...');
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="flex justify-center items-center h-64 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-12 h-12 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
+          </div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Loading Action Agents...</p>
+        </div>
       </div>
     );
   }
