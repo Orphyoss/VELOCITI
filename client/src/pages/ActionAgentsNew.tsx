@@ -171,35 +171,41 @@ export default function ActionAgentsNew({ selectedAgentId }: ActionAgentsNewProp
   };
 
   useEffect(() => {
-    console.log('[ActionAgents] Component mounted, setting current module...');
+    console.log('[ActionAgentsNew] Component mounted, setting current module...');
     setCurrentModule('action-agents');
-    loadAgentData();
+    
+    try {
+      loadAgentData();
+    } catch (error) {
+      console.error('[ActionAgentsNew] Error during initialization:', error);
+      setError('Failed to initialize Action Agents. Please refresh the page.');
+    }
   }, [setCurrentModule]);
 
   const loadAgentData = async () => {
-    console.log('[ActionAgents] Starting loadAgentData...');
+    console.log('[ActionAgentsNew] Starting loadAgentData...');
     setLoading(true);
     try {
-      console.log('[ActionAgents] Fetching /api/telos/agents/status...');
+      console.log('[ActionAgentsNew] Fetching /api/telos/agents/status...');
       const response = await fetch('/api/telos/agents/status');
-      console.log('[ActionAgents] Response status:', response.status, response.statusText);
+      console.log('[ActionAgentsNew] Response status:', response.status, response.statusText);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('[ActionAgents] API Error:', response.status, errorText);
+        console.error('[ActionAgentsNew] API Error:', response.status, errorText);
         throw new Error(`Failed to load agent data: ${response.status} ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('[ActionAgents] Agent data loaded successfully:', data);
+      console.log('[ActionAgentsNew] Agent data loaded successfully:', data);
       setAgentData(data);
       setError(null);
     } catch (err: any) {
-      console.error('[ActionAgents] Error loading agent data:', err);
-      setError(err.message);
+      console.error('[ActionAgentsNew] Error loading agent data:', err);
+      setError(err.message || 'Unknown error occurred');
     } finally {
       setLoading(false);
-      console.log('[ActionAgents] loadAgentData completed');
+      console.log('[ActionAgentsNew] loadAgentData completed');
     }
   };
 
@@ -925,36 +931,36 @@ AND route_id = ANY($1);`}
           </div>
         </div>
         
-        {/* Agent Selection - Enhanced Prominent Position */}
+        {/* Agent Selection - Mobile Responsive */}
         <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-950 dark:via-indigo-950 dark:to-blue-950 border-2 border-blue-300 dark:border-blue-700 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Label htmlFor="agent-select" className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
-                  <Zap className="h-6 w-6 mr-2 text-blue-600" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <Label htmlFor="agent-select" className="text-lg sm:text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-blue-600" />
                   Select Action Agent:
                 </Label>
                 <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
-                  <SelectTrigger className="w-[400px] h-14 text-lg border-3 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
+                  <SelectTrigger className="w-full sm:w-[350px] lg:w-[400px] h-12 sm:h-14 text-base sm:text-lg border-3 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
                   <SelectValue placeholder="Choose an Action Agent">
                     {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
                       <div className="flex items-center space-x-2">
-                        <Brain className="h-5 w-5 text-blue-600" />
-                        <span className="font-medium">{actionAgentDefinitions[activeAgentTab].name}</span>
+                        <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                        <span className="font-medium text-sm sm:text-base">{actionAgentDefinitions[activeAgentTab].name}</span>
                         <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
                       </div>
                     )}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent className="w-[400px]">
+                <SelectContent className="w-full sm:w-[350px] lg:w-[400px]">
                   {Object.values(actionAgentDefinitions).map((agent) => (
-                    <SelectItem key={agent.id} value={agent.id} className="text-base py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
+                    <SelectItem key={agent.id} value={agent.id} className="text-sm sm:text-base py-3 sm:py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center space-x-3">
-                          <Brain className="h-5 w-5 text-blue-600" />
+                          <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                           <div>
-                            <div className="font-medium">{agent.name}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{agent.description.substring(0, 60)}...</div>
+                            <div className="font-medium text-sm sm:text-base">{agent.name}</div>
+                            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">{agent.description.substring(0, 60)}...</div>
                           </div>
                         </div>
                         <StatusBadge status={agent.status} />
@@ -965,7 +971,7 @@ AND route_id = ANY($1);`}
               </Select>
               </div>
               {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
-                <div className="text-right">
+                <div className="text-left lg:text-right">
                   <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">Current Status</div>
                   <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
                 </div>

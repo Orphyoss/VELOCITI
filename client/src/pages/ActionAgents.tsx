@@ -67,16 +67,31 @@ export default function ActionAgents() {
   const [sortBy, setSortBy] = useState<string>('created');
 
   useEffect(() => {
+    console.log('[ActionAgents] Component mounted');
     setCurrentModule('action-agents');
-    initializeAgents();
-    loadRealAlerts();
+    
+    try {
+      initializeAgents();
+      loadRealAlerts();
+    } catch (error) {
+      console.error('[ActionAgents] Error during initialization:', error);
+    }
   }, [setCurrentModule]);
 
   const loadRealAlerts = async () => {
+    console.log('[ActionAgents] Starting loadRealAlerts...');
     try {
       setLoading(true);
+      console.log('[ActionAgents] Fetching alerts from /api/alerts...');
       const response = await fetch('/api/alerts');
+      
+      if (!response.ok) {
+        console.error('[ActionAgents] Failed to fetch alerts:', response.status, response.statusText);
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const realAlerts = await response.json();
+      console.log('[ActionAgents] Received', realAlerts.length, 'alerts from database');
       
       // Transform database alerts to match our interface
       const transformedAlerts: Alert[] = realAlerts.map((alert: any) => ({
@@ -94,11 +109,15 @@ export default function ActionAgents() {
         expiresAt: alert.expires_at ? formatTimeAgo(alert.expires_at) : undefined
       }));
       
+      console.log('[ActionAgents] Successfully transformed', transformedAlerts.length, 'alerts');
       setAlerts(transformedAlerts);
     } catch (error) {
-      console.error('Failed to load alerts:', error);
+      console.error('[ActionAgents] Error in loadRealAlerts:', error);
+      // Show user-friendly error message
+      setAlerts([]);
     } finally {
       setLoading(false);
+      console.log('[ActionAgents] loadRealAlerts completed');
     }
   };
 
@@ -133,6 +152,7 @@ export default function ActionAgents() {
   };
 
   const initializeAgents = () => {
+    console.log('[ActionAgents] Initializing agents...');
     const agentData: Agent[] = [
       {
         id: 'performance',
@@ -192,6 +212,7 @@ export default function ActionAgents() {
   };
 
   const runAgent = async (agentId: string) => {
+    console.log('[ActionAgents] Running agent:', agentId);
     setIsRunning(prev => ({ ...prev, [agentId]: true }));
     
     // Simulate processing
@@ -201,15 +222,26 @@ export default function ActionAgents() {
         : agent
     ));
     
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setAgents(prev => prev.map(agent => 
-      agent.id === agentId 
-        ? { ...agent, status: 'ACTIVE', lastRun: 'Just now' }
-        : agent
-    ));
-    
-    setIsRunning(prev => ({ ...prev, [agentId]: false }));
+    try {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      setAgents(prev => prev.map(agent => 
+        agent.id === agentId 
+          ? { ...agent, status: 'ACTIVE', lastRun: 'Just now' }
+          : agent
+      ));
+      
+      console.log('[ActionAgents] Agent execution completed successfully:', agentId);
+    } catch (error) {
+      console.error('[ActionAgents] Agent execution failed:', agentId, error);
+      setAgents(prev => prev.map(agent => 
+        agent.id === agentId 
+          ? { ...agent, status: 'ERROR', lastRun: 'Failed' }
+          : agent
+      ));
+    } finally {
+      setIsRunning(prev => ({ ...prev, [agentId]: false }));
+    }
   };
 
   const handleOpenSettings = (agentId: string) => {
@@ -284,11 +316,11 @@ export default function ActionAgents() {
   return (
     <AppShell>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
+        {/* Header - Mobile Responsive */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div>
-            <h1 className="text-2xl font-bold text-dark-50">Action Agents</h1>
-            <p className="text-dark-400 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-dark-50">Action Agents</h1>
+            <p className="text-dark-400 mt-1 text-sm sm:text-base">
               Advanced Predictive Analytics Suite - Mission Control for Revenue Intelligence
             </p>
           </div>
@@ -300,42 +332,42 @@ export default function ActionAgents() {
           </div>
         </div>
 
-        {/* Agent Selection - Prominent Position */}
+        {/* Agent Selection - Mobile Responsive */}
         <Card className="bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 dark:from-blue-950 dark:via-indigo-950 dark:to-blue-950 border-2 border-blue-300 dark:border-blue-700 shadow-lg">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Label htmlFor="agent-select" className="text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
-                  <Zap className="h-6 w-6 mr-2 text-blue-600" />
+          <CardContent className="pt-4 sm:pt-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <Label htmlFor="agent-select" className="text-lg sm:text-xl font-bold text-blue-900 dark:text-blue-100 flex items-center">
+                  <Zap className="h-5 w-5 sm:h-6 sm:w-6 mr-2 text-blue-600" />
                   Select Action Agent:
                 </Label>
                 <Select value={selectedAgent} onValueChange={setSelectedAgent}>
-                  <SelectTrigger className="w-[400px] h-14 text-lg border-4 border-white dark:border-white bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
+                  <SelectTrigger className="w-full sm:w-[350px] lg:w-[400px] h-12 sm:h-14 text-base sm:text-lg border-4 border-white dark:border-white bg-white dark:bg-gray-800 shadow-md hover:shadow-lg transition-shadow" id="agent-select">
                     <SelectValue placeholder="Choose an Action Agent">
                       {selectedAgent && agents.find(a => a.id === selectedAgent) && (() => {
                         const agent = agents.find(a => a.id === selectedAgent)!;
                         const IconComponent = agent.icon;
                         return (
                           <div className="flex items-center space-x-2">
-                            <IconComponent className="h-5 w-5 text-blue-600" />
-                            <span className="font-medium">{agent.name}</span>
+                            <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                            <span className="font-medium text-sm sm:text-base">{agent.name}</span>
                             <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
                           </div>
                         );
                       })()}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent className="w-[400px]">
+                  <SelectContent className="w-full sm:w-[350px] lg:w-[400px]">
                     {agents.map((agent) => {
                       const IconComponent = agent.icon;
                       return (
-                        <SelectItem key={agent.id} value={agent.id} className="text-base py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
+                        <SelectItem key={agent.id} value={agent.id} className="text-sm sm:text-base py-3 sm:py-4 hover:bg-blue-50 dark:hover:bg-blue-900">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center space-x-3">
-                              <IconComponent className="h-5 w-5 text-blue-600" />
+                              <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                               <div>
-                                <div className="font-medium">{agent.name}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">{agent.description.substring(0, 60)}...</div>
+                                <div className="font-medium text-sm sm:text-base">{agent.name}</div>
+                                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">{agent.description.substring(0, 60)}...</div>
                               </div>
                             </div>
                             <div className={`w-2 h-2 rounded-full ${getStatusColor(agent.status)}`}></div>
@@ -347,10 +379,12 @@ export default function ActionAgents() {
                 </Select>
               </div>
               {selectedAgent && agents.find(a => a.id === selectedAgent) && (
-                <div className="text-right">
+                <div className="text-left lg:text-right">
                   <div className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">Current Status</div>
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(agents.find(a => a.id === selectedAgent)!.status)} inline-block mr-2`}></div>
-                  <span className="text-sm font-medium">{agents.find(a => a.id === selectedAgent)!.status}</span>
+                  <div className="flex items-center lg:justify-end">
+                    <div className={`w-2 h-2 rounded-full ${getStatusColor(agents.find(a => a.id === selectedAgent)!.status)} mr-2`}></div>
+                    <span className="text-sm font-medium">{agents.find(a => a.id === selectedAgent)!.status}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -386,8 +420,8 @@ export default function ActionAgents() {
                 </div>
               </div>
               
-              {/* Filters and Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+              {/* Filters and Controls - Mobile Responsive */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
                 <div className="space-y-2">
                   <Label htmlFor="search" className="text-sm text-dark-300 flex items-center">
                     <Search className="h-4 w-4 mr-1" />
@@ -396,10 +430,10 @@ export default function ActionAgents() {
                   <Input
                     id="search"
                     type="text"
-                    placeholder="Search by title or description..."
+                    placeholder="Search alerts..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-dark-800 border-dark-600 text-dark-50 placeholder-dark-400"
+                    className="bg-dark-800 border-dark-600 text-dark-50 placeholder-dark-400 h-10 text-sm"
                   />
                 </div>
                 
@@ -409,7 +443,7 @@ export default function ActionAgents() {
                     Priority
                   </Label>
                   <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50" id="priority-filter">
+                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50 h-10 text-sm" id="priority-filter">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -428,11 +462,11 @@ export default function ActionAgents() {
                     Sort By
                   </Label>
                   <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50" id="sort-by">
+                    <SelectTrigger className="bg-dark-800 border-dark-600 text-dark-50 h-10 text-sm" id="sort-by">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="created">Most Recent</SelectItem>
+                      <SelectItem value="created">Recent</SelectItem>
                       <SelectItem value="priority">Priority</SelectItem>
                       <SelectItem value="confidence">Confidence</SelectItem>
                       <SelectItem value="impact">Revenue Impact</SelectItem>
@@ -447,11 +481,12 @@ export default function ActionAgents() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
+                        console.log('[ActionAgents] Clearing all filters');
                         setPriorityFilter('all');
                         setSearchQuery('');
                         setSortBy('created');
                       }}
-                      className="bg-dark-800 border-dark-600 hover:bg-dark-700 text-dark-300"
+                      className="bg-dark-800 border-dark-600 hover:bg-dark-700 text-dark-300 h-10 text-sm"
                     >
                       Clear Filters
                     </Button>
@@ -595,36 +630,41 @@ function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, format
           {agent.description}
         </p>
         
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        {/* Mobile Responsive Stats Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div>
             <div className="text-xs text-dark-500">Alerts Generated</div>
-            <div className="text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
+            <div className="text-base sm:text-lg font-semibold text-dark-50">{agent.alertsGenerated}</div>
           </div>
           <div>
             <div className="text-xs text-dark-500">Avg Confidence</div>
-            <div className="text-lg font-semibold text-green-400">
+            <div className="text-base sm:text-lg font-semibold text-green-400">
               {(agent.avgConfidence * 100).toFixed(0)}%
             </div>
           </div>
-          <div>
+          <div className="col-span-2 sm:col-span-1">
             <div className="text-xs text-dark-500">Revenue Impact</div>
             <div className="text-sm font-semibold text-aviation-400">
               {formatCurrency(agent.revenueImpact)}
             </div>
           </div>
-          <div>
+          <div className="hidden sm:block">
             <div className="text-xs text-dark-500">Next Run</div>
             <div className="text-sm text-dark-300">{agent.nextRun}</div>
           </div>
         </div>
 
-        <div className="flex space-x-2">
+        {/* Mobile Responsive Action Buttons */}
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onRunAgent(agent.id)}
+            onClick={() => {
+              console.log('[ActionAgents] User clicked Run Agent for:', agent.id);
+              onRunAgent(agent.id);
+            }}
             disabled={isRunning[agent.id] || agent.status === 'PROCESSING'}
-            className="flex-1 bg-dark-800 border-dark-600 hover:bg-dark-700"
+            className="flex-1 bg-dark-800 border-dark-600 hover:bg-dark-700 h-10 touch-manipulation"
           >
             {isRunning[agent.id] || agent.status === 'PROCESSING' ? (
               <>
@@ -641,24 +681,37 @@ function SelectedAgentCard({ agent, isRunning, onRunAgent, onToggleAgent, format
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onToggleAgent(agent.id)}
+            onClick={() => {
+              console.log('[ActionAgents] User clicked Toggle Agent for:', agent.id);
+              onToggleAgent(agent.id);
+            }}
             disabled={isRunning[agent.id]}
-            className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+            className="bg-dark-800 border-dark-600 hover:bg-dark-700 h-10 w-full sm:w-12 touch-manipulation"
           >
             {agent.status === 'ACTIVE' ? (
-              <Pause className="w-4 h-4" />
+              <>
+                <Pause className="w-4 h-4 sm:mr-0 mr-2" />
+                <span className="sm:hidden">Pause</span>
+              </>
             ) : (
-              <Play className="w-4 h-4" />
+              <>
+                <Play className="w-4 h-4 sm:mr-0 mr-2" />
+                <span className="sm:hidden">Start</span>
+              </>
             )}
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onOpenSettings(agent.id)}
-            className="bg-dark-800 border-dark-600 hover:bg-dark-700"
+            onClick={() => {
+              console.log('[ActionAgents] User clicked Settings for:', agent.id);
+              onOpenSettings(agent.id);
+            }}
+            className="bg-dark-800 border-dark-600 hover:bg-dark-700 h-10 w-full sm:w-12 touch-manipulation"
             title={`Configure ${agent.name} settings`}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className="w-4 h-4 sm:mr-0 mr-2" />
+            <span className="sm:hidden">Configure</span>
           </Button>
         </div>
       </CardContent>
