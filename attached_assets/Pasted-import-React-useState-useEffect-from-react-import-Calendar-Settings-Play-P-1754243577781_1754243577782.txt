@@ -1,0 +1,713 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Calendar, 
+  Settings, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Activity, 
+  AlertTriangle, 
+  CheckCircle, 
+  Clock, 
+  Target, 
+  Zap, 
+  TrendingUp,
+  Globe,
+  Brain,
+  Eye,
+  AlertCircle,
+  ChevronRight,
+  BarChart3,
+  Users,
+  Plane,
+  Database,
+  Server,
+  Code,
+  Loader
+} from 'lucide-react';
+
+const TelosActionAgentManager = () => {
+  const [activeAgentTab, setActiveAgentTab] = useState('surge-detector');
+  const [activeSubTab, setActiveSubTab] = useState('overview');
+  const [agentData, setAgentData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Your actual Action Agents from the real implementation
+  const actionAgentDefinitions = {
+    'surge-detector': {
+      id: 'surge-detector',
+      name: 'RealSurgeEventDetector',
+      className: 'RealSurgeEventDetector',
+      description: 'Detects viral demand surges, events, and unusual market patterns from real database data',
+      dbTables: ['market_events', 'web_search_data', 'competitive_pricing'],
+      configParams: [
+        { key: 'search_growth_threshold', type: 'float', default: 0.50, description: '50% search growth threshold' },
+        { key: 'booking_conversion_threshold', type: 'float', default: 0.15, description: '15% conversion rate spike' },
+        { key: 'confidence_threshold', type: 'float', default: 0.75, description: 'Minimum confidence threshold' }
+      ],
+      methods: [
+        'detect_surge_events(routes)',
+        '_detect_market_events(conn, routes)',
+        '_detect_viral_demand_surges(conn, routes)', 
+        '_detect_competitive_event_signals(conn, routes)'
+      ]
+    },
+    
+    'booking-curve': {
+      id: 'booking-curve',
+      name: 'RealAdvanceBookingCurveAlerting',
+      className: 'RealAdvanceBookingCurveAlerting',
+      description: 'Analyzes booking patterns vs historical curves using real flight performance data',
+      dbTables: ['flight_performance'],
+      configParams: [
+        { key: 'anomaly_threshold', type: 'float', default: 0.15, description: '15% deviation from expected' },
+        { key: 'sustained_anomaly_days', type: 'int', default: 3, description: '3+ days of deviation' },
+        { key: 'confidence_threshold', type: 'float', default: 0.75, description: 'Minimum confidence threshold' }
+      ],
+      methods: [
+        'analyze_booking_curves(routes)',
+        '_get_current_booking_performance(conn, route)',
+        '_get_historical_booking_curves(conn, route)',
+        '_detect_booking_anomalies(conn, route, current, historical)'
+      ]
+    },
+
+    'elasticity-monitor': {
+      id: 'elasticity-monitor', 
+      name: 'RealElasticityChangeAlert',
+      className: 'RealElasticityChangeAlert',
+      description: 'Monitors price elasticity changes from real pricing actions and booking responses',
+      dbTables: ['rm_pricing_actions', 'flight_performance'],
+      configParams: [
+        { key: 'elasticity_change_threshold', type: 'float', default: 0.20, description: '20% change in elasticity' },
+        { key: 'min_price_actions', type: 'int', default: 3, description: 'Need at least 3 pricing actions' },
+        { key: 'confidence_threshold', type: 'float', default: 0.70, description: 'Minimum confidence threshold' }
+      ],
+      methods: [
+        'detect_elasticity_changes(routes)',
+        '_get_recent_pricing_actions(conn, route)',
+        '_calculate_current_elasticity(conn, route, actions)',
+        '_get_historical_elasticity(conn, route)'
+      ]
+    }
+  };
+
+  // Load real data from your database
+  useEffect(() => {
+    loadAgentData();
+  }, []);
+
+  const loadAgentData = async () => {
+    setLoading(true);
+    try {
+      // Call your actual backend API
+      const response = await fetch('/api/telos/agents/status');
+      if (!response.ok) throw new Error('Failed to load agent data');
+      
+      const data = await response.json();
+      setAgentData(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      console.error('Error loading agent data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const StatusBadge = ({ status }) => {
+    const statusConfig = {
+      running: { bg: 'bg-green-100', text: 'text-green-800', dot: 'bg-green-400', label: 'Running' },
+      paused: { bg: 'bg-yellow-100', text: 'text-yellow-800', dot: 'bg-yellow-400', label: 'Paused' },
+      error: { bg: 'bg-red-100', text: 'text-red-800', dot: 'bg-red-400', label: 'Error' },
+      idle: { bg: 'bg-gray-100', text: 'text-gray-800', dot: 'bg-gray-400', label: 'Idle' }
+    };
+    
+    const config = statusConfig[status] || statusConfig.idle;
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+        <div className={`w-2 h-2 ${config.dot} rounded-full mr-1.5 ${status === 'running' ? 'animate-pulse' : ''}`}></div>
+        {config.label}
+      </span>
+    );
+  };
+
+  const AgentSubTabs = ({ agent }) => {
+    const subTabs = [
+      { id: 'overview', label: 'Overview', icon: Activity },
+      { id: 'configuration', label: 'Configuration', icon: Settings },
+      { id: 'schedule', label: 'Schedule', icon: Calendar },
+      { id: 'execution', label: 'Run & Monitor', icon: Play }
+    ];
+
+    return (
+      <>
+        <div className="border-b border-gray-200 mb-6">
+          <nav className="flex space-x-8">
+            {subTabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSubTab(tab.id)}
+                  className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeSubTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <IconComponent className="h-5 w-5 mr-2" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Sub-tab Content */}
+        {activeSubTab === 'overview' && <AgentOverview agent={agent} />}
+        {activeSubTab === 'configuration' && <AgentConfiguration agent={agent} />}
+        {activeSubTab === 'schedule' && <AgentSchedule agent={agent} />}
+        {activeSubTab === 'execution' && <AgentExecution agent={agent} />}
+      </>
+    );
+  };
+
+  const AgentOverview = ({ agent }) => {
+    const [metrics, setMetrics] = useState(null);
+    const [recentAlerts, setRecentAlerts] = useState([]);
+    const [loadingMetrics, setLoadingMetrics] = useState(true);
+
+    useEffect(() => {
+      loadAgentMetrics();
+      loadRecentAlerts();
+    }, [agent.id]);
+
+    const loadAgentMetrics = async () => {
+      try {
+        const response = await fetch(`/api/telos/agents/${agent.id}/metrics`);
+        const data = await response.json();
+        setMetrics(data);
+      } catch (err) {
+        console.error('Error loading agent metrics:', err);
+      } finally {
+        setLoadingMetrics(false);
+      }
+    };
+
+    const loadRecentAlerts = async () => {
+      try {
+        // Query your actual intelligence_insights table
+        const response = await fetch(`/api/telos/agents/${agent.id}/alerts?limit=5`);
+        const data = await response.json();
+        setRecentAlerts(data);
+      } catch (err) {
+        console.error('Error loading recent alerts:', err);
+      }
+    };
+
+    if (loadingMetrics) {
+      return (
+        <div className="flex justify-center items-center h-64">
+          <Loader className="h-8 w-8 animate-spin text-blue-600" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* Real Performance Metrics from Database */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Processing Time</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {metrics?.avg_processing_time || '--'}
+                </p>
+              </div>
+              <Clock className="h-8 w-8 text-blue-600" />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {metrics?.success_rate ? `${metrics.success_rate.toFixed(1)}%` : '--'}
+                </p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Alerts Generated</p>
+                <p className="text-2xl font-bold text-orange-600">
+                  {metrics?.alerts_generated || '--'}
+                </p>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Revenue Impact</p>
+                <p className="text-xl font-bold text-green-600">
+                  {metrics?.revenue_impact ? `€${metrics.revenue_impact.toLocaleString()}` : '--'}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+        </div>
+
+        {/* Database Tables */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Database className="h-5 w-5 mr-2" />
+            Database Tables
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {agent.dbTables.map((table, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center">
+                  <Server className="h-5 w-5 text-blue-600 mr-2" />
+                  <span className="font-medium text-gray-900">{table}</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-1">
+                  Connected • Live Data
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Alerts from intelligence_insights table */}
+        <div className="bg-white rounded-lg border">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Alerts</h3>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {recentAlerts.length > 0 ? recentAlerts.map((alert) => (
+              <div key={alert.id} className="p-6 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start">
+                    <div className={`p-2 rounded-lg mr-4 ${
+                      alert.priority_level === 'Critical' ? 'bg-red-100 text-red-600' : 
+                      alert.priority_level === 'High' ? 'bg-orange-100 text-orange-600' :
+                      'bg-blue-100 text-blue-600'
+                    }`}>
+                      <AlertTriangle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">{alert.title}</h4>
+                      <p className="text-sm text-gray-600 mt-1">{alert.description}</p>
+                      <p className="text-xs text-gray-500 mt-2">{alert.created_at}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-medium text-blue-600">{(alert.confidence_score * 100).toFixed(0)}%</div>
+                    <div className="text-xs text-gray-500">Confidence</div>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="p-6 text-center text-gray-500">
+                No recent alerts from this agent
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Class Methods */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <Code className="h-5 w-5 mr-2" />
+            Agent Methods
+          </h3>
+          <div className="space-y-2">
+            {agent.methods.map((method, index) => (
+              <div key={index} className="bg-gray-50 rounded p-3">
+                <code className="text-sm text-blue-600 font-mono">{method}</code>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const AgentConfiguration = ({ agent }) => {
+    const [config, setConfig] = useState({});
+    const [hasChanges, setHasChanges] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+      loadAgentConfig();
+    }, [agent.id]);
+
+    const loadAgentConfig = async () => {
+      try {
+        const response = await fetch(`/api/telos/agents/${agent.id}/config`);
+        const data = await response.json();
+        setConfig(data);
+      } catch (err) {
+        console.error('Error loading agent config:', err);
+      }
+    };
+
+    const updateConfig = (key, value) => {
+      setConfig(prev => ({ ...prev, [key]: value }));
+      setHasChanges(true);
+    };
+
+    const saveConfig = async () => {
+      setSaving(true);
+      try {
+        const response = await fetch(`/api/telos/agents/${agent.id}/config`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        
+        if (!response.ok) throw new Error('Failed to save configuration');
+        
+        setHasChanges(false);
+        console.log(`Saved ${agent.className} config:`, config);
+      } catch (err) {
+        console.error('Error saving config:', err);
+        alert('Failed to save configuration');
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg border p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              {agent.className} Configuration
+            </h3>
+            {hasChanges && (
+              <button
+                onClick={saveConfig}
+                disabled={saving}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Real Configuration Parameters */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Detection Thresholds</h4>
+              
+              {agent.configParams.map((param) => (
+                <div key={param.key}>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {param.key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </label>
+                  <input
+                    type={param.type === 'int' ? 'number' : param.type === 'float' ? 'number' : 'text'}
+                    step={param.type === 'float' ? '0.01' : '1'}
+                    value={config[param.key] ?? param.default}
+                    onChange={(e) => updateConfig(param.key, param.type === 'int' ? parseInt(e.target.value) : parseFloat(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">{param.description}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Routes Configuration - loaded from database */}
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Route Configuration</h4>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Monitored Routes
+                </label>
+                <div className="space-y-2">
+                  {config.routes?.map((route, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
+                      <span className="text-sm font-medium">{route}</span>
+                      <button 
+                        onClick={() => {
+                          const newRoutes = config.routes.filter((_, i) => i !== index);
+                          updateConfig('routes', newRoutes);
+                        }}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )) || (
+                    <div className="text-sm text-gray-500">Loading routes from database...</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const AgentSchedule = ({ agent }) => {
+    const [schedule, setSchedule] = useState({});
+    const [executionHistory, setExecutionHistory] = useState([]);
+
+    useEffect(() => {
+      loadSchedule();
+      loadExecutionHistory();
+    }, [agent.id]);
+
+    const loadSchedule = async () => {
+      try {
+        const response = await fetch(`/api/telos/agents/${agent.id}/schedule`);
+        const data = await response.json();
+        setSchedule(data);
+      } catch (err) {
+        console.error('Error loading schedule:', err);
+      }
+    };
+
+    const loadExecutionHistory = async () => {
+      try {
+        // Query nightshift_processing table
+        const response = await fetch(`/api/telos/agents/${agent.id}/execution-history?limit=10`);
+        const data = await response.json();
+        setExecutionHistory(data);
+      } catch (err) {
+        console.error('Error loading execution history:', err);
+      }
+    };
+
+    const updateSchedule = async (newSchedule) => {
+      try {
+        const response = await fetch(`/api/telos/agents/${agent.id}/schedule`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newSchedule)
+        });
+        
+        if (!response.ok) throw new Error('Failed to update schedule');
+        setSchedule(newSchedule);
+      } catch (err) {
+        console.error('Error updating schedule:', err);
+        alert('Failed to update schedule');
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Schedule {agent.className}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Execution Frequency
+                </label>
+                <select 
+                  value={schedule.frequency || 'daily'}
+                  onChange={(e) => updateSchedule({...schedule, frequency: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="hourly">Every Hour</option>
+                  <option value="manual">Manual Only</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Execution Time
+                </label>
+                <input
+                  type="time"
+                  value={schedule.time || '02:00'}
+                  onChange={(e) => updateSchedule({...schedule, time: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Execution History</h4>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {executionHistory.map((execution, index) => (
+                  <div key={index} className={`flex justify-between items-center p-3 rounded ${
+                    execution.processing_status === 'Completed' ? 'bg-green-50' :
+                    execution.processing_status === 'Failed' ? 'bg-red-50' :
+                    'bg-yellow-50'
+                  }`}>
+                    <span className="text-sm">{execution.processing_start}</span>
+                    <span className={`text-xs font-medium ${
+                      execution.processing_status === 'Completed' ? 'text-green-600' :
+                      execution.processing_status === 'Failed' ? 'text-red-600' :
+                      'text-yellow-600'
+                    }`}>
+                      {execution.processing_status}
+                    </span>
+                  </div>
+                ))}
+                {executionHistory.length === 0 && (
+                  <div className="text-sm text-gray-500">Loading execution history...</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const AgentExecution = ({ agent }) => {
+    const [isRunning, setIsRunning] = useState(false);
+    const [logs, setLogs] = useState([]);
+    const [executionResults, setExecutionResults] = useState(null);
+
+    const runAgent = async () => {
+      setIsRunning(true);
+      setLogs([]);
+      
+      try {
+        // Call your actual agent execution endpoint
+        const response = await fetch(`/api/telos/agents/${agent.id}/execute`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) throw new Error('Agent execution failed');
+
+        // Stream logs if supported, otherwise get final result
+        const result = await response.json();
+        setExecutionResults(result);
+        
+        // Add execution log
+        setLogs(prev => [...prev, {
+          time: new Date().toLocaleTimeString(),
+          level: 'INFO',
+          message: `${agent.className} execution completed successfully`
+        }]);
+
+      } catch (err) {
+        console.error('Agent execution error:', err);
+        setLogs(prev => [...prev, {
+          time: new Date().toLocaleTimeString(),
+          level: 'ERROR',
+          message: `Execution failed: ${err.message}`
+        }]);
+      } finally {
+        setIsRunning(false);
+      }
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="bg-white rounded-lg border p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Run {agent.className}
+            </h3>
+            <div className="flex space-x-2">
+              <button
+                onClick={runAgent}
+                disabled={isRunning}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isRunning ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Run Now
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {executionResults && (
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">
+                  {executionResults.alerts_generated || 0}
+                </div>
+                <div className="text-sm text-gray-600">Alerts Generated</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  €{executionResults.revenue_impact?.toLocaleString() || 0}
+                </div>
+                <div className="text-sm text-gray-600">Revenue Impact</div>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">
+                  {executionResults.confidence ? (executionResults.confidence * 100).toFixed(0) : 0}%
+                </div>
+                <div className="text-sm text-gray-600">Avg Confidence</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Execution Logs</h3>
+          <div className="bg-black rounded-lg p-4 h-64 overflow-y-auto font-mono text-sm">
+            {logs.map((log, index) => (
+              <div key={index} className="mb-1">
+                <span className="text-gray-400">[{log.time}]</span>
+                <span className={`ml-2 ${
+                  log.level === 'ERROR' ? 'text-red-400' :
+                  log.level === 'WARN' ? 'text-yellow-400' :
+                  'text-green-400'
+                }`}>
+                  {log.level}
+                </span>
+                <span className="text-white ml-2">{log.message}</span>
+              </div>
+            ))}
+            {isRunning && (
+              <div className="mb-1">
+                <span className="text-gray-400">[{new Date().toLocaleTimeString()}]</span>
+                <span className="text-blue-400 ml-2">INFO</span>
+                <span className="text-white ml-2">Agent execution in progress...</span>
+                <span className="animate-pulse">|</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Real Database Query Preview */}
+        <div className="bg-white rounded-lg border p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Database Query Preview</h3>
+          <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+            <pre className="text-green-400 text-sm font-mono">
+{agent.id === 'surge-detector' && `-- RealSurgeEventDetector Queries
+SELECT event_name, event_type, affected_routes, impact_level
+FROM market_events 
+WHERE event_date >= CURRENT_DATE - INTERVAL '7 days'
+AND affected_routes::text LIKE ANY($1);
+
+SELECT route_id, AVG(web_ty_searches) as recent_avg_searches,
+       AVG(conversion_rate) as recent_conversion_rate
+FROM web_search_data 
+WHERE search_dt >= CURRENT_DATE - INTERVAL '7 days'

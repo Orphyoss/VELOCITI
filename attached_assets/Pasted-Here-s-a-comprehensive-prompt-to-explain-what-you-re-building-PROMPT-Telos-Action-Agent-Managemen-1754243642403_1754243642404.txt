@@ -1,0 +1,45 @@
+Here's a comprehensive prompt to explain what you're building:
+
+PROMPT: Telos Action Agent Management System
+We're building a sophisticated management interface for Telos's real-world AI-powered airline intelligence agents. This isn't a prototype or demo - it's the actual production control panel for managing live database-driven Action Agents that process millions of dollars in airline revenue optimization decisions.
+What We're Building:
+A React-based management dashboard that provides complete lifecycle control over 3 core Action Agents:
+
+RealSurgeEventDetector - Detects viral demand surges and market events from live data
+RealAdvanceBookingCurveAlerting - Analyzes booking patterns vs historical performance
+RealElasticityChangeAlert - Monitors price elasticity changes from actual pricing actions
+
+Key Requirements:
+🔗 Real Database Integration:
+
+Must connect to actual airline databases (PostgreSQL/Databricks)
+Query live tables: market_events, web_search_data, rm_pricing_actions, flight_performance, intelligence_insights
+Display real metrics, not mock data
+Show actual agent execution logs and results
+
+⚙️ Agent Management Interface:
+Each agent gets 4 sub-tabs:
+
+Overview: Live performance metrics, recent alerts, database table status
+Configuration: Modify real parameters (thresholds, routes, confidence levels)
+Schedule: Set execution frequency, time, timezone with real cron scheduling
+Run & Monitor: Manual execution, live logs, database query preview
+
+📊 Live Data Display:
+
+Real revenue impact calculations from database queries
+Actual processing times and success rates
+Live alerts from intelligence_insights table
+Current agent status from nightshift_processing table
+
+🎯 Business Context:
+This manages agents that process real EasyJet operational data for revenue management decisions. Each agent can impact hundreds of thousands of euros in revenue optimization. The interface must be enterprise-grade with proper error handling, loading states, and real-time updates.
+Technical Stack:
+
+React with Tailwind CSS for the frontend
+Backend APIs that connect to actual airline databases
+Real-time data fetching and updates
+Enterprise-grade error handling and logging
+
+Critical Success Factor:
+Everything must connect to real data. No hardcoded metrics, no mock responses, no synthetic data. This controls actual AI agents making real revenue optimization decisions for a major European airline.

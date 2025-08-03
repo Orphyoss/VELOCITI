@@ -316,6 +316,69 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+// Action Agents Configuration and Management
+export const actionAgentConfigs = pgTable("action_agent_configs", {
+  id: text("id").primaryKey(), // surge-detector, booking-curve, elasticity-monitor
+  name: text("name").notNull(),
+  className: text("class_name").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("active"), // active, paused, error, maintenance
+  dbTables: text("db_tables").array().notNull().default([]),
+  configParams: jsonb("config_params").default({}),
+  methods: text("methods").array().notNull().default([]),
+  schedule: jsonb("schedule").default({ frequency: 'daily', time: '02:00' }),
+  lastExecution: timestamp("last_execution"),
+  nextExecution: timestamp("next_execution"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Action Agent Execution History  
+export const actionAgentExecutions = pgTable("action_agent_executions", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: text("agent_id").notNull().references(() => actionAgentConfigs.id),
+  executionStart: timestamp("execution_start").notNull(),
+  executionEnd: timestamp("execution_end"),
+  status: text("status").notNull(), // running, completed, failed, cancelled
+  alertsGenerated: integer("alerts_generated").default(0),
+  processingTimeMs: integer("processing_time_ms"),
+  confidence: decimal("confidence", { precision: 5, scale: 4 }),
+  revenueImpact: decimal("revenue_impact", { precision: 12, scale: 2 }),
+  errorMessage: text("error_message"),
+  executionLogs: jsonb("execution_logs").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Action Agent Metrics
+export const actionAgentMetrics = pgTable("action_agent_metrics", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agentId: text("agent_id").notNull().references(() => actionAgentConfigs.id),
+  metricDate: date("metric_date").notNull(),
+  avgProcessingTime: integer("avg_processing_time"),
+  successRate: decimal("success_rate", { precision: 5, scale: 2 }),
+  alertsGenerated: integer("alerts_generated").default(0),
+  revenueImpact: decimal("revenue_impact", { precision: 12, scale: 2 }),
+  executionCount: integer("execution_count").default(0),
+  errorCount: integer("error_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Insert schemas for action agents
+export const insertActionAgentConfigSchema = createInsertSchema(actionAgentConfigs).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertActionAgentExecutionSchema = createInsertSchema(actionAgentExecutions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertActionAgentMetricSchema = createInsertSchema(actionAgentMetrics).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Insert schemas for Telos Intelligence Platform tables  
 export const insertCompetitivePricingSchema = createInsertSchema(competitivePricing).omit({
   id: true,
@@ -382,6 +445,16 @@ export type SystemMetric = typeof systemMetrics.$inferSelect;
 
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activities.$inferSelect;
+
+// Action Agent types
+export type InsertActionAgentConfig = z.infer<typeof insertActionAgentConfigSchema>;
+export type ActionAgentConfig = typeof actionAgentConfigs.$inferSelect;
+
+export type InsertActionAgentExecution = z.infer<typeof insertActionAgentExecutionSchema>;
+export type ActionAgentExecution = typeof actionAgentExecutions.$inferSelect;
+
+export type InsertActionAgentMetric = z.infer<typeof insertActionAgentMetricSchema>;
+export type ActionAgentMetric = typeof actionAgentMetrics.$inferSelect;
 
 // Enums for type safety
 export const AlertPriority = {

@@ -57,6 +57,12 @@ export default function Sidebar() {
       path: '/action-agents'
     },
     {
+      id: 'action-agents-new',
+      label: 'Telos Action Agents',
+      icon: Brain,
+      path: '/action-agents-new'
+    },
+    {
       id: 'admin',
       label: 'Admin',
       icon: Settings,
