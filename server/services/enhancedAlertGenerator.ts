@@ -3,6 +3,7 @@ import { alerts } from "@shared/schema";
 import { storage } from "../storage";
 import { sql } from "drizzle-orm";
 import { logger, logAgent } from "./logger";
+import { DuplicatePreventionService } from "./duplicatePreventionService";
 
 export interface AlertScenario {
   type: 'competitive' | 'demand' | 'operational' | 'system' | 'economic';
@@ -19,9 +20,11 @@ export interface AlertScenario {
 
 export class EnhancedAlertGenerator {
   private scenarios: AlertScenario[] = [];
+  private duplicatePreventionService: DuplicatePreventionService;
 
   constructor() {
     logger.info('EnhancedAlertGenerator', 'init', 'Initializing Enhanced Alert Generation Engine');
+    this.duplicatePreventionService = new DuplicatePreventionService();
     this.initializeScenarios();
     logger.info('EnhancedAlertGenerator', 'init', `Loaded ${this.scenarios.length} sophisticated alert scenarios`);
   }
@@ -274,6 +277,36 @@ export class EnhancedAlertGenerator {
       'createAlert',
       `Creating alert: ${scenario.title}`,
       async () => {
+        // Check for duplicate alerts first
+        const isDuplicate = await this.duplicatePreventionService.isDuplicateAlert(
+          scenario.title, 
+          scenario.agent_source, 
+          24 // Check for duplicates in last 24 hours
+        );
+
+        if (isDuplicate) {
+          logger.warn('EnhancedAlertGenerator', 'createAlert', `Skipping duplicate alert: ${scenario.title}`, {
+            title: scenario.title,
+            agentId: scenario.agent_source
+          });
+          return;
+        }
+
+        // Also check for similar alerts (fuzzy matching)
+        const hasSimilar = await this.duplicatePreventionService.hasSimilarAlert(
+          scenario.description,
+          scenario.agent_source,
+          12 // Check for similar alerts in last 12 hours
+        );
+
+        if (hasSimilar) {
+          logger.warn('EnhancedAlertGenerator', 'createAlert', `Skipping similar alert: ${scenario.title}`, {
+            title: scenario.title,
+            agentId: scenario.agent_source
+          });
+          return;
+        }
+
         const alertData = {
           type: scenario.type,
           priority: scenario.priority,
