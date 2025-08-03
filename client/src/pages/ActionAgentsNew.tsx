@@ -896,42 +896,59 @@ AND route_id = ANY($1);`}
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h2>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Enterprise-grade AI agent control panel for EasyJet revenue optimization
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="agent-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">Agent:</Label>
-            <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
-              <SelectTrigger className="w-[280px]" id="agent-select">
-                <SelectValue placeholder="Select an agent">
-                  {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
-                    <div className="flex items-center space-x-2">
-                      <Brain className="h-4 w-4" />
-                      <span>{actionAgentDefinitions[activeAgentTab].name}</span>
-                      <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
-                    </div>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(actionAgentDefinitions).map((agent) => (
-                  <SelectItem key={agent.id} value={agent.id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h2>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Enterprise-grade AI agent control panel for EasyJet revenue optimization
+            </p>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-sm text-gray-600 dark:text-gray-400">System Active</span>
           </div>
         </div>
+        
+        {/* Agent Selection - Prominent Position */}
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-4">
+              <Label htmlFor="agent-select" className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                Select Agent:
+              </Label>
+              <Select value={activeAgentTab} onValueChange={setActiveAgentTab}>
+                <SelectTrigger className="w-[320px] h-12 text-lg border-2 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-800" id="agent-select">
+                  <SelectValue placeholder="Choose an Action Agent">
+                    {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
+                      <div className="flex items-center space-x-2">
+                        <Brain className="h-5 w-5 text-blue-600" />
+                        <span className="font-medium">{actionAgentDefinitions[activeAgentTab].name}</span>
+                        <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
+                      </div>
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="w-[320px]">
+                  {Object.values(actionAgentDefinitions).map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id} className="text-base py-3">
+                      <div className="flex items-center space-x-2">
+                        <Brain className="h-4 w-4 text-blue-600" />
+                        <span>{agent.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {activeAgentTab && actionAgentDefinitions[activeAgentTab] && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">Status:</span>
+                  <StatusBadge status={actionAgentDefinitions[activeAgentTab].status} />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Selected Agent Display */}
