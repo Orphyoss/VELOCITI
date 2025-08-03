@@ -989,6 +989,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get action agent status and real-time metrics
   app.get('/api/telos/agents/status', async (req, res) => {
+    console.log('[ActionAgents API] GET /api/telos/agents/status - Request received');
     try {
       // Return real agent status from the system
       const agentStatus = {
@@ -1012,6 +1013,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
       
+      console.log('[ActionAgents API] Returning agent status:', agentStatus);
       res.json(agentStatus);
     } catch (error) {
       console.error('Error fetching agent status:', error);

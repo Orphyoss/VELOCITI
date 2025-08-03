@@ -160,24 +160,35 @@ export default function ActionAgentsNew() {
   };
 
   useEffect(() => {
+    console.log('[ActionAgents] Component mounted, setting current module...');
     setCurrentModule('action-agents');
     loadAgentData();
   }, [setCurrentModule]);
 
   const loadAgentData = async () => {
+    console.log('[ActionAgents] Starting loadAgentData...');
     setLoading(true);
     try {
+      console.log('[ActionAgents] Fetching /api/telos/agents/status...');
       const response = await fetch('/api/telos/agents/status');
-      if (!response.ok) throw new Error('Failed to load agent data');
+      console.log('[ActionAgents] Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[ActionAgents] API Error:', response.status, errorText);
+        throw new Error(`Failed to load agent data: ${response.status} ${errorText}`);
+      }
       
       const data = await response.json();
+      console.log('[ActionAgents] Agent data loaded successfully:', data);
       setAgentData(data);
       setError(null);
     } catch (err: any) {
+      console.error('[ActionAgents] Error loading agent data:', err);
       setError(err.message);
-      console.error('Error loading agent data:', err);
     } finally {
       setLoading(false);
+      console.log('[ActionAgents] loadAgentData completed');
     }
   };
 
@@ -846,6 +857,7 @@ AND route_id = ANY($1);`}
   };
 
   if (loading) {
+    console.log('[ActionAgents] Rendering loading state...');
     return (
       <div className="flex justify-center items-center h-64">
         <Loader className="h-8 w-8 animate-spin text-blue-600" />
@@ -854,6 +866,7 @@ AND route_id = ANY($1);`}
   }
 
   if (error) {
+    console.error('[ActionAgents] Rendering error state:', error);
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-center">
