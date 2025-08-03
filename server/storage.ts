@@ -73,7 +73,6 @@ export class PostgreSQLStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     try {
       const newUser = {
-        id: `user-${Date.now()}`,
         username: user.username,
         email: user.email,
         role: user.role || 'analyst',
@@ -81,8 +80,9 @@ export class PostgreSQLStorage implements IStorage {
         createdAt: new Date()
       };
       
-      await db.insert(users).values(newUser);
-      return newUser as User;
+      // Let PostgreSQL generate the UUID automatically
+      const result = await db.insert(users).values(newUser).returning();
+      return result[0] as User;
     } catch (error) {
       console.error('[Storage] Error creating user:', error);
       throw error;
@@ -179,7 +179,6 @@ export class PostgreSQLStorage implements IStorage {
   async createAlert(alert: InsertAlert): Promise<Alert> {
     try {
       const newAlert = {
-        id: `alert-${Date.now()}`,
         type: alert.type || 'alert',
         priority: alert.priority,
         title: alert.title,
@@ -193,14 +192,14 @@ export class PostgreSQLStorage implements IStorage {
         agent_id: alert.agent_id,
         metadata: alert.metadata || {},
         status: alert.status || 'active',
-        created_at: new Date(),
         acknowledged_at: null,
         resolved_at: null,
         category: alert.category
       };
       
-      await db.insert(alerts).values(newAlert);
-      return newAlert as Alert;
+      // Let PostgreSQL generate the UUID automatically
+      const result = await db.insert(alerts).values(newAlert).returning();
+      return result[0] as Alert;
     } catch (error) {
       console.error('[Storage] Error creating alert:', error);
       throw error;
@@ -252,10 +251,10 @@ export class PostgreSQLStorage implements IStorage {
   async createFeedback(feedbackData: InsertFeedback): Promise<void> {
     try {
       const feedbackRecord = {
-        id: `feedback-${Date.now()}`,
         ...feedbackData,
         createdAt: new Date()
       };
+      // Let PostgreSQL generate the UUID automatically
       await db.insert(feedback).values(feedbackRecord);
     } catch (error) {
       console.error('[Storage] Error creating feedback:', error);
@@ -414,7 +413,6 @@ export class PostgreSQLStorage implements IStorage {
   async createActivity(activity: InsertActivity): Promise<void> {
     try {
       const newActivity = {
-        id: `activity-${Date.now()}`,
         ...activity,
         createdAt: new Date(),
         description: activity.description ?? null,
@@ -422,6 +420,7 @@ export class PostgreSQLStorage implements IStorage {
         userId: activity.userId ?? null,
         agentId: activity.agentId ?? null,
       };
+      // Let PostgreSQL generate the UUID automatically
       await db.insert(activities).values(newActivity);
     } catch (error) {
       console.error('[Storage] Error creating activity:', error);

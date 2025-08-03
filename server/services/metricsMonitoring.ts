@@ -326,7 +326,7 @@ export class TelosMetricsMonitoring {
 
   private async storeAlert(alert: MetricAlert) {
     try {
-      await storage.createAlert({
+      const alertData = {
         category: alert.category,
         priority: alert.severity,
         title: `${this.formatMetricName(alert.metricName)} Alert`,
@@ -339,13 +339,24 @@ export class TelosMetricsMonitoring {
           currentValue: alert.currentValue,
           threshold: alert.threshold,
           category: alert.category,
-          metricAlertId: alert.id
+          metricAlertId: alert.id,
+          metricName: alert.metricName,
+          timestamp: alert.timestamp
         }
-      });
-      console.log(`[MetricsMonitoring] Successfully stored alert: ${alert.metricName}`);
+      };
+
+      console.log(`[MetricsMonitoring] Storing alert for ${alert.metricName} with severity ${alert.severity}`);
+      const storedAlert = await storage.createAlert(alertData);
+      console.log(`[MetricsMonitoring] Successfully stored alert: ${alert.metricName} with DB ID: ${storedAlert.id}`);
     } catch (error) {
       console.error('[MetricsMonitoring] Error storing alert:', error);
-      console.error('[MetricsMonitoring] Alert data:', alert);
+      console.error('[MetricsMonitoring] Alert data:', {
+        metricName: alert.metricName,
+        severity: alert.severity,
+        currentValue: alert.currentValue,
+        threshold: alert.threshold,
+        message: alert.message.substring(0, 100) + '...'
+      });
     }
   }
 
