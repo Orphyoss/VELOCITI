@@ -16,12 +16,19 @@ import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 function TestComponent() {
-  return (
-    <div className="min-h-screen bg-red-500 text-white p-8">
-      <h1 className="text-4xl font-bold text-white">Test Component Loading</h1>
-      <p className="text-white mt-4">If you see this, React is working!</p>
-    </div>
-  );
+  console.log("TestComponent rendering...");
+  
+  try {
+    return (
+      <div className="min-h-screen bg-red-500 text-white p-8">
+        <h1 className="text-4xl font-bold text-white">Test Component Loading</h1>
+        <p className="text-white mt-4">If you see this, React is working!</p>
+      </div>
+    );
+  } catch (error) {
+    console.error("TestComponent error:", error);
+    return <div>Error in TestComponent</div>;
+  }
 }
 
 function Router() {
@@ -44,16 +51,23 @@ function Router() {
 }
 
 function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <div className="dark min-h-screen bg-background text-foreground">
-          <Toaster />
-          <Router />
-        </div>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
+  console.log("App component rendering...");
+  
+  try {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <div className="dark min-h-screen bg-background text-foreground">
+            <Toaster />
+            <Router />
+          </div>
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  } catch (error: any) {
+    console.error("App component error:", error);
+    return <div className="text-red-500 p-8">App Error: {error?.message || 'Unknown error'}</div>;
+  }
 }
 
 export default App;
