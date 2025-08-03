@@ -325,7 +325,13 @@ export class MemoryStorage implements IStorage {
     const routePerf: RoutePerformance = {
       id: data.id || `route-${Date.now()}`,
       ...data,
-      createdAt: new Date()
+      createdAt: new Date(),
+      loadFactor: data.loadFactor ?? null,
+      yield: data.yield ?? null,
+      performance: data.performance ?? null,
+      competitorPrice: data.competitorPrice ?? null,
+      ourPrice: data.ourPrice ?? null,
+      demandIndex: data.demandIndex ?? null,
     };
     memoryStore.routePerformance.set(routePerf.id, routePerf);
   }
@@ -341,7 +347,11 @@ export class MemoryStorage implements IStorage {
       id: conversation.id || `conv-${Date.now()}`,
       ...conversation,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      title: conversation.title ?? null,
+      userId: conversation.userId ?? null,
+      messages: conversation.messages ?? {},
+      context: conversation.context ?? {},
     };
     memoryStore.conversations.set(newConv.id, newConv);
     return newConv;
@@ -350,7 +360,10 @@ export class MemoryStorage implements IStorage {
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
     const conv = memoryStore.conversations.get(id);
     if (conv) {
-      Object.assign(conv, updates, { updatedAt: new Date() });
+      Object.assign(conv, updates, { 
+        updatedAt: new Date(),
+        createdAt: conv.createdAt || new Date() 
+      });
       memoryStore.conversations.set(id, conv);
     }
   }
@@ -359,20 +372,25 @@ export class MemoryStorage implements IStorage {
     const since = new Date(Date.now() - hours * 60 * 60 * 1000);
     
     let metrics = Array.from(memoryStore.systemMetrics.values())
-      .filter(metric => new Date(metric.timestamp) >= since);
+      .filter(metric => metric.timestamp && new Date(metric.timestamp) >= since);
     
     if (type) {
       metrics = metrics.filter(metric => metric.metricType === type);
     }
     
-    return metrics.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    return metrics.sort((a, b) => {
+      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      return bTime - aTime;
+    });
   }
 
   async createSystemMetric(metric: InsertSystemMetric): Promise<void> {
     const newMetric: SystemMetric = {
       id: `metric-${Date.now()}`,
       ...metric,
-      timestamp: metric.timestamp || new Date()
+      timestamp: metric.timestamp || new Date(),
+      metadata: metric.metadata ?? {},
     };
     memoryStore.systemMetrics.set(newMetric.id, newMetric);
   }
@@ -387,7 +405,11 @@ export class MemoryStorage implements IStorage {
     const newActivity: Activity = {
       id: `activity-${Date.now()}`,
       ...activity,
-      createdAt: new Date()
+      createdAt: new Date(),
+      description: activity.description ?? null,
+      metadata: activity.metadata ?? {},
+      userId: activity.userId ?? null,
+      agentId: activity.agentId ?? null,
     };
     memoryStore.activities.set(newActivity.id, newActivity);
   }

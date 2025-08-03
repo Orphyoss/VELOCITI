@@ -7,6 +7,11 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- Fixed critical deployment errors by resolving TypeScript type mismatches in storage layer (2025-08-03)
+- Corrected PostgreSQL database compatibility issues and null handling in storage operations (2025-08-03)
+- Enhanced mobile responsiveness with touch-friendly interfaces and responsive grid layouts (2025-08-03)
+- Implemented comprehensive logging system throughout ActionAgents components with detailed error reporting (2025-08-03)
+- Resolved storage layer compatibility between in-memory fallback and PostgreSQL schema requirements (2025-08-03)
 - Data Generation admin feature implemented for running daily data population scripts for specific dates and scenarios (2025-08-03)
 - Added comprehensive Data Generation interface with scenario selection, job tracking, and real-time status updates (2025-08-03)
 - Created Python script template for daily data generation with market scenario simulation capabilities (2025-08-03)
