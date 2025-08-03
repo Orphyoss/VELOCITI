@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import AppShell from '@/components/layout/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -848,55 +847,50 @@ AND route_id = ANY($1);`}
 
   if (loading) {
     return (
-      <AppShell>
-        <div className="flex justify-center items-center h-64">
-          <Loader className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      </AppShell>
+      <div className="flex justify-center items-center h-64">
+        <Loader className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppShell>
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Error Loading Action Agents</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
-            <Button onClick={loadAgentData}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          </div>
+      <div className="flex justify-center items-center h-64">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Error Loading Action Agents</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+          <Button onClick={loadAgentData}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
         </div>
-      </AppShell>
+      </div>
     );
   }
 
   const currentAgent = actionAgentDefinitions[activeAgentTab];
 
   return (
-    <AppShell>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Enterprise-grade AI agent control panel for EasyJet revenue optimization
-            </p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm text-gray-600 dark:text-gray-400">System Active</span>
-            </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Enterprise-grade AI agent control panel for EasyJet revenue optimization
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">System Active</span>
           </div>
         </div>
+      </div>
 
-        {/* Agent Selection Tabs */}
-        <Card>
+      {/* Agent Selection Tabs */}
+      <Card>
           <CardHeader>
             <CardTitle>Action Agents</CardTitle>
           </CardHeader>
@@ -927,7 +921,6 @@ AND route_id = ANY($1);`}
             </Tabs>
           </CardContent>
         </Card>
-      </div>
-    </AppShell>
+    </div>
   );
 }

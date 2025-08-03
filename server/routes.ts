@@ -25,6 +25,7 @@ import { metricsMonitoring } from "./services/metricsMonitoring.js";
 import { TelosIntelligenceService } from "./services/telos-intelligence.js";
 import { logger, logAPI } from "./services/logger.js";
 import { duplicatePreventionService } from "./services/duplicatePreventionService.js";
+import { db } from "./services/supabase.js";
 
 // Function to calculate real dashboard metrics from actual data
 async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activities: any[]) {
@@ -238,8 +239,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         alert_id: req.body.alertId || '550e8400-e29b-41d4-a716-446655440000',
         agent_id: agentId || 'unknown',
         user_id: req.body.userId || '550e8400-e29b-41d4-a716-446655440000', // Development UUID
-        rating: req.body.rating,
-        comment: req.body.comment,
+        rating: req.body.rating || 0,
+        comment: req.body.comment || '',
         action_taken: req.body.actionTaken || false,
         impact_realized: req.body.impactRealized ? req.body.impactRealized.toString() : undefined
       };
