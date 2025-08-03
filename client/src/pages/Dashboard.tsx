@@ -3,9 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
-
 import MetricsOverview from '@/components/dashboard/MetricsOverview';
-
 import NetworkOverview from '@/components/dashboard/NetworkOverview';
 import TodaysPriorities from '@/components/dashboard/TodaysPriorities';
 
