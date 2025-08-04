@@ -178,29 +178,32 @@ export default function DataGeneration() {
 
       {/* Data Generation Controls */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
             <Database className="h-5 w-5" />
             Generate Data
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CardContent className="pt-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             {/* Date Selection */}
             <div className="space-y-2">
-              <Label htmlFor="date">Target Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full"
-              />
+              <Label htmlFor="date" className="text-sm font-medium">Target Date</Label>
+              <div className="relative">
+                <Input
+                  id="date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full pl-10"
+                />
+                <Calendar className="h-4 w-4 absolute left-3 top-3 text-gray-500" />
+              </div>
             </div>
 
             {/* Scenario Selection */}
             <div className="space-y-2">
-              <Label htmlFor="scenario">Market Scenario</Label>
+              <Label htmlFor="scenario" className="text-sm font-medium">Market Scenario</Label>
               <Select value={selectedScenario} onValueChange={setSelectedScenario}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select scenario type" />
@@ -229,7 +232,7 @@ export default function DataGeneration() {
               {generateDataMutation.isPending ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                  Starting...
+                  Generating...
                 </>
               ) : (
                 <>
