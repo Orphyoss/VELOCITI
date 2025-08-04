@@ -14,40 +14,16 @@ const router = Router();
  * Get competitive positioning analysis
  */
 router.get('/competitive-position', async (req, res) => {
-  const startTime = Date.now();
   try {
-    const { routeId, days = 7 } = req.query;
-    
-    console.log(`🔍 [API DEBUG] GET /competitive-position - routeId: ${routeId}, days: ${days}`);
-    
+    const { routeId } = req.query;
     const positions = await telosIntelligenceService.getCompetitivePosition(
       routeId as string || 'LGW-BCN'
     );
-    
-    const duration = Date.now() - startTime;
-    console.log(`🔍 [API DEBUG] Raw service response:`, JSON.stringify(positions, null, 2));
-    console.log(`🔍 [API DEBUG] Response type:`, typeof positions);
-    console.log(`🔍 [API DEBUG] Response keys:`, Object.keys(positions || {}));
-    console.log(`🔍 [API DEBUG] Competitor count:`, positions?.competitorCount);
-    console.log(`🔍 [API DEBUG] Request completed in ${duration}ms`);
-    
-    // Ensure we return a valid object
-    if (!positions || typeof positions !== 'object') {
-      console.error(`🔍 [API DEBUG] Invalid response from service:`, positions);
-      return res.status(500).json({ 
-        error: 'Invalid response from competitive analysis service',
-        details: 'Service returned non-object response'
-      });
-    }
-    
     res.json(positions);
   } catch (error) {
-    const duration = Date.now() - startTime;
-    console.error(`🔍 [API DEBUG] Failed to get competitive position (${duration}ms):`, error);
-    console.error(`🔍 [API DEBUG] Error stack:`, error.stack);
+    console.error(`Failed to get competitive position:`, error);
     res.status(500).json({ 
-      error: 'Failed to retrieve competitive position data',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: 'Failed to retrieve competitive position data'
     });
   }
 });

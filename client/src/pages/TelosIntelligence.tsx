@@ -154,34 +154,11 @@ export default function TelosIntelligence() {
 
   // Fetch competitive pricing
   const { data: competitive, isLoading: competitiveLoading, error: competitiveError } = useQuery({
-    queryKey: ['/api/telos/competitive-position', competitiveRoute],
-    queryFn: async () => {
-      console.log('🔍 [DEBUG] Fetching competitive data for route:', competitiveRoute);
-      const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`);
-      console.log('🔍 [DEBUG] Response status:', response.status, response.statusText);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch competitive data: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log('🔍 [DEBUG] Received data:', JSON.stringify(data, null, 2));
-      console.log('🔍 [DEBUG] Data type:', typeof data);
-      console.log('🔍 [DEBUG] Has route:', !!data?.route);
-      console.log('🔍 [DEBUG] Competitor count:', data?.competitorCount);
-      console.log('🔍 [DEBUG] Pricing data:', data?.pricing);
-      return data;
-    },
+    queryKey: ['competitive-position', competitiveRoute],
+    queryFn: () => fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`).then(res => res.json()),
     enabled: !!competitiveRoute,
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache
-  });
-
-  console.log('🔍 [DEBUG] Current competitive state:', {
-    loading: competitiveLoading,
-    hasData: !!competitive,
-    dataType: typeof competitive,
-    error: competitiveError,
-    route: competitiveRoute,
-    data: competitive
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
   // Fetch route dashboard
@@ -858,28 +835,17 @@ export default function TelosIntelligence() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4 p-2 bg-blue-50 dark:bg-blue-950 rounded text-xs">
-                <div>Debug Info:</div>
-                <div>Loading: {competitiveLoading ? 'YES' : 'NO'}</div>
-                <div>Has Data: {competitive ? 'YES' : 'NO'}</div>
-                <div>Data Type: {typeof competitive}</div>
-                <div>Competitor Count: {competitive?.competitorCount || 'N/A'}</div>
-                <div>Route: {competitive?.route || 'N/A'}</div>
-                <div>Error: {competitiveError ? String(competitiveError) : 'None'}</div>
-              </div>
-              
               {competitiveLoading ? (
                 <div className="space-y-4">
-                  <div className="text-center py-4">Loading competitive data...</div>
                   {[1, 2, 3, 4].map(i => (
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
               ) : competitiveError ? (
                 <div className="text-center py-8 text-red-600">
-                  Error: {String(competitiveError)}
+                  Error loading competitive data
                 </div>
-              ) : competitive && typeof competitive === 'object' && competitive.competitorCount && competitive.competitorCount > 0 ? (
+              ) : competitive && competitive.competitorCount > 0 ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">
@@ -939,10 +905,7 @@ export default function TelosIntelligence() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <div>No competitive data available for route {competitiveRoute}</div>
-                  <div className="text-xs mt-2">
-                    Data received: {competitive ? JSON.stringify(competitive) : 'null'}
-                  </div>
+                  No competitive data available for route {competitiveRoute}
                 </div>
               )}
             </CardContent>
