@@ -155,7 +155,7 @@ export default function TelosIntelligence() {
   // Fetch competitive pricing
   const { data: competitive, isLoading: competitiveLoading } = useQuery({
     queryKey: ['/api/telos/competitive-position', competitiveRoute],
-    queryFn: () => fetch(`/api/telos/competitive-position?route=${competitiveRoute}`).then(res => res.json()),
+    queryFn: () => fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`).then(res => res.json()),
     enabled: !!competitiveRoute,
     staleTime: 0, // Always fetch fresh data
     cacheTime: 0, // Don't cache
@@ -841,7 +841,7 @@ export default function TelosIntelligence() {
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
-              ) : competitive && (competitive as any).route ? (
+              ) : competitive && Object.keys(competitive).length > 0 ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">
