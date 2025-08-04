@@ -7,6 +7,7 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **CRITICAL ISSUE RESOLVED: Fixed Deployment Port Conflicts** - Completely rewrote deployment system to eliminate port conflicts between development (port 5000) and production (port 3001) servers; removed old broken deployment code and created clean separation allowing both environments to run simultaneously; added proper process management and cleanup scripts (2025-08-04)
 - **COMPLETED: Professional Deployment System** - Created comprehensive deployment pipeline with automated scripts for production deployment, rollback capabilities, and health monitoring; unified configuration system addresses dev/prod parity concerns with feature flags and environment validation (2025-08-04)
 - **COMPLETED: Environment Parity System** - Created unified configuration system (`shared/config.ts`) to eliminate dev/prod differences, implemented standardization script and comprehensive guide, addresses scattered `process.env.NODE_ENV` checks with centralized feature flags and consistent behavior patterns (2025-08-04)
 - **VERIFIED: Analyst Workbench Alert Display Fixed** - Resolved React rendering issue causing "No Alerts in Database" by replacing problematic `useMemo` with direct filtering logic, now displays 100 alerts correctly with proper status filtering (2025-08-04)

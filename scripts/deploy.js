@@ -55,6 +55,14 @@ class ProductionDeployment {
   async startProductionServer() {
     this.log('Starting production server on port 3001...');
     
+    // Ensure no conflicting processes
+    try {
+      execSync('pkill -f "node dist/index.js" || true', { stdio: 'pipe' });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    } catch (e) {
+      // Ignore errors
+    }
+    
     const server = spawn('node', ['dist/index.js'], {
       env: {
         ...process.env,
@@ -62,7 +70,7 @@ class ProductionDeployment {
         PORT: '3001'
       },
       stdio: 'pipe',
-      detached: false
+      detached: true
     });
 
     server.stdout.on('data', (data) => {
@@ -78,6 +86,9 @@ class ProductionDeployment {
     
     this.log('Production server started on port 3001', 'success');
     this.log('Access your production app at: http://localhost:3001', 'success');
+    
+    // Write PID for cleanup
+    fs.writeFileSync('.production-pid', server.pid.toString());
     
     return server;
   }
@@ -131,12 +142,21 @@ class ProductionDeployment {
     this.log('Production server: http://localhost:3001', 'success');
     this.log('Development server: http://localhost:5000', 'success');
     
-    // Keep process alive
-    process.on('SIGINT', () => {
+    // Cleanup function
+    const cleanup = () => {
       this.log('Shutting down production server...', 'warning');
-      server.kill();
+      try {
+        const pid = fs.readFileSync('.production-pid', 'utf8');
+        execSync(`kill ${pid} || true`, { stdio: 'pipe' });
+        fs.unlinkSync('.production-pid');
+      } catch (e) {
+        // Ignore errors
+      }
       process.exit(0);
-    });
+    };
+
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
   }
 }
 
