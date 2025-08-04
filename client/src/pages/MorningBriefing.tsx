@@ -1043,7 +1043,7 @@ ${insight.description}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  {briefingData?.routeInsights.map((route) => (
+                  {briefingData?.routeInsights?.map((route) => (
                     <tr key={route.route} className="hover:bg-dark-800/30">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-50">
                         {route.route}
@@ -1054,10 +1054,10 @@ ${insight.description}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
-                        {route.loadFactor.toFixed(1)}%
+                        {route.loadFactor?.toFixed(1) || 0}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
-                        {route.yield.toFixed(1)}
+                        {route.yield?.toFixed(1) || 0}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
                         {route.competitorPressure}
