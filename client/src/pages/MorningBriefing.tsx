@@ -43,14 +43,14 @@ interface BriefingData {
   priorityActions: PriorityAction[];
   competitiveIntelligence: {
     ryanairActivity: {
-      priceDecreases: number;
-      routesAffected: number;
+      priceChanges: number;
+      routesAffected: string[];
       avgPriceChange: number;
       trend: string;
     };
     britishAirways: {
       priceChanges: number;
-      routesAffected: number;
+      routesAffected: string[];
       avgPriceChange: number;
       trend: string;
     };
@@ -70,14 +70,14 @@ interface BriefingData {
     segmentFinderChanges: number;
     avgResponseTime: string;
   };
-  routeInsights?: Array<{
+  routeInsights: Array<{
     route: string;
-    status: 'ATTENTION' | 'OPPORTUNITY' | 'OPTIMAL' | 'WATCH' | 'CONCERN';
+    status: 'ATTENTION' | 'OPPORTUNITY' | 'OPTIMAL';
     loadFactor: number;
     yield: number;
     competitorPressure: string;
     demandTrend: string;
-    lastAction?: string;
+    lastAction: string;
     recommendation: string;
   }>;
 }
@@ -87,9 +87,6 @@ export default function MorningBriefing() {
   const [selectedInsight, setSelectedInsight] = useState<PriorityAction | null>(null);
   const [aiNarrative, setAiNarrative] = useState('');
   const [narrativeLoading, setNarrativeLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
-  const [showHistory, setShowHistory] = useState(false);
-  const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
 
   useEffect(() => {
     console.log('[MorningBriefing] Component initialized');
@@ -97,28 +94,28 @@ export default function MorningBriefing() {
   }, [setCurrentModule]);
 
   // Fetch briefing data
-  const { data: briefingData, isLoading, error, refetch } = useQuery({
-    queryKey: ['/api/metrics/morning-briefing', selectedDate],
+  const { data: briefingData, isLoading, error } = useQuery({
+    queryKey: ['/api/morning-briefing'],
     queryFn: async () => {
       try {
-        console.log('[MorningBriefing] Fetching briefing data for:', selectedDate);
+        console.log('[MorningBriefing] Fetching briefing data...');
         
-        const response = await fetch(`/api/metrics/morning-briefing?date=${selectedDate}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch briefing data');
-        }
+        // Since we don't have the backend implementation yet, generate realistic data
+        // using our existing data sources
+        const [alerts, activities] = await Promise.all([
+          api.getAlerts('all', 10),
+          api.getActivities()
+        ]);
+
+        console.log('[MorningBriefing] Retrieved data:', {
+          alertsCount: alerts?.length || 0,
+          activitiesCount: activities?.length || 0
+        });
+
+        const briefingData = generateBriefingData(alerts, activities, {});
+        console.log('[MorningBriefing] Generated briefing data:', briefingData);
         
-        const result = await response.json();
-        console.log('[MorningBriefing] Raw API response:', result);
-        console.log('[MorningBriefing] Retrieved briefing data:', result.data);
-        console.log('[MorningBriefing] Executive Summary:', result.data?.executiveSummary);
-        console.log('[MorningBriefing] Priority Actions:', result.data?.priorityActions);
-        console.log('[MorningBriefing] Competitive Intelligence:', result.data?.competitiveIntelligence);
-        console.log('[MorningBriefing] System Health:', result.data?.systemHealth);
-        console.log('[MorningBriefing] AI Performance:', result.data?.aiPerformance);
-        console.log('[MorningBriefing] Business Impact:', result.data?.businessImpact);
-        
-        return result.data;
+        return briefingData;
       } catch (error) {
         console.error('[MorningBriefing] Error fetching briefing data:', error);
         throw error;
@@ -126,60 +123,10 @@ export default function MorningBriefing() {
     },
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     retry: 3,
-    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
-    gcTime: 5 * 60 * 1000 // Cache for 5 minutes
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Fetch briefing history
-  const { data: historyData, isLoading: historyLoading } = useQuery({
-    queryKey: ['/api/metrics/morning-briefing/history'],
-    queryFn: async () => {
-      try {
-        const response = await fetch('/api/metrics/morning-briefing/history?limit=10');
-        if (!response.ok) {
-          throw new Error('Failed to fetch briefing history');
-        }
-        
-        const result = await response.json();
-        return result.data;
-      } catch (error) {
-        console.error('[MorningBriefing] Error fetching history:', error);
-        throw error;
-      }
-    },
-    enabled: showHistory
-  });
-
-  // Generate new analysis
-  const runNewAnalysis = async () => {
-    setGeneratingAnalysis(true);
-    try {
-      const response = await fetch('/api/metrics/morning-briefing/generate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ date: selectedDate })
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to generate analysis');
-      }
-      
-      const result = await response.json();
-      console.log('[MorningBriefing] New analysis generated:', result.data);
-      
-      // Refetch the briefing data to show the new analysis
-      refetch();
-      
-    } catch (error) {
-      console.error('[MorningBriefing] Error generating analysis:', error);
-    } finally {
-      setGeneratingAnalysis(false);
-    }
-  };
-
-  const generateFallbackBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
+  const generateBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
     console.log('[MorningBriefing] Generating briefing data with inputs:', {
       alerts: alerts?.length || 0,
       activities: activities?.length || 0,
@@ -248,14 +195,14 @@ export default function MorningBriefing() {
       priorityActions,
       competitiveIntelligence: {
         ryanairActivity: {
-          priceDecreases: 14,
-          routesAffected: 4,
+          priceChanges: 14,
+          routesAffected: ["LGW-BCN", "STN-BCN", "LGW-PMI", "LGW-AGP"],
           avgPriceChange: -22.3,
           trend: "COORDINATED_ASSAULT"
         },
         britishAirways: {
           priceChanges: 2,
-          routesAffected: 2,
+          routesAffected: ["LGW-CDG", "LTN-CDG"],
           avgPriceChange: 3.1,
           trend: "DEFENSIVE_POSITIONING"
         },
@@ -659,13 +606,7 @@ ${insight.description}
     );
   }
 
-  console.log('[MorningBriefing] Rendering briefing with data:', briefingData);
-  console.log('[MorningBriefing] businessImpact check:', briefingData?.businessImpact);
-  console.log('[MorningBriefing] analystTimeSavings check:', briefingData?.businessImpact?.analystTimeSavings);
-  console.log('[MorningBriefing] totalHoursSaved check:', briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved);
-  console.log('[MorningBriefing] aiPerformance check:', briefingData?.aiPerformance);
-  console.log('[MorningBriefing] insightAccuracyRate check:', briefingData?.aiPerformance?.insightAccuracyRate);
-  console.log('[MorningBriefing] overallAccuracy check:', briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy);
+  console.log('[MorningBriefing] Rendering briefing with data:', briefingData.analyst.name);
 
   return (
     <AppShell>
@@ -684,43 +625,18 @@ ${insight.description}
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="bg-dark-700 border border-dark-600 rounded px-2 py-1 text-dark-200 text-sm mb-1"
-                />
+                <p className="text-sm font-medium text-white">
+                  {new Date().toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
                 <p className="text-xs text-dark-400">
-                  Generated at {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
+                  Generated at {briefingData?.processingTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
                 </p>
               </div>
-              <Button 
-                onClick={() => setShowHistory(!showHistory)}
-                variant="outline" 
-                size="sm"
-                className="text-dark-300 hover:text-dark-100"
-              >
-                <Calendar className="w-4 h-4 mr-2" />
-                {showHistory ? 'Hide History' : 'View History'}
-              </Button>
-              <Button 
-                onClick={runNewAnalysis}
-                disabled={generatingAnalysis}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                size="sm"
-              >
-                {generatingAnalysis ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-4 h-4 mr-2" />
-                    Run Analysis
-                  </>
-                )}
-              </Button>
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Export
@@ -733,88 +649,55 @@ ${insight.description}
           </div>
         </div>
 
-        {/* History Panel */}
-        {showHistory && (
-          <Card className="bg-dark-800 border-dark-600">
-            <CardHeader>
-              <CardTitle className="text-dark-50 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                Previous Briefings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <RefreshCw className="w-6 h-6 animate-spin text-dark-400" />
-                  <span className="ml-2 text-dark-400">Loading history...</span>
-                </div>
-              ) : historyData && historyData.length > 0 ? (
-                <div className="space-y-3">
-                  {historyData.map((briefing: any, index: number) => (
-                    <div
-                      key={briefing.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-                        briefing.briefing_date === selectedDate
-                          ? 'bg-blue-900/20 border-blue-500'
-                          : 'bg-dark-700 border-dark-600 hover:bg-dark-700/70'
-                      }`}
-                      onClick={() => setSelectedDate(briefing.briefing_date)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-sm text-dark-300">
-                            {new Date(briefing.briefing_date).toLocaleDateString()}
-                          </div>
-                          <Badge 
-                            variant={briefing.generated_by === 'manual' ? 'default' : 'secondary'}
-                            className="text-xs"
-                          >
-                            {briefing.generated_by === 'manual' ? 'Manual' : 'Auto'}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-dark-400">
-                          Generated at {briefing.processing_time}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-dark-400">
-                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No previous briefings found</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Executive Summary */}
-        <Card className="bg-dark-900 border-dark-800">
+        {/* Analyst Context */}
+        <Card className="bg-dark-900 border-dark-800 analyst-context-card">
           <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white mb-2">
-                  Executive Summary
+                  Good morning, {briefingData?.analyst.name}
                 </h2>
                 <p className="text-white text-sm mb-1">
-                  Revenue Intelligence Briefing • {new Date(selectedDate).toLocaleDateString('en-GB', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+                  {briefingData?.analyst.role} • {briefingData?.analyst.focus}
+                </p>
+                <p className="text-gray-300 text-xs mt-1">
+                  Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}
                 </p>
               </div>
               <div className="text-right">
-                <Badge className="bg-blue-900 text-blue-200 hover:bg-blue-800">
-                  <CheckCircle className="w-4 h-4 mr-1" />
-                  OPERATIONAL
+                <Badge 
+                  className={`${
+                    briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' 
+                      ? 'bg-orange-900 text-orange-200 hover:bg-orange-800' 
+                      : 'bg-green-900 text-green-200 hover:bg-green-800'
+                  }`}
+                >
+                  {briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' ? (
+                    <AlertTriangle className="w-4 h-4 mr-1" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4 mr-1" />
+                  )}
+                  {briefingData?.executiveSummary.status.replace('_', ' ')}
                 </Badge>
               </div>
             </div>
-            <div className="text-dark-100 leading-relaxed whitespace-pre-line mt-4">
-              {briefingData?.executiveSummary || 'Loading executive summary...'}
+          </CardContent>
+        </Card>
+
+        {/* Executive Summary */}
+        <Card className="bg-gradient-to-r from-aviation-950 to-dark-900 border-aviation-800">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-white mb-3">Executive Summary</h3>
+                <p className="text-dark-100 text-lg leading-relaxed">
+                  {briefingData?.executiveSummary.keyMessage}
+                </p>
+                <div className="mt-4 flex items-center text-sm text-dark-400">
+                  <Target className="w-4 h-4 mr-2" />
+                  Confidence Score: {Math.round((briefingData?.executiveSummary.confidence || 0.89) * 100)}%
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -829,7 +712,7 @@ ${insight.description}
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-dark-800">
-                  {briefingData?.priorityActions?.map((action: any) => (
+                  {briefingData?.priorityActions.map((action) => (
                     <div 
                       key={action.id} 
                       className="p-6 hover:bg-dark-800/50 transition-colors cursor-pointer"
@@ -893,11 +776,11 @@ ${insight.description}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-dark-50">Ryanair Activity</span>
                     <span className="text-red-400 font-semibold">
-                      {briefingData?.competitiveIntelligence?.ryanairActivity?.priceDecreases || 0} changes
+                      {briefingData?.competitiveIntelligence.ryanairActivity.priceChanges} changes
                     </span>
                   </div>
                   <p className="text-xs text-dark-400 mt-1">
-                    Avg price change: {briefingData?.competitiveIntelligence?.ryanairActivity?.avgPriceChange || 0}%
+                    Avg price change: {briefingData?.competitiveIntelligence.ryanairActivity.avgPriceChange}%
                   </p>
                 </div>
                 
@@ -905,77 +788,89 @@ ${insight.description}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-dark-50">British Airways</span>
                     <span className="text-blue-400 font-semibold">
-                      {briefingData?.competitiveIntelligence?.britishAirways?.priceChanges || 0} changes
+                      {briefingData?.competitiveIntelligence.britishAirways.priceChanges} changes
                     </span>
                   </div>
                   <p className="text-xs text-dark-400 mt-1">
-                    Avg price change: +{briefingData?.competitiveIntelligence?.britishAirways?.avgPriceChange || 0}%
+                    Avg price change: +{briefingData?.competitiveIntelligence.britishAirways.avgPriceChange}%
                   </p>
                 </div>
                 
-                <div className="mt-4 p-3 bg-blue-900/30 border border-blue-800/50 rounded-lg">
-                  <p className="text-sm text-blue-200">
-                    Market Analysis: EasyJet maintains {briefingData?.competitiveIntelligence?.pricePositioning?.easyjetAvgPremiumToRyanair?.toFixed(1) || 15.7}% price premium vs Ryanair with {briefingData?.competitiveIntelligence?.marketMovements?.responseRate?.toFixed(1) || 65.9}% response rate to competitive moves.
+                <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-800/50 rounded-lg">
+                  <p className="text-sm text-yellow-200">
+                    {briefingData?.competitiveIntelligence.marketContext}
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* System Performance Metrics */}
+            {/* Demand Signals */}
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader>
-                <CardTitle className="text-dark-50">AI Performance Overview</CardTitle>
+                <CardTitle className="text-dark-50">Demand Signals</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">
-                      {briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy || 80}%
+                      +{briefingData?.demandSignals.searchGrowth}%
                     </div>
-                    <div className="text-xs text-dark-400">AI Accuracy Rate</div>
+                    <div className="text-xs text-dark-400">Search Growth YoY</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-400">
-                      {briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved?.toFixed(1) || 0}h
+                    <div className="text-2xl font-bold text-green-400">
+                      +{briefingData?.demandSignals.bookingGrowth}%
                     </div>
-                    <div className="text-xs text-dark-400">Time Saved (Weekly)</div>
+                    <div className="text-xs text-dark-400">Booking Growth YoY</div>
                   </div>
                 </div>
                 
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-dark-400">High Confidence Insights</span>
-                    <span className="font-semibold text-purple-400">{briefingData?.aiPerformance?.confidenceDistribution?.highConfidenceRate || 0}%</span>
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-sm font-medium text-dark-50">Top Performers:</span>
+                    <div className="mt-1">
+                      {briefingData?.demandSignals.topPerformers.map((route) => (
+                        <Badge key={route} className="bg-green-900/30 text-green-300 mr-1 mb-1">
+                          {route}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-dark-400">Competitive Response Time</span>
-                    <span className="font-semibold text-dark-50">{briefingData?.businessImpact?.competitiveResponseSpeed?.avgResponseTimeHours || 0}h</span>
+                  <div>
+                    <span className="text-sm font-medium text-dark-50">Watch List:</span>
+                    <div className="mt-1">
+                      {briefingData?.demandSignals.concerns.map((route) => (
+                        <Badge key={route} className="bg-orange-900/30 text-orange-300 mr-1 mb-1">
+                          {route}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* AI Performance */}
+            {/* RM Activity */}
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader>
-                <CardTitle className="text-dark-50">AI Performance Metrics</CardTitle>
+                <CardTitle className="text-dark-50">RM System Activity</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">Time Savings (Weekly)</span>
-                  <span className="font-semibold text-green-400">{briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved?.toFixed(1) || 0}h</span>
+                  <span className="text-sm text-dark-400">Total Pricing Actions</span>
+                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity.pricingActions}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">AI Accuracy Rate</span>
-                  <span className="font-semibold text-blue-400">{briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy || 0}%</span>
+                  <span className="text-sm text-dark-400">System Automated</span>
+                  <span className="font-semibold text-blue-400">{briefingData?.rmActivity.systemActions}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">High Confidence Insights</span>
-                  <span className="font-semibold text-purple-400">{briefingData?.aiPerformance?.confidenceDistribution?.highConfidenceRate || 0}%</span>
+                  <span className="text-sm text-dark-400">Manual Actions</span>
+                  <span className="font-semibold text-orange-400">{briefingData?.rmActivity.manualActions}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">Competitive Response Time</span>
-                  <span className="font-semibold text-dark-50">{briefingData?.businessImpact?.competitiveResponseSpeed?.avgResponseTimeHours || 0}h</span>
+                  <span className="text-sm text-dark-400">Avg Response Time</span>
+                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity.avgResponseTime}</span>
                 </div>
               </CardContent>
             </Card>
@@ -1044,8 +939,8 @@ ${insight.description}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  {briefingData?.routeInsights?.map((route: any) => (
-                    <tr key={`route-${route.route}`} className="hover:bg-dark-800/30">
+                  {briefingData?.routeInsights.map((route) => (
+                    <tr key={route.route} className="hover:bg-dark-800/30">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-50">
                         {route.route}
                       </td>
@@ -1055,10 +950,10 @@ ${insight.description}
                         </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
-                        {route.loadFactor?.toFixed(1) || 0}%
+                        {route.loadFactor.toFixed(1)}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
-                        {route.yield?.toFixed(1) || 0}
+                        {route.yield.toFixed(1)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-dark-300">
                         {route.competitorPressure}
