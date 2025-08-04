@@ -103,6 +103,24 @@ export default function AnalystWorkbench() {
     return filtered;
   }, [allAlerts, priorityFilter, categoryFilter, statusFilter, searchQuery]);
 
+  // Debug effect to track allAlerts changes
+  React.useEffect(() => {
+    console.log('[AnalystWorkbench] allAlerts changed:', {
+      length: allAlerts?.length,
+      isArray: Array.isArray(allAlerts),
+      firstAlert: allAlerts?.[0]?.id?.slice(0,8)
+    });
+  }, [allAlerts]);
+
+  // Force re-render when allAlerts changes
+  React.useEffect(() => {
+    console.log('[AnalystWorkbench] useEffect triggered - allAlerts changed:', {
+      length: allAlerts?.length,
+      isArray: Array.isArray(allAlerts),
+      firstAlert: allAlerts?.[0]?.id?.slice(0,8)
+    });
+  }, [allAlerts]);
+
   // Apply same sorting to other alert lists
   const sortAlerts = (alerts: Alert[]) => {
     return alerts.sort((a: Alert, b: Alert) => {
@@ -273,9 +291,15 @@ export default function AnalystWorkbench() {
                   </Card>
                 ))}
               </div>
+            ) : filteredAlerts && filteredAlerts.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredAlerts.map((alert: Alert) => (
+                  <AlertCard key={alert.id} alert={alert} showDetails />
+                ))}
+              </div>
             ) : allAlerts && allAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {(filteredAlerts || allAlerts).map((alert: Alert) => (
+                {allAlerts.map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
                 ))}
               </div>
