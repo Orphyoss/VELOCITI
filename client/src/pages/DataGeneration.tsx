@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { api } from '@/services/api';
 import { useToast } from '@/hooks/use-toast';
+import AppShell from '@/components/layout/AppShell';
+import { useVelocitiStore } from '@/stores/useVelocitiStore';
 
 const SCENARIO_TYPES = [
   { value: 'auto', label: 'Auto-select Realistic Scenario', icon: '🎯' },
@@ -49,6 +51,11 @@ export default function DataGeneration() {
   const [selectedScenario, setSelectedScenario] = useState('auto');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { setCurrentModule } = useVelocitiStore();
+
+  useEffect(() => {
+    setCurrentModule('admin');
+  }, [setCurrentModule]);
 
   // Fetch recent data generation jobs
   const { data: recentJobs, isLoading, error: jobsError } = useQuery({
@@ -154,7 +161,9 @@ export default function DataGeneration() {
   };
 
   return (
-    <div className="space-y-6">
+    <AppShell>
+      <div className="p-6">
+        <div className="space-y-6">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Daily Data Generation</h2>
@@ -334,6 +343,8 @@ export default function DataGeneration() {
           )}
         </CardContent>
       </Card>
-    </div>
+        </div>
+      </div>
+    </AppShell>
   );
 }

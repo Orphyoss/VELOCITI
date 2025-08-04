@@ -81,6 +81,11 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     }
   ];
 
+  // Check if current page is an admin page to keep admin expanded
+  const isAdminPage = adminNavigationItems.some(item => 
+    location === item.path || location.startsWith(item.path.split('?')[0])
+  );
+
   if (!isOpen) return null;
 
   return (
@@ -127,7 +132,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                   <a
                     className={`flex items-center space-x-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? 'bg-aviation-600/20 text-aviation-400 border-l-2 border-aviation-500'
+                        ? 'bg-blue-600 text-white'
                         : 'text-dark-300 hover:text-white hover:bg-dark-800'
                     }`}
                     onClick={() => {
@@ -161,7 +166,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
               </div>
               
               {/* Admin Navigation Items - Collapsible */}
-              {isAdminExpanded && (
+              {(isAdminExpanded || isAdminPage) && (
                 <div className="space-y-1 ml-4">
                   {adminNavigationItems.map((item) => {
                     const Icon = item.icon;
@@ -172,7 +177,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                         <a
                           className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             isActive
-                              ? 'bg-aviation-600/20 text-aviation-400 border-l-2 border-aviation-500'
+                              ? 'bg-blue-600 text-white'
                               : 'text-dark-300 hover:text-white hover:bg-dark-800'
                           }`}
                           onClick={() => {

@@ -75,6 +75,11 @@ export default function Sidebar() {
     }
   ];
 
+  // Check if current page is an admin page to keep admin expanded
+  const isAdminPage = adminNavigationItems.some(item => 
+    location === item.path || location.startsWith(item.path.split('?')[0])
+  );
+
   return (
     <div className="w-64 sidebar flex flex-col">
       {/* Logo */}
@@ -99,7 +104,7 @@ export default function Sidebar() {
           return (
             <Link key={item.id} href={item.path}>
               <div 
-                className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer`}
+                className={`nav-item ${isActive ? 'active bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'} flex items-center space-x-3 text-lg font-medium cursor-pointer px-3 py-2 rounded-lg transition-colors duration-200`}
                 onClick={() => setCurrentModule(item.id as any)}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
@@ -128,7 +133,7 @@ export default function Sidebar() {
           </div>
           
           {/* Admin Navigation Items - Collapsible */}
-          {isAdminExpanded && (
+          {(isAdminExpanded || isAdminPage) && (
             <div className="space-y-1">
               {adminNavigationItems.map((item) => {
                 const Icon = item.icon;
