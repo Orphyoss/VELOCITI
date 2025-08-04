@@ -1323,10 +1323,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const actualEstimatedDailyFlights = dailyFlights;
       const actualDailyRevenue = scaledDailyRevenue;
       
+      const calculatedTotalRevenue = actualTotalFlights * actualAvgPrice;
       const revenue = { 
         total_flights: actualTotalFlights, 
         avg_price: actualAvgPrice, 
-        total_revenue: totalRevenue 
+        total_revenue: calculatedTotalRevenue 
       };
       const routes = ezyPricing.slice(0, 5).map(p => ({
         route_id: 'LGW-BCN', // Use known route since routeId may not exist
