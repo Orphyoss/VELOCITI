@@ -160,60 +160,42 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
-  // Fetch route performance data
-  const { data: performance, isLoading: performanceLoading } = useQuery({
-    queryKey: ['/api/routes/performance'],
+  // Fetch RM metrics directly from the dedicated endpoint
+  const { data: rmMetricsData, isLoading: rmMetricsLoading } = useQuery({
+    queryKey: ['/api/telos/rm-metrics'],
     enabled: true,
+    refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Real RM metrics data from live backend metrics
+  // Use the fetched RM metrics with fallbacks
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / ((performance as any)?.length || 1) / 30 || 0, // Daily average from total revenue
-      weekly: ((performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / ((performance as any)?.length || 1) / 30 || 0) * 7,
-      monthly: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) || 0,
-      trend: (insights as any)?.length > 0 ? (insights as any).length * 1.5 : 0 // Trend based on active insights
+      daily: rmMetricsData?.revenueImpact?.daily || 0,
+      weekly: rmMetricsData?.revenueImpact?.weekly || 0,
+      monthly: rmMetricsData?.revenueImpact?.monthly || 0,
+      trend: rmMetricsData?.revenueImpact?.trend || 0
     },
     yieldOptimization: {
-      currentYield: (performance as any)?.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0,
-      targetYield: ((performance as any)?.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0) * 1.12,
-      improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 0,
-      topRoutes: (performance as any)?.slice(0, 5).map((route: any) => ({
-        route: route.routeId,
-        yield: parseFloat(route.avgYield || '0'),
-        change: parseFloat(route.totalRevenue || '0') / 50000
-      })) || []
+      currentYield: rmMetricsData?.yieldOptimization?.currentYield || 0,
+      targetYield: rmMetricsData?.yieldOptimization?.targetYield || 0,
+      improvement: rmMetricsData?.yieldOptimization?.improvement || 0,
+      topRoutes: rmMetricsData?.yieldOptimization?.topRoutes || []
     },
     competitiveIntelligence: {
-      priceAdvantageRoutes: (competitive as any)?.filter((comp: any) => {
-        const ezyPrice = parseFloat(comp.avgPrice || '0');
-        const competitorAvg = (competitive as any)?.reduce((sum: number, c: any) => sum + parseFloat(c.avgPrice || '0'), 0) / (competitive as any)?.length || 100;
-        return ezyPrice < competitorAvg * 0.95; // EZY price 5% below market average
-      }).length || 0,
-      priceDisadvantageRoutes: (competitive as any)?.filter((comp: any) => {
-        const ezyPrice = parseFloat(comp.avgPrice || '0');
-        const competitorAvg = (competitive as any)?.reduce((sum: number, c: any) => sum + parseFloat(c.avgPrice || '0'), 0) / (competitive as any)?.length || 100;
-        return ezyPrice > competitorAvg * 1.05; // EZY price 5% above market average
-      }).length || 0,
-      responseTime: (insights as any)?.filter((insight: any) => insight.agentSource === 'Competitive Agent').length > 0 ? 2 : 0, // 2 hours response time when competitive insights exist
-      marketShare: 25.3 // EasyJet's typical market share percentage
+      priceAdvantageRoutes: rmMetricsData?.competitiveIntelligence?.priceAdvantageRoutes || 0,
+      priceDisadvantageRoutes: rmMetricsData?.competitiveIntelligence?.priceDisadvantageRoutes || 0,
+      responseTime: rmMetricsData?.competitiveIntelligence?.responseTime || 0,
+      marketShare: rmMetricsData?.competitiveIntelligence?.marketShare || 25.3
     },
     operationalEfficiency: {
-      loadFactorVariance: (performance as any)?.reduce((acc: number, route: any) => {
-        const lf = parseFloat(route.avgLoadFactor || '0');
-        return acc + Math.abs(lf - 80); // Variance from 80% target load factor
-      }, 0) / Math.max(1, (performance as any)?.length || 1) || 0,
-      demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 80,
-      bookingPaceVariance: (routeDashboard as any)?.demandVariance || 0,
-      capacityUtilization: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.avgLoadFactor || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0
+      loadFactorVariance: rmMetricsData?.operationalEfficiency?.loadFactorVariance || 0,
+      demandPredictionAccuracy: rmMetricsData?.operationalEfficiency?.demandPredictionAccuracy || (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 80,
+      bookingPaceVariance: rmMetricsData?.operationalEfficiency?.bookingPaceVariance || 0,
+      capacityUtilization: rmMetricsData?.operationalEfficiency?.loadFactor || 0 // Using loadFactor from RM metrics endpoint
     },
     riskMetrics: {
       routesAtRisk: (insights as any)?.filter((insight: any) => insight.priorityLevel === 'Critical').length || 0,
-      volatilityIndex: (performance as any)?.reduce((acc: number, route: any) => {
-        const routeYield = parseFloat(route.avgYield || '0');
-        const avgYield = 100; // Average yield baseline
-        return acc + Math.abs(routeYield - avgYield);
-      }, 0) / Math.max(1, (performance as any)?.length || 1) || 0,
+      volatilityIndex: rmMetricsData?.operationalEfficiency?.volatilityIndex || 0,
       competitorThreats: (insights as any)?.filter((insight: any) => insight.insightType === 'Alert' && insight.agentSource === 'Competitive Agent').length || 0,
       seasonalRisks: (insights as any)?.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal') || insight.description?.toLowerCase().includes('demand')).length || 0
     }
