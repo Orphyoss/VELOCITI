@@ -51,7 +51,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const adminNavigationItems = [
     {
       id: 'action-agents',
-      label: 'Action Agents',
+      label: 'Action Agents Setup',
       icon: Zap,
       path: '/action-agents'
     },
@@ -75,7 +75,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     },
     {
       id: 'settings',
-      label: 'Settings',
+      label: 'RAG Management',
       icon: Cog,
       path: '/settings'
     }
@@ -149,8 +149,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 className="flex items-center justify-between px-3 py-2 mb-2 cursor-pointer hover:bg-dark-800 rounded-lg"
                 onClick={() => setIsAdminExpanded(!isAdminExpanded)}
               >
-                <div className="text-xs font-bold text-orange-400 uppercase tracking-wider font-mono">
-                  Admin
+                <div className="text-lg font-bold text-orange-400 uppercase tracking-wider font-mono flex items-center space-x-2">
+                  <Settings className="w-4 h-4" />
+                  <span>Configuration</span>
                 </div>
                 {isAdminExpanded ? (
                   <ChevronDown className="w-4 h-4 text-gray-400" />

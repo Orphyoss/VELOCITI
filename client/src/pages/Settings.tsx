@@ -17,10 +17,10 @@ export default function Settings() {
         <div className="mb-8">
           <div className="flex items-center space-x-3 mb-4">
             <SettingsIcon className="w-8 h-8 text-orange-500" />
-            <h1 className="text-3xl font-bold text-dark-50">Settings</h1>
+            <h1 className="text-3xl font-bold text-dark-50">RAG Management</h1>
           </div>
           <p className="text-dark-400">
-            Manage system configuration and document uploads
+            Manage RAG document uploads and vector database content
           </p>
         </div>
 

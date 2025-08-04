@@ -45,7 +45,7 @@ export default function Sidebar() {
   const adminNavigationItems = [
     {
       id: 'action-agents',
-      label: 'Action Agents',
+      label: 'Action Agents Setup',
       icon: Zap,
       path: '/action-agents'
     },
@@ -69,7 +69,7 @@ export default function Sidebar() {
     },
     {
       id: 'settings',
-      label: 'Settings',
+      label: 'RAG Management',
       icon: Cog,
       path: '/settings'
     }
@@ -116,8 +116,9 @@ export default function Sidebar() {
             className="flex items-center justify-between px-2 py-2 mb-2 cursor-pointer hover:bg-gray-800 rounded-md"
             onClick={() => setIsAdminExpanded(!isAdminExpanded)}
           >
-            <div className="text-xs font-bold text-orange-400 dark:text-orange-300 uppercase tracking-wider font-mono">
-              Admin
+            <div className="text-lg font-bold text-orange-400 dark:text-orange-300 uppercase tracking-wider font-mono flex items-center space-x-2">
+              <Settings className="w-4 h-4" />
+              <span>Configuration</span>
             </div>
             {isAdminExpanded ? (
               <ChevronDown className="w-4 h-4 text-gray-400" />
