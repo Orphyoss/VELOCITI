@@ -28,12 +28,12 @@ export default function MemoryStats() {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
+          <Card key={i} className="animate-pulse !bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
             <CardHeader className="pb-3">
-              <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+              <div className="h-4 bg-dark-600 rounded w-1/2"></div>
             </CardHeader>
             <CardContent>
-              <div className="h-8 bg-gray-300 rounded w-1/3"></div>
+              <div className="h-8 bg-dark-600 rounded w-1/3"></div>
             </CardContent>
           </Card>
         ))}
@@ -43,9 +43,9 @@ export default function MemoryStats() {
 
   if (!stats) {
     return (
-      <Card>
+      <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
         <CardContent className="p-6">
-          <p className="text-gray-500">Memory stats unavailable</p>
+          <p className="text-dark-400">Memory stats unavailable</p>
         </CardContent>
       </Card>
     );
@@ -66,69 +66,69 @@ export default function MemoryStats() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Active Contexts */}
-        <Card>
+        <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardDescription>Active Contexts</CardDescription>
+              <CardDescription className="!text-dark-300">Active Contexts</CardDescription>
               <Users className="w-4 h-4 text-blue-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-blue-400">
               {stats.activeContexts}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-dark-400 mt-1">
               User sessions with memory
             </p>
           </CardContent>
         </Card>
 
         {/* Total Conversations */}
-        <Card>
+        <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardDescription>Conversations</CardDescription>
+              <CardDescription className="!text-dark-300">Conversations</CardDescription>
               <MessageSquare className="w-4 h-4 text-green-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-400">
               {stats.totalConversations}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-dark-400 mt-1">
               Total conversation threads
             </p>
           </CardContent>
         </Card>
 
         {/* Learning Patterns */}
-        <Card>
+        <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardDescription>Learning Patterns</CardDescription>
+              <CardDescription className="!text-dark-300">Learning Patterns</CardDescription>
               <TrendingUp className="w-4 h-4 text-purple-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-purple-400">
               {stats.totalLearnings}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-dark-400 mt-1">
               Feedback & learnings stored
             </p>
           </CardContent>
         </Card>
 
         {/* Memory Usage */}
-        <Card>
+        <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardDescription>Memory Usage</CardDescription>
+              <CardDescription className="!text-dark-300">Memory Usage</CardDescription>
               <Database className="w-4 h-4 text-orange-500" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
+            <div className="text-2xl font-bold text-orange-400">
               {stats.memoryUsage}
             </div>
             <div className="mt-2">
@@ -136,7 +136,7 @@ export default function MemoryStats() {
                 value={memoryProgressValue} 
                 className="h-2"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-dark-400 mt-1">
                 {memoryProgressValue.toFixed(1)}% of allocated memory
               </p>
             </div>
@@ -145,13 +145,13 @@ export default function MemoryStats() {
       </div>
 
       {/* Memory Features Overview */}
-      <Card>
+      <Card className="!bg-dark-800 !border-dark-600 !text-dark-50 shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 !text-dark-50">
             <Brain className="w-5 h-5" />
             Memory Capabilities
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="!text-dark-300">
             AI agents learn and remember to provide better insights over time
           </CardDescription>
         </CardHeader>
