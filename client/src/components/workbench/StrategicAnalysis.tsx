@@ -216,7 +216,7 @@ export default function StrategicAnalysis() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
                 <Brain className="text-aviation-500 mr-2" />
-                Strategic Analysis
+                Generative AI Strategic Analysis
               </CardTitle>
               <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40 text-purple-200">
                 {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
