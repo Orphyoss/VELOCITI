@@ -8,7 +8,13 @@ class WebSocketService {
 
   connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // In development, explicitly use localhost:5000 to avoid undefined port
+    const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? `${window.location.hostname}:5000`
+      : window.location.host;
+    const wsUrl = `${protocol}//${host}/ws`;
+    
+    console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
     
     try {
       this.ws = new WebSocket(wsUrl);
@@ -39,7 +45,7 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error(`[WebSocket] Connection error to ${wsUrl}:`, error);
         useVelocitiStore.getState().setConnectionStatus(false);
       };
 
