@@ -1330,7 +1330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         yieldOptimization: {
           currentYield: Math.round(currentYield * 100) / 100,
           targetYield: Math.round(currentYield * 1.15 * 100) / 100, // 15% improvement target
-          improvement: totalLoadFactor > 75 ? 8.5 : 12.3, // % improvement based on load factor
+          improvement: (totalLoadFactor * 100) > 75 ? 8.5 : 12.3, // % improvement based on load factor
           topRoutes: routePerformance.slice(0, 5).map((route: any) => ({
             route: route.route,
             yield: parseFloat(route.yield || '0'),
@@ -1346,18 +1346,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         competitiveIntelligence: {
           priceAdvantageRoutes,
           priceDisadvantageRoutes,
-          responseTime: totalLoadFactor > 80 ? 1.2 : 2.1, // Hours response time based on performance
-          marketShare: Math.min(25.3, 15 + (totalLoadFactor - 70) * 0.5) // Market share estimate
+          responseTime: (totalLoadFactor * 100) > 80 ? 1.2 : 2.1, // Hours response time based on performance
+          marketShare: Math.min(25.3, 15 + ((totalLoadFactor * 100) - 70) * 0.5) // Market share estimate
         },
         operationalEfficiency: {
-          loadFactor: Math.round(totalLoadFactor * 100) / 100,
-          utilizationRate: Math.min(95, 85 + (totalLoadFactor - 70) * 0.8),
+          loadFactor: Math.round(totalLoadFactor * 100 * 100) / 100, // Convert decimal to percentage (0.8 -> 80.0)
+          utilizationRate: Math.min(95, 85 + (totalLoadFactor * 100 - 70) * 0.8),
           onTimePerformance: routeCount > 5 ? 87.4 : 82.1,
           routesMonitored: routeCount
         }
       };
       
-      console.log(`[Telos RM Metrics] Calculated metrics from ${routeCount} routes: yield=${currentYield.toFixed(2)}, revenue=${totalRevenue.toFixed(0)}, load factor=${totalLoadFactor.toFixed(1)}%`);
+      console.log(`[Telos RM Metrics] Calculated metrics from ${routeCount} routes: yield=${currentYield.toFixed(2)}, revenue=${totalRevenue.toFixed(0)}, load factor=${(totalLoadFactor * 100).toFixed(1)}%`);
       
       res.json(rmMetrics);
     } catch (error) {
