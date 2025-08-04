@@ -7,8 +7,8 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **COMPLETED: Database Architecture Consolidation** - Successfully eliminated dual database architecture (Supabase PostgreSQL + MemoryStorage) by implementing PostgreSQL-only storage, fixing -98% yield metrics, and ensuring single source of truth for all data operations (2025-08-04)
 - **COMPLETED: Telos Intelligence Revenue Metrics Fixed** - Resolved all broken metrics displaying £0.00 by implementing dedicated `/api/telos/rm-metrics` endpoint with authentic route performance data, fixed JavaScript errors, and TypeScript issues (2025-08-04)
-- **COMPLETED: Dual Database Removal** - Methodically converted hybrid storage to PostgreSQL-first architecture with error handling (2025-08-03)
 - **COMPLETED: Database Integrity Audit** - Verified Supabase PostgreSQL as primary data source with authentic data operations (2025-08-03)
 - **VERIFIED: No hardcoded/mock data violations** - All primary operations use real database queries with proper error handling (2025-08-03)
 - Fixed critical deployment errors by resolving TypeScript type mismatches in storage layer (2025-08-03)
@@ -55,9 +55,10 @@ Preferred communication style: Simple, everyday language.
 - **Data Flow**: AI agents analyze data, generate alerts stored in PostgreSQL, and broadcast via WebSockets. Real-time updates are pushed to clients.
 
 ### System Design Choices
-- **Data Storage**: PostgreSQL with Neon serverless hosting.
+- **Data Storage**: PostgreSQL-only architecture with Neon serverless hosting (consolidated from dual database system).
 - **Schema Management**: Drizzle Kit for migrations.
 - **Data Structure**: Relational design for users, alerts, agents, feedback, route performance, conversations, system metrics, and activities.
+- **Storage Layer**: Clean PostgresStorage class with raw SQL queries, eliminating memory storage fallbacks.
 - **High Availability**: Designed for high availability with automatic failover and scalable architecture.
 
 ## External Dependencies
