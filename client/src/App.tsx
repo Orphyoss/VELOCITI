@@ -19,14 +19,14 @@ import NotFound from "@/pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
+      <Route path="/" component={TelosIntelligence} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/workbench" component={AnalystWorkbench} />
       <Route path="/agents" component={Agents} />
       <Route path="/action-agents" component={ActionAgents} />
       <Route path="/action-agents-new">{() => <ActionAgentsNew />}</Route>
       <Route path="/genie" component={DatabricsGenie} />
       <Route path="/strategic" component={StrategicAnalysis} />
-      <Route path="/telos" component={TelosIntelligence} />
       <Route path="/briefing" component={MorningBriefing} />
       <Route path="/admin" component={Admin} />
       <Route path="/data-generation" component={DataGeneration} />

@@ -32,9 +32,6 @@ export default function Dashboard() {
         {/* Key Metrics */}
         <MetricsOverview />
         
-        {/* Network Performance - Full width horizontal */}
-        <NetworkOverview />
-        
         {/* Today's Priorities - Critical alerts only */}
         <TodaysPriorities />
       </div>
