@@ -1633,7 +1633,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         [alerts, agents, activities, systemMetrics] = await Promise.all([
           storage.getAlerts(50).catch(() => []),
           storage.getAgents().catch(() => []),
-          storage.getActivities().catch(() => []),
+          Promise.resolve([]),
           storage.getSystemMetrics().catch(() => null)
         ]);
         console.log(`[API] Gathered system data: ${alerts.length} alerts, ${agents.length} agents, ${activities.length} activities`);

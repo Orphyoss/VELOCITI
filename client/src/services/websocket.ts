@@ -8,15 +8,16 @@ class WebSocketService {
 
   connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // In development, explicitly use localhost:5000 to avoid undefined port
-    const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? `${window.location.hostname}:5000`
-      : window.location.host;
-    const wsUrl = `${protocol}//${host}/ws`;
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
     console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
     
     try {
+      // Add additional error checking for WebSocket construction
+      if (!window.WebSocket) {
+        throw new Error('WebSocket not supported by browser');
+      }
+      
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
