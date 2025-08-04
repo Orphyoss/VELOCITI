@@ -155,7 +155,8 @@ export default function TelosIntelligence() {
   // Fetch competitive pricing
   const { data: competitive, isLoading: competitiveLoading } = useQuery({
     queryKey: ['/api/telos/competitive-position', competitiveRoute],
-    enabled: true,
+    queryFn: () => apiRequest(`/api/telos/competitive-position?route=${competitiveRoute}`),
+    enabled: !!competitiveRoute,
   });
 
   // Fetch route dashboard
@@ -822,8 +823,8 @@ export default function TelosIntelligence() {
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
                 <div>
-                  <CardTitle>Competitive Positioning Analysis</CardTitle>
-                  <CardDescription>EasyJet vs competitors across key routes</CardDescription>
+                  <CardTitle>Route Competitive Intelligence</CardTitle>
+                  <CardDescription>Detailed route-specific competitive positioning and market analysis</CardDescription>
                 </div>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-muted-foreground">Route:</span>
