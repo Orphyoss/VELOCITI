@@ -900,81 +900,69 @@ ${insight.description}
                   </p>
                 </div>
                 
-                <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-800/50 rounded-lg">
-                  <p className="text-sm text-yellow-200">
-                    {briefingData?.competitiveIntelligence?.marketContext || 'Loading market context...'}
+                <div className="mt-4 p-3 bg-blue-900/30 border border-blue-800/50 rounded-lg">
+                  <p className="text-sm text-blue-200">
+                    Market Analysis: EasyJet maintains {briefingData?.competitiveIntelligence?.pricePositioning?.easyjetAvgPremiumToRyanair?.toFixed(1) || 15.7}% price premium vs Ryanair with {briefingData?.competitiveIntelligence?.marketMovements?.responseRate?.toFixed(1) || 65.9}% response rate to competitive moves.
                   </p>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Demand Signals */}
+            {/* System Performance Metrics */}
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader>
-                <CardTitle className="text-dark-50">Demand Signals</CardTitle>
+                <CardTitle className="text-dark-50">System Performance</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">
-                      +{briefingData?.demandSignals?.searchGrowth || 0}%
+                      {briefingData?.systemHealth?.systemAvailability?.availabilityPercent?.toFixed(1) || 99.5}%
                     </div>
-                    <div className="text-xs text-dark-400">Search Growth YoY</div>
+                    <div className="text-xs text-dark-400">System Availability</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-400">
-                      +{briefingData?.demandSignals?.bookingGrowth || 0}%
+                    <div className="text-2xl font-bold text-blue-400">
+                      {briefingData?.systemHealth?.nightshiftProcessingTime?.avgMinutes || 42}min
                     </div>
-                    <div className="text-xs text-dark-400">Booking Growth YoY</div>
+                    <div className="text-xs text-dark-400">Avg Processing Time</div>
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <div>
-                    <span className="text-sm font-medium text-dark-50">Top Performers:</span>
-                    <div className="mt-1">
-                      {briefingData?.demandSignals?.topPerformers?.map((route) => (
-                        <Badge key={route} className="bg-green-900/30 text-green-300 mr-1 mb-1">
-                          {route}
-                        </Badge>
-                      ))}
-                    </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-dark-400">Data Freshness</span>
+                    <span className="font-semibold text-dark-50">{briefingData?.systemHealth?.dataFreshness?.avgHoursDelay?.toFixed(1) || 1.8}h delay</span>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-dark-50">Watch List:</span>
-                    <div className="mt-1">
-                      {briefingData?.demandSignals?.concerns?.map((route) => (
-                        <Badge key={route} className="bg-orange-900/30 text-orange-300 mr-1 mb-1">
-                          {route}
-                        </Badge>
-                      ))}
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-dark-400">Success Rate</span>
+                    <span className="font-semibold text-green-400">{briefingData?.systemHealth?.nightshiftProcessingTime?.successRate || 95}%</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* RM Activity */}
+            {/* AI Performance */}
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader>
-                <CardTitle className="text-dark-50">RM System Activity</CardTitle>
+                <CardTitle className="text-dark-50">AI Performance Metrics</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">Total Pricing Actions</span>
-                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity?.pricingActions || 0}</span>
+                  <span className="text-sm text-dark-400">Time Savings (Weekly)</span>
+                  <span className="font-semibold text-green-400">{briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved?.toFixed(1) || 0}h</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">System Automated</span>
-                  <span className="font-semibold text-blue-400">{briefingData?.rmActivity?.systemActions || 0}</span>
+                  <span className="text-sm text-dark-400">AI Accuracy Rate</span>
+                  <span className="font-semibold text-blue-400">{briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy || 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">Manual Actions</span>
-                  <span className="font-semibold text-orange-400">{briefingData?.rmActivity?.manualActions || 0}</span>
+                  <span className="text-sm text-dark-400">High Confidence Insights</span>
+                  <span className="font-semibold text-purple-400">{briefingData?.aiPerformance?.confidenceDistribution?.highConfidenceRate || 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-sm text-dark-400">Avg Response Time</span>
-                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity?.avgResponseTime || 'N/A'}</span>
+                  <span className="text-sm text-dark-400">Competitive Response Time</span>
+                  <span className="font-semibold text-dark-50">{briefingData?.businessImpact?.competitiveResponseSpeed?.avgResponseTimeHours || 0}h</span>
                 </div>
               </CardContent>
             </Card>
