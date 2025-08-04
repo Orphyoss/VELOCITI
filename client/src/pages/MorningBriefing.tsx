@@ -652,7 +652,7 @@ ${insight.description}
     );
   }
 
-  console.log('[MorningBriefing] Rendering briefing with data:', briefingData.analyst.name);
+  console.log('[MorningBriefing] Rendering briefing with data:', briefingData);
 
   return (
     <AppShell>
@@ -678,7 +678,7 @@ ${insight.description}
                   className="bg-dark-700 border border-dark-600 rounded px-2 py-1 text-dark-200 text-sm mb-1"
                 />
                 <p className="text-xs text-dark-400">
-                  Generated at {briefingData?.processingTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
+                  Generated at {new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
                 </p>
               </div>
               <Button 
@@ -776,55 +776,32 @@ ${insight.description}
           </Card>
         )}
 
-        {/* Analyst Context */}
-        <Card className="bg-dark-900 border-dark-800 analyst-context-card">
+        {/* Executive Summary */}
+        <Card className="bg-dark-900 border-dark-800">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-white mb-2">
-                  Good morning, {briefingData?.analyst.name}
+                  Executive Summary
                 </h2>
                 <p className="text-white text-sm mb-1">
-                  {briefingData?.analyst.role} • {briefingData?.analyst.focus}
-                </p>
-                <p className="text-gray-300 text-xs mt-1">
-                  Managing {briefingData?.analyst.routes.length} core routes: {briefingData?.analyst.routes.join(', ')}
+                  Revenue Intelligence Briefing • {new Date(selectedDate).toLocaleDateString('en-GB', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
                 </p>
               </div>
               <div className="text-right">
-                <Badge 
-                  className={`${
-                    briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' 
-                      ? 'bg-orange-900 text-orange-200 hover:bg-orange-800' 
-                      : 'bg-green-900 text-green-200 hover:bg-green-800'
-                  }`}
-                >
-                  {briefingData?.executiveSummary.status === 'ATTENTION_REQUIRED' ? (
-                    <AlertTriangle className="w-4 h-4 mr-1" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                  )}
-                  {briefingData?.executiveSummary.status.replace('_', ' ')}
+                <Badge className="bg-blue-900 text-blue-200 hover:bg-blue-800">
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  OPERATIONAL
                 </Badge>
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Executive Summary */}
-        <Card className="bg-gradient-to-r from-aviation-950 to-dark-900 border-aviation-800">
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-white mb-3">Executive Summary</h3>
-                <p className="text-dark-100 text-lg leading-relaxed">
-                  {briefingData?.executiveSummary.keyMessage}
-                </p>
-                <div className="mt-4 flex items-center text-sm text-dark-400">
-                  <Target className="w-4 h-4 mr-2" />
-                  Confidence Score: {Math.round((briefingData?.executiveSummary.confidence || 0.89) * 100)}%
-                </div>
-              </div>
+            <div className="text-dark-100 leading-relaxed whitespace-pre-line mt-4">
+              {briefingData?.executiveSummary || 'Loading executive summary...'}
             </div>
           </CardContent>
         </Card>
@@ -839,7 +816,7 @@ ${insight.description}
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-dark-800">
-                  {briefingData?.priorityActions.map((action) => (
+                  {briefingData?.priorityActions?.map((action: any) => (
                     <div 
                       key={action.id} 
                       className="p-6 hover:bg-dark-800/50 transition-colors cursor-pointer"
