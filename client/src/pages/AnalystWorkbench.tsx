@@ -232,9 +232,9 @@ export default function AnalystWorkbench() {
                   </Card>
                 ))}
               </div>
-            ) : filteredAlerts && filteredAlerts.length > 0 ? (
+            ) : allAlerts && allAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredAlerts.map((alert: Alert) => (
+                {(filteredAlerts || allAlerts).map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
                 ))}
               </div>
@@ -243,12 +243,12 @@ export default function AnalystWorkbench() {
                 <CardContent className="p-8 text-center">
                   <AlertTriangle className="w-12 h-12 text-dark-600 mx-auto mb-4" />
                   <h4 className="text-lg font-medium text-dark-300 mb-2">
-                    No Alerts Found
+                    {allAlerts?.length === 0 ? 'No Alerts in Database' : 'No Alerts Match Filters'}
                   </h4>
                   <p className="text-dark-400">
-                    {searchQuery || priorityFilter !== 'all' || categoryFilter !== 'all' || statusFilter !== 'all'
-                      ? 'Try adjusting your filters to see more alerts.'
-                      : 'All systems are running smoothly.'}
+                    {allAlerts?.length === 0 
+                      ? 'Check API connection status in debug panel above'
+                      : 'Try adjusting your filters to see more alerts.'}
                   </p>
                 </CardContent>
               </Card>
