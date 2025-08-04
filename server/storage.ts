@@ -7,7 +7,7 @@ import {
 } from '@shared/schema';
 import { db, client } from './services/supabase.js';
 import { alerts, agents, users, feedback, conversations, systemMetrics, activities, routePerformance } from '@shared/schema';
-import { eq, desc, gte, lte, and } from 'drizzle-orm';
+import { eq, desc, gte, lte, and, sql } from 'drizzle-orm';
 
 // Temporary memory storage for development resilience
 const memoryStore = {
@@ -318,6 +318,20 @@ export class MemoryStorage implements IStorage {
 
   async getAgents(): Promise<Agent[]> {
     try {
+      // Check if agents table exists first
+      const tableExists = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'agents'
+        );
+      `);
+      
+      if (!(tableExists as any).rows?.[0]?.exists) {
+        console.warn('[Storage] agents table does not exist, using memory store');
+        return Array.from(memoryStore.agents.values());
+      }
+
       const result = await db.select().from(agents);
       if (result.length > 0) {
         return result.map(agent => ({
@@ -341,6 +355,20 @@ export class MemoryStorage implements IStorage {
 
   async getAgent(id: string): Promise<Agent | undefined> {
     try {
+      // Check if agents table exists first
+      const tableExists = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'agents'
+        );
+      `);
+      
+      if (!(tableExists as any).rows?.[0]?.exists) {
+        console.warn('[Storage] agents table does not exist, using memory store');
+        return memoryStore.agents.get(id);
+      }
+
       const result = await db.select().from(agents).where(eq(agents.id, id));
       if (result.length > 0) {
         const agent = result[0];
