@@ -59,9 +59,9 @@ export default function AnalystWorkbench() {
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
-  // Filter and sort alerts by criticality then date
-  const filteredAlerts = React.useMemo(() => {
-    console.log('[AnalystWorkbench] Processing alerts:', {
+  // Direct filtering function (bypassing React.useMemo issues)
+  const getFilteredAlerts = () => {
+    console.log('[AnalystWorkbench] DIRECT filtering alerts:', {
       allAlertsType: typeof allAlerts,
       allAlertsLength: allAlerts?.length,
       isArray: Array.isArray(allAlerts),
@@ -90,7 +90,7 @@ export default function AnalystWorkbench() {
       return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
     });
     
-    console.log('[AnalystWorkbench] Filtered alerts result:', {
+    console.log('[AnalystWorkbench] DIRECT filtering result:', {
       originalCount: allAlerts.length,
       filteredCount: filtered.length,
       firstFiltered: filtered[0] ? {
@@ -101,7 +101,9 @@ export default function AnalystWorkbench() {
     });
     
     return filtered;
-  }, [allAlerts, priorityFilter, categoryFilter, statusFilter, searchQuery]);
+  };
+
+  const filteredAlerts = getFilteredAlerts();
 
   // Debug effect to track allAlerts changes
   React.useEffect(() => {
@@ -291,9 +293,15 @@ export default function AnalystWorkbench() {
                   </Card>
                 ))}
               </div>
+            ) : allAlerts && allAlerts.length > 0 && filteredAlerts && filteredAlerts.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {filteredAlerts.map((alert: Alert) => (
+                  <AlertCard key={alert.id} alert={alert} showDetails />
+                ))}
+              </div>
             ) : allAlerts && allAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {(filteredAlerts.length > 0 ? filteredAlerts : allAlerts).map((alert: Alert) => (
+                {allAlerts.map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
                 ))}
               </div>
