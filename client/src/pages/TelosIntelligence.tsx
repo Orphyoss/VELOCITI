@@ -292,25 +292,21 @@ export default function TelosIntelligence() {
       <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Telos Intelligence Platform</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            AI-powered competitive intelligence and market analysis for EasyJet
-          </p>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => runAnalysisMutation.mutate()}
+            disabled={runAnalysisMutation.isPending}
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+            size="sm"
+          >
+            {runAnalysisMutation.isPending ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin text-white" />
+            ) : (
+              <Activity className="h-4 w-4 mr-2" />
+            )}
+            <span className="sm:inline">Run Analysis</span>
+          </Button>
         </div>
-        <Button
-          onClick={() => runAnalysisMutation.mutate()}
-          disabled={runAnalysisMutation.isPending}
-          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-          size="sm"
-        >
-          {runAnalysisMutation.isPending ? (
-            <RefreshCw className="h-4 w-4 mr-2 animate-spin text-white" />
-          ) : (
-            <Activity className="h-4 w-4 mr-2" />
-          )}
-          <span className="sm:inline">Run Analysis</span>
-        </Button>
       </div>
 
       {/* Revenue Management KPIs */}
