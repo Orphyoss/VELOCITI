@@ -291,15 +291,9 @@ export default function AnalystWorkbench() {
                   </Card>
                 ))}
               </div>
-            ) : filteredAlerts && filteredAlerts.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredAlerts.map((alert: Alert) => (
-                  <AlertCard key={alert.id} alert={alert} showDetails />
-                ))}
-              </div>
             ) : allAlerts && allAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {allAlerts.map((alert: Alert) => (
+                {(filteredAlerts.length > 0 ? filteredAlerts : allAlerts).map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
                 ))}
               </div>
