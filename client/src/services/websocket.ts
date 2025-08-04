@@ -8,7 +8,9 @@ class WebSocketService {
 
   connect() {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Use window.location.host, but fallback to localhost:3000 if undefined
+    const host = window.location.host || 'localhost:3000';
+    const wsUrl = `${protocol}//${host}/ws`;
     
     console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
     

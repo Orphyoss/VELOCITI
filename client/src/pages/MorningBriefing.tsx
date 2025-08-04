@@ -336,25 +336,25 @@ export default function MorningBriefing() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-dark-800 rounded-lg p-3">
                   <div className="text-2xl font-bold text-aviation-400">
-                    £{(parseFloat(briefingData.performanceMetrics.networkYield) || 0).toFixed(0)}
+                    £{(parseFloat(String(briefingData.performanceMetrics.networkYield)) || 0).toFixed(0)}
                   </div>
                   <div className="text-xs text-dark-400">Network Yield</div>
                 </div>
                 <div className="bg-dark-800 rounded-lg p-3">
                   <div className="text-2xl font-bold text-green-400">
-                    {(parseFloat(briefingData.performanceMetrics.loadFactor) || 0).toFixed(1)}%
+                    {(parseFloat(String(briefingData.performanceMetrics.loadFactor)) || 0).toFixed(1)}%
                   </div>
                   <div className="text-xs text-dark-400">Load Factor</div>
                 </div>
                 <div className="bg-dark-800 rounded-lg p-3">
                   <div className="text-2xl font-bold text-blue-400">
-                    £{((parseFloat(briefingData.performanceMetrics.revenueImpact) || 0) / 1000).toFixed(0)}K
+                    £{((parseFloat(String(briefingData.performanceMetrics.revenueImpact)) || 0) / 1000).toFixed(0)}K
                   </div>
                   <div className="text-xs text-dark-400">Revenue Impact</div>
                 </div>
                 <div className="bg-dark-800 rounded-lg p-3">
                   <div className="text-2xl font-bold text-purple-400">
-                    {(parseFloat(briefingData.performanceMetrics.aiAccuracy) || 0).toFixed(1)}%
+                    {(parseFloat(String(briefingData.performanceMetrics.aiAccuracy)) || 0).toFixed(1)}%
                   </div>
                   <div className="text-xs text-dark-400">AI Accuracy</div>
                 </div>

@@ -27,7 +27,7 @@ export function PerformanceMonitor() {
     queryFn: async () => {
       const response = await fetch('/api/monitor/performance');
       if (!response.ok) throw new Error('Failed to fetch performance data');
-      return response.json() as PerformanceStats;
+      return response.json();
     },
     refetchInterval: 5000 // Update every 5 seconds
   });
@@ -174,20 +174,23 @@ export function PerformanceMonitor() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {performanceData?.apiHealth ? Object.entries(performanceData.apiHealth).map(([service, health]) => (
-              <div key={service} className="flex items-center justify-between p-3 bg-dark-800 rounded">
-                <div>
-                  <div className="font-medium text-dark-100 capitalize">{service}</div>
-                  <div className="text-xs text-dark-400">{health.responseTime}ms</div>
+            {performanceData?.apiHealth ? Object.entries(performanceData.apiHealth).map(([service, health]) => {
+              const healthData = health as { status: string; responseTime: number };
+              return (
+                <div key={service} className="flex items-center justify-between p-3 bg-dark-800 rounded">
+                  <div>
+                    <div className="font-medium text-dark-100 capitalize">{service}</div>
+                    <div className="text-xs text-dark-400">{healthData.responseTime}ms</div>
+                  </div>
+                  <Badge 
+                    variant={getHealthBadgeVariant(healthData.status)}
+                    className={getHealthColor(healthData.status)}
+                  >
+                    {healthData.status}
+                  </Badge>
                 </div>
-                <Badge 
-                  variant={getHealthBadgeVariant(health.status)}
-                  className={getHealthColor(health.status)}
-                >
-                  {health.status}
-                </Badge>
-              </div>
-            )) : (
+              );
+            }) : (
               <div className="col-span-4 text-center text-dark-400 py-8">
                 No health data available
               </div>

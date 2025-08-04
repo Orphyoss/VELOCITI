@@ -48,7 +48,7 @@ export const useVelocitiStore = create<VelocitiState>((set, get) => ({
   
   updateAlertStatus: (id, status) => set(state => ({
     alerts: state.alerts.map(alert => 
-      alert.id === id ? { ...alert, status } : alert
+      alert.id === id ? { ...alert, status: status as 'active' | 'dismissed' | 'escalated' } : alert
     )
   })),
   
