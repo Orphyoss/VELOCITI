@@ -37,8 +37,10 @@ export default function AnalystWorkbench() {
           id: result[0].id?.slice(0,8),
           title: result[0].title?.slice(0,30),
           status: result[0].status,
-          priority: result[0].priority
-        } : 'NO_FIRST_ALERT'
+          priority: result[0].priority,
+          category: result[0].category
+        } : 'NO_FIRST_ALERT',
+        env: window.location.hostname.includes('replit.dev') ? 'production' : 'development'
       });
       return result;
     },
@@ -59,18 +61,44 @@ export default function AnalystWorkbench() {
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
-  // GUARANTEED alert display - no filtering dependencies
+  // PRODUCTION-SAFE alert display with comprehensive debugging
   const displayAlerts = allAlerts && Array.isArray(allAlerts) ? allAlerts.filter((alert: Alert) => {
-    // Apply filters directly in render
-    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
-    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
-    if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
+    console.log('[AnalystWorkbench] Filtering alert:', {
+      id: alert.id?.slice(0,8),
+      status: alert.status,
+      category: alert.category,
+      priority: alert.priority,
+      statusFilter,
+      categoryFilter,
+      priorityFilter,
+      statusMatch: statusFilter === 'all' || alert.status === statusFilter,
+      categoryMatch: categoryFilter === 'all' || alert.category === categoryFilter,
+      priorityMatch: priorityFilter === 'all' || alert.priority === priorityFilter
+    });
+    
+    // Apply filters directly in render with explicit logging
+    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) {
+      console.log('[AnalystWorkbench] Filtered out by priority:', alert.priority, 'vs', priorityFilter);
+      return false;
+    }
+    if (categoryFilter !== 'all' && alert.category !== categoryFilter) {
+      console.log('[AnalystWorkbench] Filtered out by category:', alert.category, 'vs', categoryFilter);
+      return false;
+    }
+    if (statusFilter !== 'all' && alert.status !== statusFilter) {
+      console.log('[AnalystWorkbench] Filtered out by status:', alert.status, 'vs', statusFilter);
+      return false;
+    }
     if (searchQuery) {
       const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
       const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
-      if (!titleMatch && !descriptionMatch && !messageMatch) return false;
+      if (!titleMatch && !descriptionMatch && !messageMatch) {
+        console.log('[AnalystWorkbench] Filtered out by search:', searchQuery);
+        return false;
+      }
     }
+    console.log('[AnalystWorkbench] Alert PASSED filters:', alert.id?.slice(0,8));
     return true;
   }).sort((a: Alert, b: Alert) => {
     const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
@@ -80,11 +108,18 @@ export default function AnalystWorkbench() {
   }) : [];
 
   // Debug logging
-  console.log('[AnalystWorkbench] GUARANTEED display logic:', {
+  console.log('[AnalystWorkbench] PRODUCTION DEBUG display logic:', {
     allAlertsLength: allAlerts?.length || 0,
     displayAlertsLength: displayAlerts.length,
     hasRawData: !!(allAlerts && Array.isArray(allAlerts)),
-    firstDisplayAlert: displayAlerts[0]?.id?.slice(0,8) || 'NONE'
+    firstDisplayAlert: displayAlerts[0]?.id?.slice(0,8) || 'NONE',
+    filters: { priorityFilter, categoryFilter, statusFilter, searchQuery },
+    isProduction: window.location.hostname.includes('replit.dev'),
+    rawFirstAlert: allAlerts?.[0] ? {
+      status: allAlerts[0].status,
+      category: allAlerts[0].category,
+      priority: allAlerts[0].priority
+    } : null
   });
 
   // Debug effect to track allAlerts changes
