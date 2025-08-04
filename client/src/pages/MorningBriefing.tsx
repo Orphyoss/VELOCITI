@@ -179,7 +179,7 @@ export default function MorningBriefing() {
     }
   };
 
-  const generateBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
+  const generateFallbackBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
     console.log('[MorningBriefing] Generating briefing data with inputs:', {
       alerts: alerts?.length || 0,
       activities: activities?.length || 0,
@@ -924,32 +924,32 @@ ${insight.description}
             {/* System Performance Metrics */}
             <Card className="bg-dark-900 border-dark-800">
               <CardHeader>
-                <CardTitle className="text-dark-50">System Performance</CardTitle>
+                <CardTitle className="text-dark-50">AI Performance Overview</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">
-                      {briefingData?.systemHealth?.systemAvailability?.availabilityPercent?.toFixed(1) || 99.5}%
+                      {briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy || 80}%
                     </div>
-                    <div className="text-xs text-dark-400">System Availability</div>
+                    <div className="text-xs text-dark-400">AI Accuracy Rate</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-400">
-                      {briefingData?.systemHealth?.nightshiftProcessingTime?.avgMinutes || 42}min
+                      {briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved?.toFixed(1) || 0}h
                     </div>
-                    <div className="text-xs text-dark-400">Avg Processing Time</div>
+                    <div className="text-xs text-dark-400">Time Saved (Weekly)</div>
                   </div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-sm text-dark-400">Data Freshness</span>
-                    <span className="font-semibold text-dark-50">{briefingData?.systemHealth?.dataFreshness?.avgHoursDelay?.toFixed(1) || 1.8}h delay</span>
+                    <span className="text-sm text-dark-400">High Confidence Insights</span>
+                    <span className="font-semibold text-purple-400">{briefingData?.aiPerformance?.confidenceDistribution?.highConfidenceRate || 0}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm text-dark-400">Success Rate</span>
-                    <span className="font-semibold text-green-400">{briefingData?.systemHealth?.nightshiftProcessingTime?.successRate || 95}%</span>
+                    <span className="text-sm text-dark-400">Competitive Response Time</span>
+                    <span className="font-semibold text-dark-50">{briefingData?.businessImpact?.competitiveResponseSpeed?.avgResponseTimeHours || 0}h</span>
                   </div>
                 </div>
               </CardContent>
