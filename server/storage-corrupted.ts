@@ -56,10 +56,10 @@ export class PostgresStorage implements IStorage {
       const { eq } = await import('drizzle-orm');
       
       const result = await db.select().from(users).where(eq(users.id, id));
-      return result[0];
+      return result[0] || undefined;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching user:', error);
-      return undefined;
+      throw new Error(`Failed to fetch user ${id}: ${error.message}`);
     }
   }
 
@@ -69,11 +69,11 @@ export class PostgresStorage implements IStorage {
       const { users } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       
-      const result = await db.select().from(users).where(eq(users.username, username));
-      return result[0];
+      const result = await db.select().from(users).where(eq(users.email, username));
+      return result[0] || undefined;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching user by username:', error);
-      return undefined;
+      throw new Error(`Failed to fetch user by username ${username}: ${error.message}`);
     }
   }
 
@@ -82,8 +82,12 @@ export class PostgresStorage implements IStorage {
       const { db } = await import('./services/supabase.js');
       const { users } = await import('@shared/schema');
       
-      const result = await db.insert(users).values([user]).returning();
-      console.log('[PostgresStorage] Successfully created user:', result[0].username);
+      const result = await db.insert(users).values([{
+        username: user.username,
+        email: user.email,
+        role: user.role || 'analyst'
+      }]).returning();
+      
       return result[0];
     } catch (error) {
       console.error('[PostgresStorage] Error creating user:', error);
@@ -173,8 +177,7 @@ export class PostgresStorage implements IStorage {
         agentId: alert.agent_id,
         scenario: alert.scenario || {},
         data: alert.data || {},
-        impact: alert.impact_score || 0,
-        confidence: alert.confidence || 0,
+        impact: alert.impact || {},
         recommendations: alert.recommendations || {},
         status: alert.status,
         createdAt: alert.created_at,
@@ -182,7 +185,7 @@ export class PostgresStorage implements IStorage {
       }));
     } catch (error) {
       console.error('[PostgresStorage] Error fetching alerts by priority:', error);
-      return [];
+      throw new Error(`Failed to fetch alerts by priority ${priority}: ${error.message}`);
     }
   }
 
@@ -203,7 +206,7 @@ export class PostgresStorage implements IStorage {
         recommendations: alert.recommendations || {}
       }]).returning();
       
-      console.log('[PostgresStorage] Successfully created alert:', alert.title);
+      console.log(`[PostgresStorage] Successfully created alert: ${alert.title}`);
       return result[0];
     } catch (error) {
       console.error('[PostgresStorage] Error creating alert in database:', error);
@@ -217,8 +220,14 @@ export class PostgresStorage implements IStorage {
       const { alerts } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       
-      await db.update(alerts).set({ status }).where(eq(alerts.id, id));
-      console.log('[PostgresStorage] Successfully updated alert status:', id, status);
+      await db.update(alerts)
+        .set({ 
+          status,
+          updatedAt: new Date()
+        })
+        .where(eq(alerts.id, id));
+      
+      console.log(`[PostgresStorage] Updated alert ${id} status to ${status}`);
     } catch (error) {
       console.error('[PostgresStorage] Error updating alert status:', error);
       throw new Error(`Failed to update alert status: ${error.message}`);
@@ -234,12 +243,7 @@ export class PostgresStorage implements IStorage {
       return result;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching agents:', error);
-      // Return default agents if database fetch fails
-      return [
-        { id: 'competitive', name: 'Competitive Intelligence', status: 'active', accuracy: '100.00' },
-        { id: 'performance', name: 'Performance Attribution', status: 'active', accuracy: '92.30' },
-        { id: 'network', name: 'Network Analysis', status: 'learning', accuracy: '89.75' }
-      ];
+      throw new Error(`Failed to fetch agents: ${error.message}`);
     }
   }
 
@@ -250,10 +254,10 @@ export class PostgresStorage implements IStorage {
       const { eq } = await import('drizzle-orm');
       
       const result = await db.select().from(agents).where(eq(agents.id, id));
-      return result[0];
+      return result[0] || undefined;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching agent:', error);
-      return undefined;
+      throw new Error(`Failed to fetch agent ${id}: ${error.message}`);
     }
   }
 
@@ -263,21 +267,24 @@ export class PostgresStorage implements IStorage {
       const { agents } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       
-      await db.update(agents).set(updates).where(eq(agents.id, id));
-      console.log('[PostgresStorage] Successfully updated agent:', id);
+      await db.update(agents)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(agents.id, id));
     } catch (error) {
       console.error('[PostgresStorage] Error updating agent:', error);
-      throw new Error(`Failed to update agent: ${error.message}`);
+      throw new Error(`Failed to update agent ${id}: ${error.message}`);
     }
   }
 
-  async createFeedback(feedback: InsertFeedback): Promise<void> {
+  async createFeedback(feedbackData: InsertFeedback): Promise<void> {
     try {
       const { db } = await import('./services/supabase.js');
-      const { feedbackTable } = await import('@shared/schema');
+      const { feedback } = await import('@shared/schema');
       
-      await db.insert(feedbackTable).values([feedback]);
-      console.log('[PostgresStorage] Successfully created feedback');
+      await db.insert(feedback).values([feedbackData]);
     } catch (error) {
       console.error('[PostgresStorage] Error creating feedback:', error);
       throw new Error(`Failed to create feedback: ${error.message}`);
@@ -287,14 +294,17 @@ export class PostgresStorage implements IStorage {
   async getFeedbackByAgent(agentId: string): Promise<any[]> {
     try {
       const { db } = await import('./services/supabase.js');
-      const { feedbackTable } = await import('@shared/schema');
-      const { eq } = await import('drizzle-orm');
+      const { feedback } = await import('@shared/schema');
+      const { eq, desc } = await import('drizzle-orm');
       
-      const result = await db.select().from(feedbackTable).where(eq(feedbackTable.agentId, agentId));
+      const result = await db.select().from(feedback)
+        .where(eq(feedback.agent_id, agentId))
+        .orderBy(desc(feedback.created_at));
+      
       return result;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching feedback:', error);
-      return [];
+      throw new Error(`Failed to fetch feedback for agent ${agentId}: ${error.message}`);
     }
   }
 
@@ -302,19 +312,28 @@ export class PostgresStorage implements IStorage {
     try {
       const { db } = await import('./services/supabase.js');
       const { routePerformance } = await import('@shared/schema');
-      const { eq, gte } = await import('drizzle-orm');
+      const { gte, eq, desc, and } = await import('drizzle-orm');
       
-      let query = db.select().from(routePerformance);
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      
+      let query = db.select().from(routePerformance)
+        .where(gte(routePerformance.date, since))
+        .orderBy(desc(routePerformance.date));
       
       if (route) {
-        query = query.where(eq(routePerformance.routeId, route));
+        query = db.select().from(routePerformance)
+          .where(and(
+            gte(routePerformance.date, since),
+            eq(routePerformance.route, route)
+          ))
+          .orderBy(desc(routePerformance.date));
       }
       
       const result = await query;
       return result;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching route performance:', error);
-      return [];
+      throw new Error(`Failed to fetch route performance: ${error.message}`);
     }
   }
 
@@ -323,8 +342,17 @@ export class PostgresStorage implements IStorage {
       const { db } = await import('./services/supabase.js');
       const { routePerformance } = await import('@shared/schema');
       
-      await db.insert(routePerformance).values([data]);
-      console.log('[PostgresStorage] Successfully created route performance');
+      await db.insert(routePerformance).values([{
+        route: data.route,
+        routeName: data.routeName,
+        date: data.date,
+        performance: data.performance ?? null,
+        yield: data.yield ?? null,
+        loadFactor: data.loadFactor ?? null,
+        competitorPrice: data.competitorPrice ?? null,
+        ourPrice: data.ourPrice ?? null,
+        demandIndex: data.demandIndex ?? null
+      }]);
     } catch (error) {
       console.error('[PostgresStorage] Error creating route performance:', error);
       throw new Error(`Failed to create route performance: ${error.message}`);
@@ -335,13 +363,16 @@ export class PostgresStorage implements IStorage {
     try {
       const { db } = await import('./services/supabase.js');
       const { conversations } = await import('@shared/schema');
-      const { eq } = await import('drizzle-orm');
+      const { eq, desc } = await import('drizzle-orm');
       
-      const result = await db.select().from(conversations).where(eq(conversations.userId, userId));
+      const result = await db.select().from(conversations)
+        .where(eq(conversations.userId, userId))
+        .orderBy(desc(conversations.updatedAt));
+      
       return result;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching conversations:', error);
-      return [];
+      throw new Error(`Failed to fetch conversations for user ${userId}: ${error.message}`);
     }
   }
 
@@ -350,8 +381,14 @@ export class PostgresStorage implements IStorage {
       const { db } = await import('./services/supabase.js');
       const { conversations } = await import('@shared/schema');
       
-      const result = await db.insert(conversations).values([conversation]).returning();
-      console.log('[PostgresStorage] Successfully created conversation');
+      const result = await db.insert(conversations).values([{
+        type: conversation.type,
+        title: conversation.title ?? null,
+        userId: conversation.userId ?? null,
+        messages: conversation.messages ?? {},
+        context: conversation.context ?? {}
+      }]).returning();
+      
       return result[0];
     } catch (error) {
       console.error('[PostgresStorage] Error creating conversation:', error);
@@ -365,11 +402,15 @@ export class PostgresStorage implements IStorage {
       const { conversations } = await import('@shared/schema');
       const { eq } = await import('drizzle-orm');
       
-      await db.update(conversations).set(updates).where(eq(conversations.id, id));
-      console.log('[PostgresStorage] Successfully updated conversation:', id);
+      await db.update(conversations)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(conversations.id, id));
     } catch (error) {
       console.error('[PostgresStorage] Error updating conversation:', error);
-      throw new Error(`Failed to update conversation: ${error.message}`);
+      throw new Error(`Failed to update conversation ${id}: ${error.message}`);
     }
   }
 
@@ -377,19 +418,28 @@ export class PostgresStorage implements IStorage {
     try {
       const { db } = await import('./services/supabase.js');
       const { systemMetrics } = await import('@shared/schema');
-      const { eq, gte } = await import('drizzle-orm');
+      const { gte, eq, desc, and } = await import('drizzle-orm');
       
-      let query = db.select().from(systemMetrics);
+      const since = new Date(Date.now() - hours * 60 * 60 * 1000);
+      
+      let query = db.select().from(systemMetrics)
+        .where(gte(systemMetrics.timestamp, since))
+        .orderBy(desc(systemMetrics.timestamp));
       
       if (type) {
-        query = query.where(eq(systemMetrics.type, type));
+        query = db.select().from(systemMetrics)
+          .where(and(
+            gte(systemMetrics.timestamp, since),
+            eq(systemMetrics.metricType, type)
+          ))
+          .orderBy(desc(systemMetrics.timestamp));
       }
       
       const result = await query;
       return result;
     } catch (error) {
       console.error('[PostgresStorage] Error fetching system metrics:', error);
-      return [];
+      throw new Error(`Failed to fetch system metrics: ${error.message}`);
     }
   }
 
@@ -398,15 +448,18 @@ export class PostgresStorage implements IStorage {
       const { db } = await import('./services/supabase.js');
       const { systemMetrics } = await import('@shared/schema');
       
-      await db.insert(systemMetrics).values([metric]);
-      console.log('[PostgresStorage] Successfully created system metric');
+      await db.insert(systemMetrics).values([{
+        metricType: metric.metricType,
+        value: metric.value,
+        metadata: metric.metadata ?? {}
+      }]);
     } catch (error) {
       console.error('[PostgresStorage] Error creating system metric:', error);
       throw new Error(`Failed to create system metric: ${error.message}`);
     }
   }
 
-  async getRecentActivities(limit = 10): Promise<Activity[]> {
+  async getRecentActivities(limit = 20): Promise<Activity[]> {
     try {
       const { db } = await import('./services/supabase.js');
       const { activities } = await import('@shared/schema');
@@ -418,8 +471,8 @@ export class PostgresStorage implements IStorage {
       
       return result;
     } catch (error) {
-      console.error('[PostgresStorage] Error fetching activities:', error);
-      return [];
+      console.error('[PostgresStorage] Error fetching recent activities:', error);
+      throw new Error(`Failed to fetch recent activities: ${error.message}`);
     }
   }
 
@@ -428,8 +481,13 @@ export class PostgresStorage implements IStorage {
       const { db } = await import('./services/supabase.js');
       const { activities } = await import('@shared/schema');
       
-      await db.insert(activities).values([activity]);
-      console.log('[PostgresStorage] Successfully created activity');
+      await db.insert(activities).values([{
+        type: activity.type,
+        title: activity.title,
+        description: activity.description,
+        userId: activity.userId,
+        metadata: activity.metadata || {}
+      }]);
     } catch (error) {
       console.error('[PostgresStorage] Error creating activity:', error);
       throw new Error(`Failed to create activity: ${error.message}`);
@@ -437,5 +495,5 @@ export class PostgresStorage implements IStorage {
   }
 }
 
-// Create and export storage instance - PostgreSQL only
+// Export PostgreSQL-only storage instance
 export const storage = new PostgresStorage();
