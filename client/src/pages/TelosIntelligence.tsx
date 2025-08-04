@@ -153,9 +153,15 @@ export default function TelosIntelligence() {
   });
 
   // Fetch competitive pricing
-  const { data: competitive, isLoading: competitiveLoading } = useQuery({
+  const { data: competitive, isLoading: competitiveLoading, error: competitiveError } = useQuery({
     queryKey: ['/api/telos/competitive-position', competitiveRoute],
-    queryFn: () => fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`).then(res => res.json()),
+    queryFn: async () => {
+      const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch competitive data: ${response.status}`);
+      }
+      return response.json();
+    },
     enabled: !!competitiveRoute,
     staleTime: 0, // Always fetch fresh data
     cacheTime: 0, // Don't cache
@@ -841,13 +847,13 @@ export default function TelosIntelligence() {
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
-              ) : competitive && Object.keys(competitive).length > 0 ? (
+              ) : competitive ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h3 className="font-medium">{(competitive as any).route}</h3>
+                        <h3 className="font-medium">{(competitive as any).route || competitiveRoute}</h3>
                         <p className="text-sm text-muted-foreground">
                           {(competitive as any).competitorCount} competitors • Market Share: {((competitive as any).marketShare?.marketSharePct || 0).toFixed(1)}%
                         </p>
@@ -901,7 +907,9 @@ export default function TelosIntelligence() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  No competitive data available for selected route
+                  {competitiveError ? 
+                    `Error loading competitive data: ${(competitiveError as Error).message}` : 
+                    `No competitive data available for route ${competitiveRoute}`}
                 </div>
               )}
             </CardContent>
