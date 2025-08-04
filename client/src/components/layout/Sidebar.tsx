@@ -47,7 +47,7 @@ export default function Sidebar() {
       id: 'agents',
       label: 'Agent Configuration',
       icon: Users,
-      path: '/agents'
+      path: '/admin'
     },
     {
       id: 'settings',

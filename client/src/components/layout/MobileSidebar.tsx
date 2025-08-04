@@ -53,7 +53,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       id: 'agents',
       label: 'Agent Configuration',
       icon: Users,
-      path: '/agents'
+      path: '/admin'
     },
     {
       id: 'settings',
