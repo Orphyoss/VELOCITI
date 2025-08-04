@@ -61,9 +61,9 @@ export default function Admin() {
             <div className="bg-dark-900/50 rounded-lg p-6 min-h-[600px]">
               <TabsContent value="agents" className="space-y-6 m-0">
                 <Tabs defaultValue="agent-status" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
-                    <TabsTrigger value="agent-setup">Agent Setup</TabsTrigger>
+                  <TabsList className="grid w-full grid-cols-2 mb-6 bg-dark-800 border border-dark-600">
+                    <TabsTrigger value="agent-status" className="text-dark-200 data-[state=active]:bg-orange-600 data-[state=active]:text-white">Agent Status</TabsTrigger>
+                    <TabsTrigger value="agent-setup" className="text-dark-200 data-[state=active]:bg-orange-600 data-[state=active]:text-white">Agent Setup</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="agent-status" className="space-y-4">
