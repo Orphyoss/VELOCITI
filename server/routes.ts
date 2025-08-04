@@ -57,7 +57,6 @@ async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activ
         networkYield = routePerformance.reduce((sum: number, route: any) => sum + parseFloat(route.yield || '0'), 0) / routePerformance.length;
         loadFactor = routePerformance.reduce((sum: number, route: any) => sum + parseFloat(route.loadFactor || '0'), 0) / routePerformance.length;
         routesMonitored = routePerformance.length;
-        console.log(`[Dashboard] Route performance loaded: ${routesMonitored} routes, avg yield: ${networkYield.toFixed(2)}, avg load factor: ${loadFactor.toFixed(1)}%`);
       }
     } catch (error: any) {
       console.log('[Dashboard] Route performance data unavailable:', error.message);
@@ -83,19 +82,19 @@ async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activ
     }
     
     return {
-      networkYield: Math.round(networkYield * 100) / 100 || 0, // Round to 2 decimal places
-      loadFactor: Math.round(loadFactor * 100) / 100 || 0, // Round to 2 decimal places  
+      networkYield: networkYield || 0,
+      loadFactor: loadFactor || 0,
       agentAccuracy: agentAccuracy.toFixed(1),
       revenueImpact: Math.round(revenueImpact),
-      briefingTime: Math.round(briefingTime) || 30, // Default to 30 min if no data
-      responseTime: Math.round(avgResponseTime) || 15, // Default to 15 min if no data
+      briefingTime: Math.round(briefingTime) || 0,
+      responseTime: Math.round(avgResponseTime) || 0,
       decisionAccuracy: agentAccuracy.toFixed(1),
       competitiveAlerts: criticalAlerts.filter(a => a.type === 'competitive').length,
       performanceAlerts: criticalAlerts.filter(a => a.type === 'performance').length,
       networkAlerts: criticalAlerts.filter(a => a.type === 'network').length,
       yieldImprovement: networkYield > 0 ? ((networkYield - 100) / 100 * 100).toFixed(1) : 0,
       routesMonitored: routesMonitored || 0,
-      analysisSpeed: Math.round(agents.reduce((sum: number, agent: any) => sum + (agent.avgAnalysisTime || 0), 0) / Math.max(agents.length, 1)) || 2 // Default 2 min analysis speed
+      analysisSpeed: agents.reduce((sum: number, agent: any) => sum + (agent.avgAnalysisTime || 0), 0) / Math.max(agents.length, 1) || 0
     };
   } catch (error) {
     console.error('[Dashboard] Error calculating real metrics:', error);
@@ -598,7 +597,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           topRoutes: validPerformances.slice(0, 5).map(route => ({
             route: route.routeId,
             yield: route.avgYield || 0,
-            change: Math.random() * 10 - 5 // Realistic yield change between -5% to +5%
+            change: ((route.avgLoadFactor || 0) - 75) / 75 * 100 // Performance vs target
           }))
         },
         revenueImpact: {
@@ -1279,97 +1278,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching competitive position:', error);
       res.status(500).json({ error: 'Failed to fetch competitive position' });
-    }
-  });
-
-  // Revenue Management Metrics endpoint for Telos Intelligence dashboard
-  app.get('/api/telos/rm-metrics', async (req, res) => {
-    try {
-      const { telosIntelligenceService } = await import('./services/telos-intelligence.js');
-      
-      // Get route performance data for yield calculations
-      const routePerformance = await telosIntelligenceService.getRoutePerformance(undefined, 30);
-      const routeCount = routePerformance.length;
-      
-      // Calculate current yield from route performance
-      let currentYield = 0;
-      let totalRevenue = 0;
-      let totalLoadFactor = 0;
-      
-      if (routePerformance.length > 0) {
-        currentYield = routePerformance.reduce((sum: number, route: any) => 
-          sum + parseFloat(route.avgYield || '0'), 0) / routePerformance.length;
-        
-        totalRevenue = routePerformance.reduce((sum: number, route: any) => 
-          sum + parseFloat(route.totalRevenue || '0'), 0);
-        
-        totalLoadFactor = routePerformance.reduce((sum: number, route: any) => 
-          sum + parseFloat(route.avgLoadFactor || '0'), 0) / routePerformance.length;
-      }
-      
-      // Get competitive pricing for advantage calculations
-      const competitivePricing = await telosIntelligenceService.getCompetitivePricingAnalysis('LGW-BCN', 7);
-      
-      // Calculate competitive advantages
-      let priceAdvantageRoutes = 0;
-      let priceDisadvantageRoutes = 0;
-      
-      if (competitivePricing.length > 0) {
-        const avgMarketPrice = competitivePricing.reduce((sum: number, comp: any) => 
-          sum + parseFloat(comp.avgPrice || '0'), 0) / competitivePricing.length;
-        
-        const ezyPricing = competitivePricing.find((comp: any) => comp.airlineCode === 'EZY');
-        const ezyPrice = parseFloat(ezyPricing?.avgPrice || '0');
-        
-        priceAdvantageRoutes = ezyPrice < avgMarketPrice * 0.95 ? routeCount : 0;
-        priceDisadvantageRoutes = ezyPrice > avgMarketPrice * 1.05 ? routeCount : 0;
-      }
-      
-      // Build comprehensive RM metrics response
-      const rmMetrics = {
-        yieldOptimization: {
-          currentYield: Math.round(currentYield * 100) / 100,
-          targetYield: Math.round(currentYield * 1.15 * 100) / 100, // 15% improvement target
-          improvement: (totalLoadFactor * 100) > 75 ? 8.5 : 12.3, // % improvement based on load factor
-          topRoutes: routePerformance.slice(0, 5).map((route: any) => {
-            const currentYield = parseFloat(route.avgYield || '0');
-            const baselineYield = 100; // Industry baseline
-            const changePercent = ((currentYield - baselineYield) / baselineYield) * 100;
-            console.log(`[DEBUG] Route ${route.routeId}: yield=${currentYield}, baseline=${baselineYield}, change=${changePercent}%`);
-            return {
-              route: route.routeId,
-              yield: currentYield,
-              change: Math.round(changePercent * 100) / 100 // Realistic percentage vs baseline
-            };
-          })
-        },
-        revenueImpact: {
-          daily: Math.round(totalRevenue * 1000 / 30), // Daily average in realistic range
-          weekly: Math.round(totalRevenue * 1000 / 4.3), // Weekly average 
-          monthly: Math.round(totalRevenue * 1000), // Monthly total
-          trend: (totalLoadFactor * 100) > 80 ? 8.5 : 5.2 // % growth trend based on performance
-        },
-        competitiveIntelligence: {
-          priceAdvantageRoutes,
-          priceDisadvantageRoutes,
-          responseTime: Math.round(((totalLoadFactor * 100) > 80 ? 2.5 : 4.2) * 10) / 10, // Hours response time based on performance  
-          marketShare: Math.round((Math.min(25.3, 15 + ((totalLoadFactor * 100) - 70) * 0.5)) * 10) / 10 // Market share estimate
-        },
-        operationalEfficiency: {
-          loadFactor: Math.round(totalLoadFactor * 100 * 100) / 100, // Convert decimal to percentage (0.795 -> 79.5)
-          utilizationRate: Math.min(95, 85 + (totalLoadFactor * 100 - 70) * 0.8),
-          onTimePerformance: routeCount > 5 ? 87.4 : 82.1,
-          routesMonitored: routeCount
-        }
-      };
-      
-      console.log(`[Telos RM Metrics] Calculated metrics from ${routeCount} routes: yield=${currentYield.toFixed(2)}, revenue=${totalRevenue.toFixed(0)}, load factor=${(totalLoadFactor * 100).toFixed(1)}%`);
-      console.log(`[Telos RM Metrics] First route data:`, routePerformance[0]);
-      
-      res.json(rmMetrics);
-    } catch (error) {
-      console.error('Error calculating RM metrics:', error);
-      res.status(500).json({ error: 'Failed to calculate RM metrics' });
     }
   });
 

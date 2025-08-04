@@ -103,7 +103,7 @@ export class TelosIntelligenceService {
         .select({
           totalSeats: sql<string>`SUM(${flightPerformance.totalSeats}::numeric)`,
           totalFlights: count(),
-          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric)`
+          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric) * 100`
         })
         .from(flightPerformance)
         .where(
@@ -256,51 +256,6 @@ export class TelosIntelligenceService {
         .orderBy(webSearchData.searchDate);
     } catch (error) {
       console.error("Error in getWebSearchTrends:", error);
-      return [];
-    }
-  }
-
-  // Get route performance data - method expected by dashboard
-  async getRoutePerformance(route?: string, days: number = 7) {
-    try {
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - days);
-
-      // Get all EasyJet route performance data
-      const ezyPerformance = await db
-        .select({
-          routeId: flightPerformance.routeId,
-          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric)`,
-          totalRevenue: sql<string>`SUM(${flightPerformance.revenueTotal}::numeric)`,
-          totalBookings: sql<string>`SUM(${flightPerformance.bookingsCount}::numeric)`,
-          flightCount: count(),
-          avgYield: sql<string>`AVG(${flightPerformance.yieldPerPax}::numeric)`
-        })
-        .from(flightPerformance)
-        .where(
-          route ? 
-            and(
-              eq(flightPerformance.routeId, route),
-              gte(flightPerformance.flightDate, cutoffDate.toISOString().slice(0, 10))
-            ) :
-            gte(flightPerformance.flightDate, cutoffDate.toISOString().slice(0, 10))
-        )
-        .groupBy(flightPerformance.routeId)
-        .orderBy(desc(sql`AVG(${flightPerformance.loadFactor}::numeric)`));
-
-      return ezyPerformance.map((perf: any) => ({
-        route: perf.routeId,
-        routeName: perf.routeId, // Use routeId as name for now
-        date: new Date(),
-        loadFactor: parseFloat(perf.avgLoadFactor || '0').toFixed(1),
-        yield: parseFloat(perf.avgYield || '0').toFixed(2),
-        performance: ((parseFloat(perf.avgLoadFactor || '75') - 75) / 75 * 100).toFixed(1), // % change from 75% baseline
-        totalRevenue: parseFloat(perf.totalRevenue || '0'),
-        totalBookings: parseInt(perf.totalBookings || '0'),
-        flightCount: parseInt(perf.flightCount?.toString() || '0')
-      }));
-    } catch (error) {
-      console.error("Error in getRoutePerformance:", error);
       return [];
     }
   }
