@@ -46,78 +46,84 @@ export default function MetricsOverview() {
     );
   }
 
-  // Calculate authentic metrics from real data with proper error handling
-  const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield || 0;
-  const loadFactor = (routePerformance as any)?.[0]?.avgLoadFactor || 0;
-  const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
-  const responseTime = (rmMetrics as any)?.competitiveIntelligence?.responseTime || 0;
-  const routesCount = Math.max((routePerformance as any)?.length || 0, (competitiveData as any)?.length || 0);
-  const competitiveAdvantage = (rmMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 0;
+  // Extract only real data from API responses - NO FALLBACKS
+  const networkYield = (rmMetrics as any)?.yieldOptimization?.currentYield;
+  const loadFactor = parseFloat((routePerformance as any)?.[0]?.avgLoadFactor) || null;
+  const routesCount = (routePerformance as any)?.length || 0;
 
-  // Use dashboard summary data as primary source
+  // Calculate real metrics from authenticated database sources
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;
-  const activeAgents = summary?.agents?.length || 3;
+  const activeAgents = summary?.agents?.length || 0;
+  const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
 
-  const metrics = [
-    {
-      title: 'Active Alerts',
-      value: totalAlerts,
-      change: `${criticalAlerts} Critical`,
-      trend: criticalAlerts > 0 ? 'down' : 'neutral',
-      icon: AlertTriangle,
-      highlight: criticalAlerts > 0,
-    },
-    {
+  // Build metrics array using ONLY real database values
+  const metrics = [];
+
+  // Active Alerts - from database
+  metrics.push({
+    title: 'Active Alerts',
+    value: totalAlerts,
+    change: `${criticalAlerts} Critical`,
+    trend: criticalAlerts > 0 ? 'down' : 'neutral',
+    icon: AlertTriangle,
+    highlight: criticalAlerts > 0,
+  });
+
+  // AI Agents - from database
+  if (activeAgents > 0) {
+    metrics.push({
       title: 'AI Agents',
       value: activeAgents,
       change: 'Active monitoring',
       trend: 'up',
       icon: Bot,
-    },
-    {
+    });
+  }
+
+  // Network Yield - from RM metrics API
+  if (networkYield && networkYield > 0) {
+    metrics.push({
       title: 'Network Yield',
-      value: networkYield > 0 ? `£${Math.round(networkYield)}` : summary?.metrics?.networkYield ? `£${summary.metrics.networkYield}` : '£174',
+      value: `£${Math.round(networkYield)}`,
       change: 'Per passenger',
       trend: 'up',
       icon: BarChart3,
-    },
-    {
+    });
+  }
+
+  // Load Factor - from route performance API
+  if (loadFactor && loadFactor > 0) {
+    metrics.push({
       title: 'Load Factor',
-      value: loadFactor > 0 ? `${Math.round(loadFactor)}%` : summary?.metrics?.loadFactor ? `${summary.metrics.loadFactor}%` : '82%',
+      value: `${Math.round(loadFactor)}%`,
       change: 'Current average',
       trend: 'up',
       icon: Users,
-    },
-    {
-      title: 'Revenue Impact',
-      value: summary?.metrics ? `£${Math.round((summary.metrics as any).revenueImpact / 1000000) || 4.7}M` : '£4.7M',
-      change: 'AI-driven impact',
-      trend: 'up',
-      icon: Target,
-    },
-    {
-      title: 'Agent Accuracy',
-      value: summary?.metrics ? `${(summary.metrics as any).agentAccuracy || '94'}%` : '94%',
-      change: 'Prediction accuracy',
-      trend: 'up',
-      icon: Zap,
-    },
-    {
+    });
+  }
+
+  // Routes Monitored - from route performance API
+  if (routesCount > 0) {
+    metrics.push({
       title: 'Routes Monitored',
-      value: summary?.metrics ? (summary.metrics as any).routesMonitored || routesCount || 6 : routesCount || 6,
+      value: routesCount,
       change: 'European network',
       trend: 'neutral',
       icon: Plane,
-    },
-    {
-      title: 'Response Time',
-      value: summary?.metrics ? `${(summary.metrics as any).briefingTime || 3.2}min` : '3.2min',
-      change: 'Alert response',
+    });
+  }
+
+  // Revenue Impact - from RM metrics API
+  if (dailyRevenue > 0) {
+    metrics.push({
+      title: 'Daily Revenue',
+      value: `£${Math.round(dailyRevenue / 1000)}K`,
+      change: 'Today',
       trend: 'up',
-      icon: Clock,
-    },
-  ];
+      icon: Target,
+    });
+  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
@@ -159,9 +165,11 @@ export default function MetricsOverview() {
                   <span className="text-xs bg-red-600 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
                     {summary?.alerts.critical} Critical
                   </span>
-                  <span className="text-xs bg-orange-600 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                    {(summary?.alerts?.total || 0) - (summary?.alerts?.critical || 0)} High
-                  </span>
+                  {((summary?.alerts?.total || 0) - (summary?.alerts?.critical || 0)) > 0 && (
+                    <span className="text-xs bg-orange-600 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
+                      {(summary?.alerts?.total || 0) - (summary?.alerts?.critical || 0)} High
+                    </span>
+                  )}
                 </div>
               )}
             </CardContent>

@@ -3,7 +3,6 @@ import { AlertTriangle, Clock, TrendingUp, Target } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/services/api';
-import { Alert } from '@/types';
 
 function TodaysPriorities() {
   const { data: alerts, isLoading } = useQuery({
@@ -13,7 +12,7 @@ function TodaysPriorities() {
   });
 
   // Filter only critical alerts - limit to first 5 for dashboard display
-  const criticalAlerts = alerts?.filter((alert: Alert) => alert.priority === 'critical').slice(0, 5) || [];
+  const criticalAlerts = alerts?.filter((alert: any) => alert.priority === 'critical').slice(0, 5) || [];
 
   if (isLoading) {
     return (
@@ -58,7 +57,7 @@ function TodaysPriorities() {
           </div>
         ) : (
           <div className="space-y-4">
-            {criticalAlerts.map((alert: Alert) => (
+            {criticalAlerts.map((alert: any) => (
               <div
                 key={alert.id}
                 className="border border-red-200 dark:border-red-800 rounded-lg p-4 bg-red-50 dark:bg-red-950/20"
@@ -70,11 +69,11 @@ function TodaysPriorities() {
                         CRITICAL
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {(alert as any).agent_id || alert.agentId || 'System'}
+                        {alert.agent_id || alert.agentId || 'System'}
                       </Badge>
-                      {((alert as any).route || alert.route) && (
+                      {(alert.route || alert.route_name) && (
                         <Badge variant="secondary" className="text-xs">
-                          {(alert as any).route || alert.route}
+                          {alert.route || alert.route_name}
                         </Badge>
                       )}
                     </div>
@@ -84,18 +83,45 @@ function TodaysPriorities() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                       {alert.description}
                     </p>
-                    {((alert as any).impact_score || alert.impact || (alert as any).revenue_impact) && (
-                      <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
-                        <TrendingUp className="h-4 w-4" />
-                        Impact: {(alert as any).impact_score ? `${(alert as any).impact_score}%` : 
-                                alert.impact ? (typeof alert.impact === 'number' ? `${alert.impact}%` : alert.impact) :
-                                `£${Math.round((alert as any).revenue_impact / 1000)}K`}
-                      </div>
-                    )}
+                    {(() => {
+                      const dbAlert = alert as any;
+                      const impactScore = dbAlert.impact_score;
+                      const revenueImpact = dbAlert.revenue_impact;
+                      const regularImpact = alert.impact;
+                      
+                      if (impactScore && typeof impactScore === 'number') {
+                        return (
+                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                            <TrendingUp className="h-4 w-4" />
+                            Impact: {impactScore}%
+                          </div>
+                        );
+                      }
+                      
+                      if (revenueImpact && typeof revenueImpact === 'number' && revenueImpact > 0) {
+                        return (
+                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                            <TrendingUp className="h-4 w-4" />
+                            Impact: £{Math.round(revenueImpact / 1000)}K
+                          </div>
+                        );
+                      }
+                      
+                      if (regularImpact) {
+                        return (
+                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                            <TrendingUp className="h-4 w-4" />
+                            Impact: {typeof regularImpact === 'number' ? `${regularImpact}%` : regularImpact}
+                          </div>
+                        );
+                      }
+                      
+                      return null;
+                    })()}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ml-4">
                     <Clock className="h-3 w-3" />
-                    {new Date((alert as any).created_at || alert.createdAt).toLocaleTimeString('en-GB', {
+                    {new Date(alert.created_at || alert.createdAt || new Date()).toLocaleTimeString('en-GB', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
