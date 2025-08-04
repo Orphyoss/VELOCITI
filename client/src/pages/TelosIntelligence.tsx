@@ -277,6 +277,13 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
+  // Fetch real RM metrics from the dedicated endpoint
+  const { data: realRMMetrics, isLoading: rmMetricsLoading } = useQuery({
+    queryKey: ['/api/telos/rm-metrics'],
+    enabled: true,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
 
 
   // Real RM metrics data from live backend metrics
@@ -285,25 +292,21 @@ export default function TelosIntelligence() {
   
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / performanceData.length / 30 : 0,
-      weekly: performanceData.length > 0 ? (performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / performanceData.length / 30) * 7 : 0,
-      monthly: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) : 0,
-      trend: insightsData.length > 0 ? insightsData.length * 1.5 : 0
+      daily: (realRMMetrics as any)?.revenueImpact?.daily || 0,
+      weekly: (realRMMetrics as any)?.revenueImpact?.weekly || 0,
+      monthly: (realRMMetrics as any)?.revenueImpact?.monthly || 0,
+      trend: (realRMMetrics as any)?.revenueImpact?.trend || 0
     },
     yieldOptimization: {
-      currentYield: performanceData.length > 0 ? performanceData.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / performanceData.length : 0,
-      targetYield: performanceData.length > 0 ? (performanceData.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / performanceData.length) * 1.12 : 0,
-      improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 0,
-      topRoutes: performanceData.length > 0 ? performanceData.slice(0, 5).map((route: any) => ({
-        route: route.routeId,
-        yield: parseFloat(route.avgYield || '0'),
-        change: parseFloat(route.totalRevenue || '0') / 50000
-      })) : []
+      currentYield: (realRMMetrics as any)?.yieldOptimization?.currentYield || 0,
+      targetYield: (realRMMetrics as any)?.yieldOptimization?.targetYield || 0,
+      improvement: (realRMMetrics as any)?.yieldOptimization?.improvement || 0,
+      topRoutes: (realRMMetrics as any)?.yieldOptimization?.topRoutes || []
     },
     competitiveIntelligence: {
-      priceAdvantageRoutes: (competitive as any)?.pricing?.priceAdvantage > 0 ? 1 : 0,
-      priceDisadvantageRoutes: (competitive as any)?.pricing?.priceAdvantage <= 0 ? 1 : 0,
-      responseTime: (insights as any)?.filter((insight: any) => insight.agentSource === 'Competitive Agent').length > 0 ? 2 : 0, // 2 hours response time when competitive insights exist
+      priceAdvantageRoutes: (realRMMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 0,
+      priceDisadvantageRoutes: (realRMMetrics as any)?.competitiveIntelligence?.priceDisadvantageRoutes || 0,
+      responseTime: (realRMMetrics as any)?.competitiveIntelligence?.responseTime || 0,
       marketShare: 25.3 // EasyJet's typical market share percentage
     },
     operationalEfficiency: {
