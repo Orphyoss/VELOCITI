@@ -40,7 +40,10 @@ export default function AnalystWorkbench() {
     queryFn: () => api.getAlerts('high'),
   });
 
-  // Filter alerts based on current filters
+  // Priority order for sorting
+  const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
+
+  // Filter and sort alerts by criticality then date
   const filteredAlerts = allAlerts?.filter((alert: Alert) => {
     if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
     if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
@@ -48,20 +51,38 @@ export default function AnalystWorkbench() {
     if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
+  }).sort((a: Alert, b: Alert) => {
+    // First sort by priority (critical first)
+    const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
+                        (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
+    if (priorityDiff !== 0) return priorityDiff;
+    
+    // Then sort by date (newest first)
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   }) || [];
 
-  const activeAlerts = allAlerts?.filter((alert: Alert) => alert.status === 'active') || [];
-  const nightshiftAlerts = allAlerts?.filter((alert: Alert) => {
+  // Apply same sorting to other alert lists
+  const sortAlerts = (alerts: Alert[]) => {
+    return alerts.sort((a: Alert, b: Alert) => {
+      const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
+                          (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  };
+
+  const activeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => alert.status === 'active') || []);
+  const nightshiftAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
     const createdDate = new Date(alert.createdAt);
     const hour = createdDate.getHours();
     return hour >= 22 || hour <= 6; // 10 PM to 6 AM
-  }) || [];
+  }) || []);
 
-  const realtimeAlerts = allAlerts?.filter((alert: Alert) => {
+  const realtimeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
     const createdDate = new Date(alert.createdAt);
     const hour = createdDate.getHours();
     return hour > 6 && hour < 22; // 6 AM to 10 PM
-  }) || [];
+  }) || []);
 
   if (isLoading) {
     return (
