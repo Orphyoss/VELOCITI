@@ -57,73 +57,52 @@ export default function MetricsOverview() {
   const activeAgents = summary?.agents?.length || 0;
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
 
-  // Build metrics array using ONLY real database values
-  const metrics = [];
-
-  // Active Alerts - from database
-  metrics.push({
-    title: 'Active Alerts',
-    value: totalAlerts,
-    change: `${criticalAlerts} Critical`,
-    trend: criticalAlerts > 0 ? 'down' : 'neutral',
-    icon: AlertTriangle,
-    highlight: criticalAlerts > 0,
-  });
-
-  // AI Agents - from database
-  if (activeAgents > 0) {
-    metrics.push({
+  // Always show core metrics with real data
+  const metrics = [
+    {
+      title: 'Active Alerts',
+      value: totalAlerts,
+      change: `${criticalAlerts} Critical`,
+      trend: criticalAlerts > 0 ? 'down' : 'neutral',
+      icon: AlertTriangle,
+      highlight: criticalAlerts > 0,
+    },
+    {
       title: 'AI Agents',
       value: activeAgents,
       change: 'Active monitoring',
       trend: 'up',
       icon: Bot,
-    });
-  }
-
-  // Network Yield - from RM metrics API
-  if (networkYield && networkYield > 0) {
-    metrics.push({
+    },
+    {
       title: 'Network Yield',
-      value: `£${Math.round(networkYield)}`,
+      value: networkYield ? `£${Math.round(networkYield)}` : 'No Data',
       change: 'Per passenger',
-      trend: 'up',
+      trend: networkYield ? 'up' : 'neutral',
       icon: BarChart3,
-    });
-  }
-
-  // Load Factor - from route performance API
-  if (loadFactor && loadFactor > 0) {
-    metrics.push({
+    },
+    {
       title: 'Load Factor',
-      value: `${Math.round(loadFactor)}%`,
+      value: loadFactor ? `${Math.round(loadFactor)}%` : 'No Data',
       change: 'Current average',
-      trend: 'up',
+      trend: loadFactor ? 'up' : 'neutral',
       icon: Users,
-    });
-  }
-
-  // Routes Monitored - from route performance API
-  if (routesCount > 0) {
-    metrics.push({
+    },
+    {
       title: 'Routes Monitored',
       value: routesCount,
       change: 'European network',
       trend: 'neutral',
       icon: Plane,
-    });
-  }
-
-  // Revenue Impact - from RM metrics API
-  if (dailyRevenue > 0) {
-    metrics.push({
+    },
+    {
       title: 'Daily Revenue',
-      value: `£${Math.round(dailyRevenue / 1000)}K`,
+      value: dailyRevenue ? `£${Math.round(dailyRevenue / 1000)}K` : 'No Data',
       change: 'Today',
-      trend: 'up',
+      trend: dailyRevenue ? 'up' : 'neutral',
       icon: Target,
-    });
-  }
+    },
+  ];
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
