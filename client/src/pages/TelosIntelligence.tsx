@@ -914,69 +914,97 @@ export default function TelosIntelligence() {
           {/* NEW: Working Competitive Position Analysis */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg sm:text-xl">Competitive Position Analysis</CardTitle>
-              <CardDescription>
-                Price comparison vs. major competitors across the EasyJet network
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle className="text-lg sm:text-xl">Competitive Position Analysis</CardTitle>
+                  <CardDescription>
+                    Price comparison vs. major competitors across the EasyJet network
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Route:</span>
+                  <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
+                    <SelectTrigger className="w-32">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
+                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
+                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
+                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
+                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
+                      <SelectItem value="LGW-ZUR">LGW-ZUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                {/* Summary Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card className="bg-blue-50 dark:bg-blue-950/20">
-                    <CardContent className="pt-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">£106.53</div>
-                        <div className="text-sm text-blue-600">EasyJet Price</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-green-50 dark:bg-green-950/20">
-                    <CardContent className="pt-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">£105.31</div>
-                        <div className="text-sm text-green-600">Competitor Average</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-orange-50 dark:bg-orange-950/20">
-                    <CardContent className="pt-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">+£1.22</div>
-                        <div className="text-sm text-orange-600">Price Advantage</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-purple-50 dark:bg-purple-950/20">
-                    <CardContent className="pt-4">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">20.3%</div>
-                        <div className="text-sm text-purple-600">Market Share</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+              {competitive && competitive.competitorCount > 0 ? (
+                <div className="space-y-6">
+                  {/* Summary Metrics */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Card className="bg-blue-50 dark:bg-blue-950/20">
+                      <CardContent className="pt-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">£{competitive.pricing.easyjetPrice.toFixed(2)}</div>
+                          <div className="text-sm text-blue-600">EasyJet Price</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-green-50 dark:bg-green-950/20">
+                      <CardContent className="pt-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">£{competitive.pricing.competitorAvgPrice.toFixed(2)}</div>
+                          <div className="text-sm text-green-600">Competitor Average</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-orange-50 dark:bg-orange-950/20">
+                      <CardContent className="pt-4">
+                        <div className="text-center">
+                          <div className={`text-2xl font-bold ${competitive.pricing.priceAdvantage > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                            {competitive.pricing.priceAdvantage > 0 ? '+' : ''}£{competitive.pricing.priceAdvantage.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-orange-600">Price Advantage</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-purple-50 dark:bg-purple-950/20">
+                      <CardContent className="pt-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">{competitive.marketShare.marketSharePct.toFixed(1)}%</div>
+                          <div className="text-sm text-purple-600">Market Share</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
                 {/* Detailed Analysis */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base">Pricing Analysis (LGW-BCN)</CardTitle>
+                      <CardTitle className="text-base">Pricing Analysis ({competitiveRoute})</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span>Price Rank</span>
-                        <Badge variant="outline">#2 of 5</Badge>
+                        <Badge variant="outline">#{competitive.pricing.priceRank} of {competitive.competitorCount}</Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>vs Market Average</span>
-                        <span className="font-semibold text-orange-600">+£1.22</span>
+                        <span className={`font-semibold ${competitive.pricing.priceAdvantage > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                          {competitive.pricing.priceAdvantage > 0 ? '+' : ''}£{competitive.pricing.priceAdvantage.toFixed(2)}
+                        </span>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Premium pricing strategy - higher than market average by 1.2%
+                        {competitive.pricing.priceAdvantage > 0 
+                          ? 'Premium pricing strategy - higher than market average'
+                          : 'Competitive pricing strategy - below market average'
+                        }
                       </div>
                     </CardContent>
                   </Card>
@@ -988,18 +1016,18 @@ export default function TelosIntelligence() {
                     <CardContent className="space-y-4">
                       <div className="flex justify-between items-center">
                         <span>Capacity Rank</span>
-                        <Badge variant="outline">#3 of 5</Badge>
+                        <Badge variant="outline">#{competitive.marketShare.capacityRank} of {competitive.competitorCount}</Badge>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Total Seats</span>
-                        <span className="font-semibold">2,700</span>
+                        <span className="font-semibold">{competitive.marketShare.easyjetSeats.toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span>Market Share</span>
-                        <span className="font-semibold text-blue-600">20.3%</span>
+                        <span className="font-semibold text-blue-600">{competitive.marketShare.marketSharePct.toFixed(1)}%</span>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Strong market presence with 20.3% of total capacity vs 5 competitors
+                        Strong market presence with {competitive.marketShare.marketSharePct.toFixed(1)}% of total capacity vs {competitive.competitorCount} competitors
                       </div>
                     </CardContent>
                   </Card>
@@ -1012,64 +1040,44 @@ export default function TelosIntelligence() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                          <span className="font-medium">British Airways</span>
+                      {competitive.competitors?.map((comp: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-muted/20 rounded">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${
+                              comp.airline === 'EasyJet' ? 'bg-orange-600' :
+                              comp.airline === 'British Airways' ? 'bg-blue-600' :
+                              comp.airline === 'Ryanair' ? 'bg-yellow-600' :
+                              comp.airline === 'Vueling' ? 'bg-red-600' :
+                              comp.airline === 'TUI Airways' ? 'bg-gray-600' :
+                              'bg-purple-600'
+                            }`}></div>
+                            <span className="font-medium">{comp.airline}</span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">£{comp.avgPrice}</div>
+                            <div className="text-xs text-muted-foreground">
+                              #{comp.priceRank} Pricing, #{comp.capacityRank} Capacity
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold">£170.73</div>
-                          <div className="text-xs text-muted-foreground">#1 Pricing, #4 Capacity</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-orange-50 dark:bg-orange-950/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-orange-600"></div>
-                          <span className="font-medium">EasyJet</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">£106.53</div>
-                          <div className="text-xs text-muted-foreground">#2 Pricing, #3 Capacity</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-950/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                          <span className="font-medium">TUI Airways</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">£93.94</div>
-                          <div className="text-xs text-muted-foreground">#3 Pricing, #1 Capacity</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-950/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                          <span className="font-medium">Vueling</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">£90.95</div>
-                          <div className="text-xs text-muted-foreground">#4 Pricing, #2 Capacity</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-yellow-600"></div>
-                          <span className="font-medium">Ryanair</span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold">£65.62</div>
-                          <div className="text-xs text-muted-foreground">#5 Pricing, #5 Capacity</div>
-                        </div>
-                      </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
-              </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  {competitiveLoading ? (
+                    <div className="space-y-4">
+                      {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="animate-pulse bg-muted h-16 rounded" />
+                      ))}
+                    </div>
+                  ) : (
+                    `No competitive data available for route ${competitiveRoute}`
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
