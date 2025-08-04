@@ -51,6 +51,8 @@ export default function MetricsOverview() {
   const loadFactor = parseFloat((routePerformance as any)?.[0]?.avgLoadFactor) || null;
   const routesCount = (routePerformance as any)?.length || 0;
 
+  console.log('MetricsOverview Debug:', { summary, rmMetrics, routePerformance });
+
   // Calculate real metrics from authenticated database sources
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;

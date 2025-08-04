@@ -5,11 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { api } from '@/services/api';
 
 function TodaysPriorities() {
-  const { data: alerts, isLoading } = useQuery({
+  const { data: alerts, isLoading, error } = useQuery({
     queryKey: ['/api/alerts'],
     queryFn: () => api.getAlerts(),
     refetchInterval: 30000,
   });
+
+  console.log('TodaysPriorities API Response:', { alerts, isLoading, error });
 
   if (isLoading) {
     return (

@@ -153,7 +153,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           critical: criticalAlerts.length,
           recent: allAlerts.slice(0, 3)
         },
-        agents: agents,
         agents: agents.map(a => ({
           id: a.id,
           name: a.name,
