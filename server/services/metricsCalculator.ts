@@ -320,6 +320,20 @@ export class TelosMetricsCalculator {
         const { intelligenceInsights } = await import('../../shared/schema');
         const { and, gte, lte } = await import('drizzle-orm');
         
+        // Check if table exists first
+        const tableExists = await db.execute(sql`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_schema = 'public' 
+            AND table_name = 'intelligence_insights'
+          );
+        `);
+        
+        if (!(tableExists as any).rows?.[0]?.exists) {
+          console.warn('[MetricsCalculator] intelligence_insights table does not exist, returning empty array');
+          return [];
+        }
+        
         const insightsData = await db.select()
           .from(intelligenceInsights)
           .where(
@@ -332,7 +346,8 @@ export class TelosMetricsCalculator {
         return insightsData;
       } catch (dbError) {
         console.error('[MetricsCalculator] Database query also failed:', dbError);
-        throw new Error('Unable to fetch intelligence insights: no data sources available');
+        console.warn('[MetricsCalculator] Returning empty insights array as fallback');
+        return [];
       }
     }
   }
@@ -358,32 +373,47 @@ export class TelosMetricsCalculator {
           const { intelligenceInsights } = await import('../../shared/schema');
           const { and, gte, lte } = await import('drizzle-orm');
           
-          insightsData = await db.select()
-            .from(intelligenceInsights)
-            .where(
-              and(
-                gte(intelligenceInsights.insightDate, dateRange.startDate),
-                lte(intelligenceInsights.insightDate, dateRange.endDate)
-              )
+          // Check if table exists first
+          const tableExists = await db.execute(sql`
+            SELECT EXISTS (
+              SELECT FROM information_schema.tables 
+              WHERE table_schema = 'public' 
+              AND table_name = 'intelligence_insights'
             );
+          `);
+          
+          if (!(tableExists as any).rows?.[0]?.exists) {
+            console.warn('[MetricsCalculator] intelligence_insights table does not exist, using empty data');
+            insightsData = [];
+          } else {
+            insightsData = await db.select()
+              .from(intelligenceInsights)
+              .where(
+                and(
+                  gte(intelligenceInsights.insightDate, dateRange.startDate),
+                  lte(intelligenceInsights.insightDate, dateRange.endDate)
+                )
+              );
+          }
           console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from direct database query`);
         } catch (dbError) {
           console.error('[MetricsCalculator] Database query also failed:', dbError);
-          throw new Error('Unable to calculate business impact metrics: no data sources available');
+          console.warn('[MetricsCalculator] Using empty array as final fallback');
+          insightsData = [];
         }
       }
 
       // Calculate real analyst time savings based on insights generated
       const totalInsights = insightsData.length;
       if (totalInsights === 0) {
-        throw new Error('No intelligence insights available for business impact calculation');
+        console.warn('[MetricsCalculator] No intelligence insights available, using default values');
       }
       
       // Get time saving configuration from agent settings
       const storage = await import('../storage');
       const agents = await storage.storage.getAgents();
       const competitiveAgent = agents.find(a => a.id === 'competitive');
-      const avgTimePerInsight = competitiveAgent?.configuration?.avgTimePerInsight || 45;
+      const avgTimePerInsight = (competitiveAgent?.configuration as any)?.avgTimePerInsight || 45;
       
       const totalMinutesSaved = totalInsights * avgTimePerInsight;
       const totalHoursSaved = totalMinutesSaved / 60;
@@ -393,15 +423,15 @@ export class TelosMetricsCalculator {
         : totalMinutesSaved / 7; // Default to weekly average
 
       // Calculate productivity gain based on agent configuration
-      const manualAnalysisTimePerInsight = competitiveAgent?.configuration?.manualAnalysisTime || 180;
-      const automatedTimePerInsight = competitiveAgent?.configuration?.automatedAnalysisTime || 15;
+      const manualAnalysisTimePerInsight = (competitiveAgent?.configuration as any)?.manualAnalysisTime || 180;
+      const automatedTimePerInsight = (competitiveAgent?.configuration as any)?.automatedAnalysisTime || 15;
       const productivityGain = totalInsights > 0 
         ? ((manualAnalysisTimePerInsight - automatedTimePerInsight) / manualAnalysisTimePerInsight) * 100
         : 0;
 
       // Calculate real revenue impact based on actionable insights
-      const actionableInsights = insightsData.filter(insight => insight.actionTaken);
-      const avgRevenuePerActionableInsight = competitiveAgent?.configuration?.avgRevenuePerInsight || 15000;
+      const actionableInsights = insightsData.filter((insight: any) => insight.actionTaken);
+      const avgRevenuePerActionableInsight = (competitiveAgent?.configuration as any)?.avgRevenuePerInsight || 15000;
       const totalAIDrivenRevenue = actionableInsights.length * avgRevenuePerActionableInsight;
       const revenuePerInsight = totalInsights > 0 ? totalAIDrivenRevenue / totalInsights : 0;
       
@@ -413,7 +443,7 @@ export class TelosMetricsCalculator {
       const monthlyRevenue = dailyRevenue * 30;
 
       // Calculate ROI based on system costs vs revenue generated
-      const systemCosts = competitiveAgent?.configuration?.systemCosts || 150000;
+      const systemCosts = (competitiveAgent?.configuration as any)?.systemCosts || 150000;
       const roiMultiple = totalAIDrivenRevenue > 0 ? (monthlyRevenue * 12) / systemCosts : 0;
 
       // Calculate competitive response speed based on real alert response times

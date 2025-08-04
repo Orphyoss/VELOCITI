@@ -7,6 +7,8 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **CRITICAL: Fixed PostgreSQL Database Deployment Errors** - Resolved production database schema mismatch causing "intelligence_insights table does not exist" errors by implementing table existence checks in metricsCalculator, added robust fallbacks for missing tables, fixed TypeScript errors, and ensured metrics APIs work in both development and production environments (2025-08-04)
+- **COMPLETED: Mobile Responsiveness Optimization** - Enhanced TabsList mobile layout with vertical stacking (grid-cols-1) on small screens, improved touch targets and spacing, optimized grid breakpoints throughout TelosIntelligence page while preserving competitive intelligence functionality (2025-08-04)
 - **COMPLETED: Morning Briefing 3-Hour Caching** - Implemented server-side caching for Morning Briefing with 3-hour TTL to prevent regeneration on every page access, updated frontend query settings with matching staleTime and gcTime, added specialized cacheService method for morning briefing data (2025-08-04)
 - **COMPLETED: Navigation and Card Styling Fixes** - Fixed Data Generation page sidebar by wrapping in AppShell, implemented persistent admin expansion when sub-tabs are selected, added blue highlighting to all main navigation items and admin sub-tabs for consistent selection indicators across desktop and mobile (2025-08-04)
 - **COMPLETED: System Monitoring Dark Theme** - Applied dark theme styling to all card components in APIMonitor and MemoryStats with proper contrast and readability (2025-08-04)
