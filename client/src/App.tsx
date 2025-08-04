@@ -14,6 +14,8 @@ import TelosIntelligence from "@/pages/TelosIntelligence";
 import MorningBriefing from "@/pages/MorningBriefing";
 import Admin from "@/pages/Admin";
 import DataGeneration from "@/pages/DataGeneration";
+import SystemMonitoring from "@/pages/SystemMonitoring";
+import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -30,6 +32,8 @@ function Router() {
       <Route path="/briefing" component={MorningBriefing} />
       <Route path="/admin" component={Admin} />
       <Route path="/data-generation" component={DataGeneration} />
+      <Route path="/system-monitoring" component={SystemMonitoring} />
+      <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
   );

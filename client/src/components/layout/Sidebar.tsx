@@ -59,13 +59,19 @@ export default function Sidebar() {
       id: 'data-generation',
       label: 'Data Generation',
       icon: BarChart3,
-      path: '/admin?tab=data-generation'
+      path: '/data-generation'
     },
     {
       id: 'system-monitoring',
       label: 'System Monitoring',
       icon: Activity,
-      path: '/admin?tab=system-monitoring'
+      path: '/system-monitoring'
+    },
+    {
+      id: 'settings',
+      label: 'Settings',
+      icon: Cog,
+      path: '/settings'
     }
   ];
 
