@@ -320,7 +320,7 @@ export default function TelosIntelligence() {
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">£{rmMetrics.yieldOptimization.currentYield.toFixed(2)}</div>
             <div className="text-xs text-muted-foreground">
-              {(performance as any)?.filter((route: any) => parseFloat(route.avgYield || '0') < rmMetrics.yieldOptimization.currentYield * 0.9).length || 0} underperforming
+              {rmMetrics.yieldOptimization.topRoutes.filter((route: any) => route.yield < rmMetrics.yieldOptimization.currentYield * 0.9).length} underperforming
             </div>
           </CardContent>
         </Card>
