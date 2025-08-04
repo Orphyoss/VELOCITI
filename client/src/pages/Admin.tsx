@@ -7,7 +7,7 @@ import APIMonitor from '@/components/admin/APIMonitor';
 import MemoryStats from '@/components/memory/MemoryStats';
 
 import DataGeneration from '@/pages/DataGeneration';
-import AgentStatus from '@/components/agents/AgentStatus';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Activity, Brain, Zap, Database, Users } from 'lucide-react';
 
@@ -60,30 +60,13 @@ export default function Admin() {
 
             <div className="bg-dark-900/50 rounded-lg p-6 min-h-[600px]">
               <TabsContent value="agents" className="space-y-6 m-0">
-                <Tabs defaultValue="agent-status" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
-                    <TabsTrigger value="agent-setup">Agent Setup</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="agent-status" className="space-y-4">
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Status</h3>
-                      <p className="text-dark-400 mb-6">Monitor agent performance and activity.</p>
-                      <AgentStatus />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="agent-setup" className="space-y-4">
-                    <div className="space-y-6">
-                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Setup</h3>
-                      <p className="text-dark-400 mb-6">Configure agent parameters and thresholds.</p>
-                      <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
-                        <p className="text-dark-300">Agent setup interface will be integrated here.</p>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <div className="space-y-6">
+                  <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Configuration</h3>
+                  <p className="text-dark-400 mb-6">Configure and monitor AI agent behavior and performance.</p>
+                  <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
+                    <p className="text-dark-300">Agent configuration interface coming soon...</p>
+                  </div>
+                </div>
               </TabsContent>
             </div>
           </Tabs>
