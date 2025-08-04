@@ -122,11 +122,15 @@ export default function ActionAgents() {
     }
   };
 
-  const getAgentDisplayName = (agentId: string): string => {
+  const getAgentDisplayName = (agentId: string | null | undefined): string => {
+    if (!agentId) {
+      return 'System Agent';
+    }
     const agentMapping: Record<string, string> = {
       'network': 'Network Agent',
       'performance': 'Performance Agent', 
-      'competitive': 'Competitive Agent'
+      'competitive': 'Competitive Agent',
+      'metrics_monitoring': 'Metrics Agent'
     };
     return agentMapping[agentId] || agentId;
   };
