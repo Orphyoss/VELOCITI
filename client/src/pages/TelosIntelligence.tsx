@@ -155,8 +155,10 @@ export default function TelosIntelligence() {
   // Fetch competitive pricing
   const { data: competitive, isLoading: competitiveLoading } = useQuery({
     queryKey: ['/api/telos/competitive-position', competitiveRoute],
-    queryFn: () => apiRequest(`/api/telos/competitive-position?route=${competitiveRoute}`),
+    queryFn: () => fetch(`/api/telos/competitive-position?route=${competitiveRoute}`).then(res => res.json()),
     enabled: !!competitiveRoute,
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache
   });
 
   // Fetch route dashboard
@@ -192,16 +194,8 @@ export default function TelosIntelligence() {
       })) || []
     },
     competitiveIntelligence: {
-      priceAdvantageRoutes: (competitive as any)?.filter((comp: any) => {
-        const ezyPrice = parseFloat(comp.avgPrice || '0');
-        const competitorAvg = (competitive as any)?.reduce((sum: number, c: any) => sum + parseFloat(c.avgPrice || '0'), 0) / (competitive as any)?.length || 100;
-        return ezyPrice < competitorAvg * 0.95; // EZY price 5% below market average
-      }).length || 0,
-      priceDisadvantageRoutes: (competitive as any)?.filter((comp: any) => {
-        const ezyPrice = parseFloat(comp.avgPrice || '0');
-        const competitorAvg = (competitive as any)?.reduce((sum: number, c: any) => sum + parseFloat(c.avgPrice || '0'), 0) / (competitive as any)?.length || 100;
-        return ezyPrice > competitorAvg * 1.05; // EZY price 5% above market average
-      }).length || 0,
+      priceAdvantageRoutes: (competitive as any)?.pricing?.priceAdvantage > 0 ? 1 : 0,
+      priceDisadvantageRoutes: (competitive as any)?.pricing?.priceAdvantage <= 0 ? 1 : 0,
       responseTime: (insights as any)?.filter((insight: any) => insight.agentSource === 'Competitive Agent').length > 0 ? 2 : 0, // 2 hours response time when competitive insights exist
       marketShare: 25.3 // EasyJet's typical market share percentage
     },
@@ -851,7 +845,7 @@ export default function TelosIntelligence() {
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
-              ) : competitive ? (
+              ) : competitive && (competitive as any).route ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">
@@ -1145,9 +1139,9 @@ export default function TelosIntelligence() {
                     <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading competitive data...</p>
                   </div>
                 </div>
-              ) : competitive && (competitive as any).length > 0 ? (
+              ) : positions && (positions as any).length > 0 ? (
                 <div className="space-y-4">
-                  {(competitive as any).slice(0, 15).map((position: any, index: number) => (
+                  {(positions as any).slice(0, 15).map((position: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="font-semibold">{position.routeId}</div>
