@@ -35,9 +35,17 @@ function TodaysPriorities() {
   }
 
   // Filter critical alerts - limit to 5 for display
-  const criticalAlerts = (alerts || [])
+  const allAlerts = alerts || [];
+  const criticalAlerts = allAlerts
     .filter((alert: any) => alert.priority === 'critical')
     .slice(0, 5);
+  
+  console.log('TodaysPriorities Debug:', {
+    totalAlerts: allAlerts.length,
+    criticalCount: allAlerts.filter((alert: any) => alert.priority === 'critical').length,
+    criticalAlertsShown: criticalAlerts.length,
+    firstAlert: allAlerts[0]
+  });
 
   return (
     <Card className="bg-dark-900 border-dark-800">
@@ -51,11 +59,17 @@ function TodaysPriorities() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {criticalAlerts.length === 0 ? (
+        {criticalAlerts.length === 0 && allAlerts.length > 0 ? (
           <div className="text-center py-8 text-dark-400">
             <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg font-medium">No Critical Issues</p>
             <p className="text-sm">All systems operating within acceptable parameters</p>
+          </div>
+        ) : allAlerts.length === 0 ? (
+          <div className="text-center py-8 text-dark-400">
+            <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-medium">Loading Alerts...</p>
+            <p className="text-sm">Fetching latest intelligence data</p>
           </div>
         ) : (
           <div className="space-y-4">

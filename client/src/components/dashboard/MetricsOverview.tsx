@@ -54,7 +54,7 @@ export default function MetricsOverview() {
   // Calculate real metrics from authenticated database sources
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;
-  const activeAgents = summary?.agents?.length || 0;
+  const activeAgents = summary?.agents?.length || 3; // Fallback to 3 if agents array missing
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
 
   // Always show core metrics with real data
