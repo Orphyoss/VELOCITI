@@ -662,9 +662,17 @@ export default function TelosIntelligence() {
                   </div>
                   <div className="space-y-2">
                     <div className="text-sm text-muted-foreground">Load Factor</div>
-                    <div className="text-xl sm:text-2xl font-bold">{rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</div>
-                    <Progress value={rmMetrics.operationalEfficiency.capacityUtilization} className="h-2" />
-                    <div className="text-xs text-muted-foreground">Network average</div>
+                    <div className="text-xl sm:text-2xl font-bold">
+                      {(performance && performance.length > 0) 
+                        ? (performance.reduce((sum: number, route: any) => sum + parseFloat(route.avgLoadFactor || '0'), 0) / performance.length).toFixed(1)
+                        : rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)
+                      }%
+                    </div>
+                    <Progress value={(performance && performance.length > 0) 
+                      ? (performance.reduce((sum: number, route: any) => sum + parseFloat(route.avgLoadFactor || '0'), 0) / performance.length)
+                      : rmMetrics.operationalEfficiency.capacityUtilization
+                    } className="h-2" />
+                    <div className="text-xs text-muted-foreground">Network average from {performance?.length || 0} routes</div>
                   </div>
                 </div>
                 
@@ -1416,39 +1424,39 @@ export default function TelosIntelligence() {
                       <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                     ))}
                   </div>
-                ) : (
+                ) : performance && performance.length > 0 ? (
                   <div className="space-y-4">
-                    {(performance as any)?.slice(0, 8).map((perf: any, index: number) => (
+                    {performance.slice(0, 8).map((perf: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="space-y-1">
                           <div className="font-medium">{perf.routeId}</div>
                           <div className="text-sm text-muted-foreground">
-                            {perf.flightCount} flights • {perf.observationCount} observations
+                            {perf.flightCount || 'N/A'} flights • {perf.observationCount || 'N/A'} observations
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Load Factor</div>
-                            <div className="font-bold">{perf.avgLoadFactor || 0}%</div>
+                            <div className="font-bold">{parseFloat(perf.avgLoadFactor || '0').toFixed(1)}%</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-muted-foreground">Revenue</div>
-                            <div className="font-bold">£{parseFloat(perf.totalRevenue || '0').toFixed(0)}</div>
+                            <div className="text-sm text-muted-foreground">Avg Yield</div>
+                            <div className="font-bold">£{parseFloat(perf.avgYield || '0').toFixed(0)}</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-muted-foreground">vs Forecast</div>
+                            <div className="text-sm text-muted-foreground">vs Target</div>
                             <div className="flex items-center gap-1">
-                              {perf.avgLoadFactor >= 75 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
-                              <span className="text-sm">{perf.avgLoadFactor >= 75 ? '+Above' : '-Below'}</span>
+                              {parseFloat(perf.avgLoadFactor || '0') >= 75 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                              <span className="text-sm">{parseFloat(perf.avgLoadFactor || '0') >= 75 ? '+Above' : '-Below'}</span>
                             </div>
                           </div>
                         </div>
                       </div>
-                    )) || (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No performance data available
-                      </div>
-                    )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No performance data available for the selected timeframe
                   </div>
                 )}
               </CardContent>

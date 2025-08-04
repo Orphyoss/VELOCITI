@@ -200,7 +200,21 @@ export default function AnalystWorkbench() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
-            {filteredAlerts.length > 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map(i => (
+                  <Card key={i} className="bg-dark-900 border-dark-800 animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="space-y-3">
+                        <div className="h-4 bg-dark-700 rounded w-3/4"></div>
+                        <div className="h-3 bg-dark-700 rounded w-1/2"></div>
+                        <div className="h-16 bg-dark-700 rounded"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredAlerts && filteredAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {filteredAlerts.map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
