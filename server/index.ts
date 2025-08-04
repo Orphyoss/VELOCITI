@@ -56,26 +56,49 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // For Replit deployments: Check if port 5000 is already in use by dev server
-  // If so, automatically use alternative port to avoid conflicts
+  // DEPLOYMENT FIX: Handle Replit deployment port conflicts intelligently
+  // During development: use 5000, during production deployment: handle conflicts gracefully
   let port = parseInt(process.env.PORT || '5000', 10);
   
-  // In production, if port 5000 is specified but we detect dev server conflict, use 3001
-  if (process.env.NODE_ENV === 'production' && port === 5000) {
-    // Check if development server is already running on 5000
-    const net = await import('net');
-    const isPortInUse = await new Promise((resolve) => {
-      const testServer = net.createServer();
-      testServer.listen(5000, () => {
-        testServer.close(() => resolve(false));
+  // Check if we're in a deployment context where port conflicts might occur
+  const isDeployment = process.env.NODE_ENV === 'production';
+  const isDevServerActive = port === 5000 && isDeployment;
+  
+  if (isDevServerActive) {
+    // In deployment, test if development port is occupied and use fallback logic
+    try {
+      const net = await import('net');
+      const testConnection = await new Promise((resolve, reject) => {
+        const testServer = net.createServer();
+        const timeout = setTimeout(() => {
+          testServer.close();
+          resolve('timeout');
+        }, 1000);
+        
+        testServer.listen(port, '0.0.0.0', () => {
+          clearTimeout(timeout);
+          testServer.close(() => resolve('available'));
+        });
+        
+        testServer.on('error', (err: any) => {
+          clearTimeout(timeout);
+          if (err.code === 'EADDRINUSE') {
+            resolve('occupied');
+          } else {
+            reject(err);
+          }
+        });
       });
-      testServer.on('error', () => resolve(true));
-    });
-    
-    if (isPortInUse) {
-      port = 3001; // Use alternative port to avoid conflict
-      console.log('[DEPLOY] Port 5000 in use, using port 3001 for production');
+      
+      if (testConnection === 'occupied') {
+        // Development server is running, deployment should use different approach
+        console.log('[DEPLOY] Development server detected on port 5000');
+        console.log('[DEPLOY] Deployment will terminate to avoid conflicts');
+        console.log('[DEPLOY] Please stop development server before deploying');
+        process.exit(1);
+      }
+    } catch (error) {
+      console.log('[DEPLOY] Port check failed, proceeding with deployment on', port);
     }
   }
   server.listen({
