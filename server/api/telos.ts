@@ -25,8 +25,7 @@ router.get('/competitive-position', async (req, res) => {
     );
     
     const duration = Date.now() - startTime;
-    console.log(`[API] Competitive position request completed in ${duration}ms`);
-    console.log(`[API] Returning competitive position data:`, JSON.stringify(positions, null, 2));
+    console.log(`[API] Competitive position request completed in ${duration}ms, returned ${positions.competitorCount} competitors`);
     
     res.json(positions);
   } catch (error) {

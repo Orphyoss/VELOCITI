@@ -300,15 +300,10 @@ export class TelosIntelligenceService {
   // Generate competitive position summary
   async getCompetitivePosition(routeId: string) {
     try {
-      console.log(`[TelosIntelligence] Getting competitive position for route: ${routeId}`);
-      
       const pricing = await this.getCompetitivePricingAnalysis(routeId, 7);
       const capacity = await this.getMarketCapacityAnalysis(routeId, 7);
       
-      console.log(`[TelosIntelligence] Found ${pricing.length} pricing records, ${capacity.length} capacity records`);
-      
       if (pricing.length === 0) {
-        console.warn(`[TelosIntelligence] No pricing data found for route ${routeId}`);
         return {
           route: routeId,
           pricing: { easyjetPrice: 0, competitorAvgPrice: 0, priceAdvantage: 0, priceRank: 0 },
@@ -346,7 +341,6 @@ export class TelosIntelligenceService {
         competitorCount: pricing.length
       };
       
-      console.log(`[TelosIntelligence] Competitive position result:`, result);
       return result;
     } catch (error) {
       console.error("Error in getCompetitivePosition:", error);
