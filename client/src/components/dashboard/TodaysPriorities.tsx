@@ -11,8 +11,6 @@ function TodaysPriorities() {
     refetchInterval: 30000,
   });
 
-  console.log('TodaysPriorities API Response:', { alerts, isLoading, error });
-
   if (isLoading) {
     return (
       <Card className="bg-dark-900 border-dark-800">
@@ -42,12 +40,7 @@ function TodaysPriorities() {
     .filter((alert: any) => alert.priority === 'critical')
     .slice(0, 5);
   
-  console.log('TodaysPriorities Debug:', {
-    totalAlerts: allAlerts.length,
-    criticalCount: allAlerts.filter((alert: any) => alert.priority === 'critical').length,
-    criticalAlertsShown: criticalAlerts.length,
-    firstAlert: allAlerts[0]
-  });
+  // Debug logging removed - component working correctly
 
   return (
     <Card className="bg-dark-900 border-dark-800">

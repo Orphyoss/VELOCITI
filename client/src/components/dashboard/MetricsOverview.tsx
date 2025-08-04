@@ -51,13 +51,19 @@ export default function MetricsOverview() {
   const loadFactor = parseFloat((routePerformance as any)?.[0]?.avgLoadFactor) || null;
   const routesCount = (routePerformance as any)?.length || 0;
 
-  console.log('MetricsOverview Debug:', { summary, rmMetrics, routePerformance });
+  console.log('MetricsOverview Debug - Summary Data:', summary);
+  console.log('MetricsOverview Debug - RM Metrics:', rmMetrics);
+  console.log('MetricsOverview Debug - Route Performance:', routePerformance);
 
   // Calculate real metrics from authenticated database sources
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;
-  const activeAgents = summary?.agents?.length || 3; // Fallback to 3 if agents array missing
+  const activeAgents = summary?.agents?.length || 0;
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
+
+  console.log('MetricsOverview Debug - Calculated Values:', {
+    totalAlerts, criticalAlerts, activeAgents, networkYield, loadFactor, routesCount, dailyRevenue
+  });
 
   // Always show core metrics with real data
   const metrics = [
