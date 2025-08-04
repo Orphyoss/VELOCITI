@@ -917,13 +917,13 @@ ${insight.description}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">
-                      +{briefingData?.demandSignals.searchGrowth}%
+                      +{briefingData?.demandSignals?.searchGrowth || 0}%
                     </div>
                     <div className="text-xs text-dark-400">Search Growth YoY</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-400">
-                      +{briefingData?.demandSignals.bookingGrowth}%
+                      +{briefingData?.demandSignals?.bookingGrowth || 0}%
                     </div>
                     <div className="text-xs text-dark-400">Booking Growth YoY</div>
                   </div>
@@ -933,7 +933,7 @@ ${insight.description}
                   <div>
                     <span className="text-sm font-medium text-dark-50">Top Performers:</span>
                     <div className="mt-1">
-                      {briefingData?.demandSignals.topPerformers.map((route) => (
+                      {briefingData?.demandSignals?.topPerformers?.map((route) => (
                         <Badge key={route} className="bg-green-900/30 text-green-300 mr-1 mb-1">
                           {route}
                         </Badge>
@@ -943,7 +943,7 @@ ${insight.description}
                   <div>
                     <span className="text-sm font-medium text-dark-50">Watch List:</span>
                     <div className="mt-1">
-                      {briefingData?.demandSignals.concerns.map((route) => (
+                      {briefingData?.demandSignals?.concerns?.map((route) => (
                         <Badge key={route} className="bg-orange-900/30 text-orange-300 mr-1 mb-1">
                           {route}
                         </Badge>
@@ -962,19 +962,19 @@ ${insight.description}
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-sm text-dark-400">Total Pricing Actions</span>
-                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity.pricingActions}</span>
+                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity?.pricingActions || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-dark-400">System Automated</span>
-                  <span className="font-semibold text-blue-400">{briefingData?.rmActivity.systemActions}</span>
+                  <span className="font-semibold text-blue-400">{briefingData?.rmActivity?.systemActions || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-dark-400">Manual Actions</span>
-                  <span className="font-semibold text-orange-400">{briefingData?.rmActivity.manualActions}</span>
+                  <span className="font-semibold text-orange-400">{briefingData?.rmActivity?.manualActions || 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-dark-400">Avg Response Time</span>
-                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity.avgResponseTime}</span>
+                  <span className="font-semibold text-dark-50">{briefingData?.rmActivity?.avgResponseTime || 'N/A'}</span>
                 </div>
               </CardContent>
             </Card>
