@@ -5,13 +5,14 @@ import AppShell from '@/components/layout/AppShell';
 import DocumentManager from '@/components/admin/DocumentManager';
 import APIMonitor from '@/components/admin/APIMonitor';
 import MemoryStats from '@/components/memory/MemoryStats';
-import ActionAgentsNew from '@/pages/ActionAgentsNew';
+
 import DataGeneration from '@/pages/DataGeneration';
+import AgentStatus from '@/components/agents/AgentStatus';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, Activity, Brain, Zap, Database, Users } from 'lucide-react';
 
 export default function Admin() {
-  const [activeTab, setActiveTab] = useState('action-agents');
+  const [activeTab, setActiveTab] = useState('agents');
   const { setCurrentModule } = useVelocitiStore();
   const [location] = useLocation();
 
@@ -47,36 +48,42 @@ export default function Admin() {
         {/* Enhanced Admin Tabs with distinct styling */}
         <div className="bg-gradient-to-r from-dark-900 via-dark-800 to-dark-900 p-1 rounded-xl shadow-xl border border-orange-500/20">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-2 bg-dark-850 border-2 border-orange-500/30 rounded-lg p-2 shadow-lg">
+            <TabsList className="grid w-full grid-cols-1 bg-dark-850 border-2 border-orange-500/30 rounded-lg p-2 shadow-lg">
               <TabsTrigger 
-                value="action-agents" 
-                className="flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-dark-700"
-              >
-                <Zap className="w-4 h-4" />
-                <span>Action Agents Setup</span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="ai-agents" 
+                value="agents" 
                 className="flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-dark-700"
               >
                 <Users className="w-4 h-4" />
-                <span>AI Agents</span>
+                <span>Agent Configuration</span>
               </TabsTrigger>
             </TabsList>
 
             <div className="bg-dark-900/50 rounded-lg p-6 min-h-[600px]">
-              <TabsContent value="action-agents" className="space-y-6 m-0">
-                <ActionAgentsNew selectedAgentId={new URLSearchParams(location.split('?')[1] || '').get('agent')} />
-              </TabsContent>
-
-              <TabsContent value="ai-agents" className="space-y-6 m-0">
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-dark-50 mb-4">AI Agent Configuration</h3>
-                  <p className="text-dark-400 mb-6">Configure and monitor AI agent behavior and performance.</p>
-                  <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
-                    <p className="text-dark-300">AI Agent management interface coming soon...</p>
-                  </div>
-                </div>
+              <TabsContent value="agents" className="space-y-6 m-0">
+                <Tabs defaultValue="agent-status" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
+                    <TabsTrigger value="agent-setup">Agent Setup</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="agent-status" className="space-y-4">
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Status</h3>
+                      <p className="text-dark-400 mb-6">Monitor agent performance and activity.</p>
+                      <AgentStatus />
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="agent-setup" className="space-y-4">
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Setup</h3>
+                      <p className="text-dark-400 mb-6">Configure agent parameters and thresholds.</p>
+                      <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
+                        <p className="text-dark-300">Agent setup interface will be integrated here.</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </div>
           </Tabs>

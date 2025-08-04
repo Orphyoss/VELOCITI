@@ -50,14 +50,8 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   const adminNavigationItems = [
     {
-      id: 'action-agents',
-      label: 'Action Agents Setup',
-      icon: Zap,
-      path: '/action-agents'
-    },
-    {
       id: 'agents',
-      label: 'AI Agents',
+      label: 'Agent Configuration',
       icon: Users,
       path: '/agents'
     },
