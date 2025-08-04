@@ -109,7 +109,14 @@ export default function MorningBriefing() {
         }
         
         const result = await response.json();
+        console.log('[MorningBriefing] Raw API response:', result);
         console.log('[MorningBriefing] Retrieved briefing data:', result.data);
+        console.log('[MorningBriefing] Executive Summary:', result.data?.executiveSummary);
+        console.log('[MorningBriefing] Priority Actions:', result.data?.priorityActions);
+        console.log('[MorningBriefing] Competitive Intelligence:', result.data?.competitiveIntelligence);
+        console.log('[MorningBriefing] System Health:', result.data?.systemHealth);
+        console.log('[MorningBriefing] AI Performance:', result.data?.aiPerformance);
+        console.log('[MorningBriefing] Business Impact:', result.data?.businessImpact);
         
         return result.data;
       } catch (error) {
@@ -653,6 +660,12 @@ ${insight.description}
   }
 
   console.log('[MorningBriefing] Rendering briefing with data:', briefingData);
+  console.log('[MorningBriefing] businessImpact check:', briefingData?.businessImpact);
+  console.log('[MorningBriefing] analystTimeSavings check:', briefingData?.businessImpact?.analystTimeSavings);
+  console.log('[MorningBriefing] totalHoursSaved check:', briefingData?.businessImpact?.analystTimeSavings?.totalHoursSaved);
+  console.log('[MorningBriefing] aiPerformance check:', briefingData?.aiPerformance);
+  console.log('[MorningBriefing] insightAccuracyRate check:', briefingData?.aiPerformance?.insightAccuracyRate);
+  console.log('[MorningBriefing] overallAccuracy check:', briefingData?.aiPerformance?.insightAccuracyRate?.overallAccuracy);
 
   return (
     <AppShell>
