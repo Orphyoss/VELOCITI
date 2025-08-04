@@ -131,17 +131,25 @@ export default function DataGeneration() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants = {
-      pending: 'secondary',
-      running: 'default',
-      completed: 'default',
-      failed: 'destructive'
-    } as const;
+    const getStatusClasses = (status: string) => {
+      switch (status) {
+        case 'pending':
+          return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+        case 'running':
+          return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        case 'completed':
+          return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        case 'failed':
+          return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        default:
+          return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      }
+    };
     
     return (
-      <Badge variant={variants[status as keyof typeof variants] || 'secondary'}>
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClasses(status)}`}>
         {status.toUpperCase()}
-      </Badge>
+      </span>
     );
   };
 
@@ -160,9 +168,9 @@ export default function DataGeneration() {
               <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                 Last available data: {lastDataInfo.lastDataDate}
               </span>
-              <Badge variant="secondary" className="text-xs">
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                 {lastDataInfo.tablesChecked} tables checked
-              </Badge>
+              </span>
             </div>
           </div>
         )}
