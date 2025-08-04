@@ -171,17 +171,9 @@ export class TelosMetricsMonitoring {
   }
 
   private async checkBusinessImpactThresholds(metrics: any) {
-    // Revenue Impact (monthly target)
-    const monthlyRevenue = metrics.revenueImpact.monthlyRevenue || 0;
-    await this.checkThreshold(
-      'revenue_impact',
-      monthlyRevenue,
-      { target: 500000, warning: 300000, critical: 200000 },
-      'AI-driven revenue impact is below targets',
-      'higher'
-    );
-
-    // Response Speed
+    // Focus on operational airline metrics only - removed generic AI revenue impact
+    
+    // Response Speed (critical for airline competitive responses)
     await this.checkThreshold(
       'competitive_response_speed',
       metrics.competitiveResponseSpeed.avgResponseTimeHours,
@@ -190,7 +182,7 @@ export class TelosMetricsMonitoring {
       'lower'
     );
 
-    // Time Savings
+    // Time Savings (operational efficiency for airline analysts)
     await this.checkThreshold(
       'analyst_time_savings',
       metrics.analystTimeSavings.avgDailySavingsMinutes,
@@ -201,26 +193,9 @@ export class TelosMetricsMonitoring {
   }
 
   private async checkUserAdoptionThresholds(metrics: any) {
-    // Daily Active Users (assuming target of 20 analysts)
-    const userRate = (metrics.dailyActiveUsers.avgDailyUsers / 20) * 100;
-    await this.checkThreshold(
-      'daily_active_users',
-      userRate,
-      { target: 90, warning: 80, critical: 70 },
-      'Daily active user rate is declining',
-      'higher'
-    );
-
-    // User Satisfaction (NPS)
-    await this.checkThreshold(
-      'user_satisfaction_score',
-      metrics.userSatisfaction.npsScore,
-      { target: 50, warning: 30, critical: 10 },
-      'User satisfaction (NPS) is below acceptable levels',
-      'higher'
-    );
-
-    // Insight Action Rate
+    // Only monitor airline-specific metrics - user satisfaction and daily active users removed as non-material
+    
+    // Insight Action Rate (still relevant for airline intelligence platform)
     await this.checkThreshold(
       'insight_action_rate',
       metrics.insightActionRate.overallActionRate,
