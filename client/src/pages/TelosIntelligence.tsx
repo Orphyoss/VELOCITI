@@ -860,22 +860,19 @@ export default function TelosIntelligence() {
                     <div className="flex justify-between">
                       <span>High Yield Routes</span>
                       <span className="text-green-600 font-medium">
-                        {(performance as any)?.filter((route: any) => parseFloat(route.avgYield || '0') > 120).length || 0} routes
+                        {rmMetrics.yieldOptimization.topRoutes.filter((route: any) => route.yield > 120).length} routes
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Average Yield Routes</span>
                       <span className="text-blue-600 font-medium">
-                        {(performance as any)?.filter((route: any) => {
-                          const routeYield = parseFloat(route.avgYield || '0');
-                          return routeYield >= 80 && routeYield <= 120;
-                        }).length || 0} routes
+                        {rmMetrics.yieldOptimization.topRoutes.filter((route: any) => route.yield >= 80 && route.yield <= 120).length} routes
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Low Yield Routes</span>
                       <span className="text-red-600 font-medium">
-                        {(performance as any)?.filter((route: any) => parseFloat(route.avgYield || '0') < 80).length || 0} routes
+                        {rmMetrics.yieldOptimization.topRoutes.filter((route: any) => route.yield < 80).length} routes
                       </span>
                     </div>
                   </div>
