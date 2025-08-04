@@ -117,8 +117,18 @@ export default function TelosIntelligence() {
   const { setCurrentModule } = useVelocitiStore();
 
   useEffect(() => {
+    console.log('[TelosIntelligence] Component mounted, initializing...');
     setCurrentModule('telos');
+    console.log('[TelosIntelligence] Initial state:', {
+      competitiveRoute,
+      currentModule: 'telos'
+    });
   }, [setCurrentModule]);
+
+  // Log route selection changes
+  useEffect(() => {
+    console.log(`[TelosIntelligence] Competitive route changed to: ${competitiveRoute}`);
+  }, [competitiveRoute]);
 
   // Fetch comprehensive metrics data from the new analytics framework
   const { data: systemMetrics } = useQuery({
@@ -152,24 +162,100 @@ export default function TelosIntelligence() {
     refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Fetch competitive pricing
+  // Fetch competitive pricing with comprehensive logging
   const { data: competitive, isLoading: competitiveLoading, error: competitiveError } = useQuery({
     queryKey: ['competitive-position', competitiveRoute],
-    queryFn: () => fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`).then(res => res.json()),
+    queryFn: async () => {
+      console.log(`[TelosIntelligence] Fetching competitive data for route: ${competitiveRoute}`);
+      try {
+        const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`);
+        console.log(`[TelosIntelligence] Competitive API response status: ${response.status}`);
+        
+        if (!response.ok) {
+          console.error(`[TelosIntelligence] Competitive API error: ${response.status} ${response.statusText}`);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`[TelosIntelligence] Competitive data received:`, {
+          route: data.route,
+          competitorCount: data.competitorCount,
+          hasCompetitors: !!data.competitors,
+          hasPricing: !!data.pricing,
+          hasMarketShare: !!data.marketShare
+        });
+        
+        return data;
+      } catch (error) {
+        console.error(`[TelosIntelligence] Error fetching competitive data for ${competitiveRoute}:`, error);
+        throw error;
+      }
+    },
     enabled: !!competitiveRoute,
     retry: 1,
     refetchOnWindowFocus: false,
   });
 
-  // Fetch route dashboard
+  // Log competitive data changes after it's defined
+  useEffect(() => {
+    if (competitive) {
+      console.log('[TelosIntelligence] Competitive data updated:', {
+        route: competitive.route,
+        competitorCount: competitive.competitorCount,
+        hasValidData: competitive.competitorCount > 0,
+        pricing: competitive.pricing,
+        marketShare: competitive.marketShare
+      });
+    } else if (competitive === null) {
+      console.log('[TelosIntelligence] No competitive data available');
+    }
+  }, [competitive]);
+
+  // Fetch route dashboard with logging
   const { data: routeDashboard, isLoading: dashboardLoading } = useQuery({
     queryKey: ['/api/telos/route-dashboard'],
+    queryFn: async () => {
+      console.log('[TelosIntelligence] Fetching route dashboard data');
+      try {
+        const response = await fetch('/api/telos/route-dashboard');
+        console.log(`[TelosIntelligence] Route dashboard response status: ${response.status}`);
+        const data = await response.json();
+        console.log('[TelosIntelligence] Route dashboard data received:', {
+          hasData: !!data,
+          routeId: data?.routeId,
+          hasPricing: !!data?.pricing?.length,
+          hasPerformance: !!data?.performance?.length
+        });
+        return data;
+      } catch (error) {
+        console.error('[TelosIntelligence] Error fetching route dashboard:', error);
+        throw error;
+      }
+    },
     enabled: true,
   });
 
-  // Fetch route performance data
+  // Fetch route performance data with logging
   const { data: performance, isLoading: performanceLoading } = useQuery({
     queryKey: ['/api/routes/performance'],
+    queryFn: async () => {
+      console.log('[TelosIntelligence] Fetching route performance data');
+      try {
+        const response = await fetch('/api/routes/performance');
+        console.log(`[TelosIntelligence] Route performance response status: ${response.status}`);
+        const data = await response.json();
+        console.log('[TelosIntelligence] Route performance data received:', {
+          hasData: !!data,
+          isArray: Array.isArray(data),
+          count: Array.isArray(data) ? data.length : 0,
+          firstRoute: Array.isArray(data) && data.length > 0 ? data[0]?.routeId : null
+        });
+        return data;
+      } catch (error) {
+        console.error('[TelosIntelligence] Error fetching route performance:', error);
+        throw error;
+      }
+    },
     enabled: true,
   });
 

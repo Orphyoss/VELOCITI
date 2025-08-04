@@ -20,7 +20,7 @@ router.get('/competitive-position', async (req, res) => {
       routeId as string || 'LGW-BCN'
     );
     res.json(positions);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Failed to get competitive position:`, error);
     res.status(500).json({ 
       error: 'Failed to retrieve competitive position data'
@@ -45,10 +45,10 @@ router.get('/route-performance', async (req, res) => {
     );
     
     const duration = Date.now() - startTime;
-    console.log(`[API] Route performance request completed in ${duration}ms, returned ${performance.length} records`);
+    console.log(`[API] Route performance request completed in ${duration}ms, returned ${performance ? 'performance data' : 'no data'}`);
     
     res.json(performance);
-  } catch (error) {
+  } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`[API] Failed to get route performance (${duration}ms):`, error);
     res.status(500).json({ 
@@ -151,9 +151,9 @@ router.get('/market-events', async (req, res) => {
   try {
     const { days = 7 } = req.query;
     
-    const events = await telosIntelligence.getMarketEvents(parseInt(days as string));
+    const events = await telosIntelligenceService.getMarketEvents(parseInt(days as string));
     res.json(events);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to get market events:', error);
     res.status(500).json({ error: 'Failed to retrieve market events' });
   }
@@ -179,7 +179,7 @@ router.post('/run-analysis', async (req, res) => {
       results: analysis,
       duration
     });
-  } catch (error) {
+  } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`[API] Failed to run Telos analysis (${duration}ms):`, error);
     res.status(500).json({ 
@@ -200,14 +200,14 @@ router.get('/routes', async (req, res) => {
     console.log('[API] GET /routes - retrieving available route list');
     
     // Get distinct routes from competitive data
-    const positions = await telosIntelligence.getCompetitivePosition(undefined, 30);
-    const routes = Array.from(new Set(positions.map(p => p.routeId))).filter(r => r).sort();
+    const positions = await telosIntelligenceService.getCompetitivePosition(undefined, 30);
+    const routes = Array.from(new Set(positions.map((p: any) => p.routeId))).filter(r => r).sort();
     
     const duration = Date.now() - startTime;
     console.log(`[API] Routes request completed in ${duration}ms, found ${routes.length} unique routes`);
     
     res.json(routes);
-  } catch (error) {
+  } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`[API] Failed to get routes (${duration}ms):`, error);
     res.status(500).json({ 
@@ -225,7 +225,7 @@ router.get('/analytics/pricing-trends', async (req, res) => {
   try {
     const { routeId, days = 30 } = req.query;
     
-    const trends = await telosIntelligence.getCompetitivePosition(
+    const trends = await telosIntelligenceService.getCompetitivePosition(
       routeId as string,
       parseInt(days as string)
     );
@@ -241,7 +241,7 @@ router.get('/analytics/pricing-trends', async (req, res) => {
     }, {} as Record<string, any[]>);
     
     res.json(trendAnalysis);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to get pricing trends:', error);
     res.status(500).json({ error: 'Failed to retrieve pricing trends' });
   }
