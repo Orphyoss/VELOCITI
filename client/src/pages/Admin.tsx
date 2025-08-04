@@ -38,7 +38,7 @@ export default function Admin() {
     <AppShell>
       <div className="p-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-dark-50">Configuration Dashboard</h1>
+          <h1 className="text-3xl font-bold text-dark-50">Admin Dashboard</h1>
           <p className="text-dark-400 mt-2">
             Configure action agents and AI agent settings
           </p>

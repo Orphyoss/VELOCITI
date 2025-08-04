@@ -116,9 +116,9 @@ export default function Sidebar() {
             className="flex items-center justify-between px-2 py-2 mb-2 cursor-pointer hover:bg-gray-800 rounded-md"
             onClick={() => setIsAdminExpanded(!isAdminExpanded)}
           >
-            <div className="text-lg font-bold text-orange-400 dark:text-orange-300 uppercase tracking-wider font-mono flex items-center space-x-2">
+            <div className="text-lg font-semibold text-orange-400 dark:text-orange-300 uppercase tracking-wider flex items-center space-x-2">
               <Settings className="w-4 h-4" />
-              <span>Configuration</span>
+              <span>Admin</span>
             </div>
             {isAdminExpanded ? (
               <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -137,7 +137,7 @@ export default function Sidebar() {
                 return (
                   <Link key={item.id} href={item.path}>
                     <div 
-                      className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer ml-4`}
+                      className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-sm font-medium cursor-pointer ml-4`}
                       onClick={() => setCurrentModule(item.id as any)}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />

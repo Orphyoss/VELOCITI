@@ -149,9 +149,9 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 className="flex items-center justify-between px-3 py-2 mb-2 cursor-pointer hover:bg-dark-800 rounded-lg"
                 onClick={() => setIsAdminExpanded(!isAdminExpanded)}
               >
-                <div className="text-lg font-bold text-orange-400 uppercase tracking-wider font-mono flex items-center space-x-2">
+                <div className="text-lg font-semibold text-orange-400 uppercase tracking-wider flex items-center space-x-2">
                   <Settings className="w-4 h-4" />
-                  <span>Configuration</span>
+                  <span>Admin</span>
                 </div>
                 {isAdminExpanded ? (
                   <ChevronDown className="w-4 h-4 text-gray-400" />
