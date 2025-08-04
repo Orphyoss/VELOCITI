@@ -57,6 +57,13 @@ export default function DataGeneration() {
     refetchInterval: 5000, // Refresh every 5 seconds to show progress
   });
 
+  // Fetch last available data date
+  const { data: lastDataInfo } = useQuery({
+    queryKey: ['/api/admin/data-generation/last-data-date'],
+    queryFn: () => api.request('GET', '/api/admin/data-generation/last-data-date'),
+    staleTime: 300000, // 5 minutes - data changes infrequently
+  });
+
   // Mutation to trigger data generation
   const generateDataMutation = useMutation({
     mutationFn: async (params: { date: string; scenario: string }) => {
@@ -118,6 +125,19 @@ export default function DataGeneration() {
         <p className="text-gray-600 dark:text-gray-400 mt-1">
           Generate realistic airline intelligence data for specific dates and scenarios
         </p>
+        {lastDataInfo?.lastDataDate && (
+          <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Database className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                Last available data: {lastDataInfo.lastDataDate}
+              </span>
+              <Badge variant="secondary" className="text-xs">
+                {lastDataInfo.tablesChecked} tables checked
+              </Badge>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Data Generation Controls */}
