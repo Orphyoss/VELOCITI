@@ -72,7 +72,7 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Velociti</h1>
-            <p className="text-xs" style={{ color: '#ffaa66' }}>Intelligence Platform</p>
+            <p className="text-xs" style={{ color: '#ffaa66' }}>Intelligence</p>
           </div>
         </div>
       </div>
