@@ -12,8 +12,8 @@ function TodaysPriorities() {
     refetchInterval: 30000,
   });
 
-  // Filter only critical alerts
-  const criticalAlerts = alerts?.filter((alert: Alert) => alert.priority === 'critical') || [];
+  // Filter only critical alerts - limit to first 5 for dashboard display
+  const criticalAlerts = alerts?.filter((alert: Alert) => alert.priority === 'critical').slice(0, 5) || [];
 
   if (isLoading) {
     return (
@@ -70,11 +70,11 @@ function TodaysPriorities() {
                         CRITICAL
                       </Badge>
                       <Badge variant="outline" className="text-xs">
-                        {alert.agentId}
+                        {(alert as any).agent_id || alert.agentId || 'System'}
                       </Badge>
-                      {alert.route && (
+                      {((alert as any).route || alert.route) && (
                         <Badge variant="secondary" className="text-xs">
-                          {alert.route}
+                          {(alert as any).route || alert.route}
                         </Badge>
                       )}
                     </div>
@@ -84,16 +84,18 @@ function TodaysPriorities() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                       {alert.description}
                     </p>
-                    {alert.impact && (
+                    {((alert as any).impact_score || alert.impact || (alert as any).revenue_impact) && (
                       <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
                         <TrendingUp className="h-4 w-4" />
-                        Impact: {typeof alert.impact === 'number' ? `${alert.impact}%` : alert.impact}
+                        Impact: {(alert as any).impact_score ? `${(alert as any).impact_score}%` : 
+                                alert.impact ? (typeof alert.impact === 'number' ? `${alert.impact}%` : alert.impact) :
+                                `£${Math.round((alert as any).revenue_impact / 1000)}K`}
                       </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ml-4">
                     <Clock className="h-3 w-3" />
-                    {new Date(alert.createdAt).toLocaleTimeString('en-GB', {
+                    {new Date((alert as any).created_at || alert.createdAt).toLocaleTimeString('en-GB', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
