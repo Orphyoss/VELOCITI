@@ -57,11 +57,27 @@ app.use((req, res, next) => {
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
-  // In production (Replit deployments), use port 3001 to avoid conflicts with dev server on 5000
-  // Other ports are firewalled. Default based on environment.
-  // this serves both the API and the client.
-  const defaultPort = process.env.NODE_ENV === 'production' ? '3001' : '5000';
-  const port = parseInt(process.env.PORT || defaultPort, 10);
+  // For Replit deployments: Check if port 5000 is already in use by dev server
+  // If so, automatically use alternative port to avoid conflicts
+  let port = parseInt(process.env.PORT || '5000', 10);
+  
+  // In production, if port 5000 is specified but we detect dev server conflict, use 3001
+  if (process.env.NODE_ENV === 'production' && port === 5000) {
+    // Check if development server is already running on 5000
+    const net = await import('net');
+    const isPortInUse = await new Promise((resolve) => {
+      const testServer = net.createServer();
+      testServer.listen(5000, () => {
+        testServer.close(() => resolve(false));
+      });
+      testServer.on('error', () => resolve(true));
+    });
+    
+    if (isPortInUse) {
+      port = 3001; // Use alternative port to avoid conflict
+      console.log('[DEPLOY] Port 5000 in use, using port 3001 for production');
+    }
+  }
   server.listen({
     port,
     host: "0.0.0.0",
