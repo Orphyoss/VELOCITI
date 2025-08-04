@@ -300,16 +300,25 @@ export class TelosIntelligenceService {
   // Generate competitive position summary
   async getCompetitivePosition(routeId: string) {
     try {
+      console.log(`🔍 [SERVICE DEBUG] Starting getCompetitivePosition for route: ${routeId}`);
+      
       const pricing = await this.getCompetitivePricingAnalysis(routeId, 7);
       const capacity = await this.getMarketCapacityAnalysis(routeId, 7);
       
+      console.log(`🔍 [SERVICE DEBUG] Pricing analysis results:`, JSON.stringify(pricing, null, 2));
+      console.log(`🔍 [SERVICE DEBUG] Capacity analysis results:`, JSON.stringify(capacity, null, 2));
+      console.log(`🔍 [SERVICE DEBUG] Found ${pricing.length} pricing records, ${capacity.length} capacity records`);
+      
       if (pricing.length === 0) {
-        return {
+        console.log(`🔍 [SERVICE DEBUG] No pricing data found, returning empty result`);
+        const emptyResult = {
           route: routeId,
           pricing: { easyjetPrice: 0, competitorAvgPrice: 0, priceAdvantage: 0, priceRank: 0 },
           marketShare: { easyjetSeats: 0, totalMarketSeats: 0, marketSharePct: 0, capacityRank: 0 },
           competitorCount: 0
         };
+        console.log(`🔍 [SERVICE DEBUG] Empty result:`, JSON.stringify(emptyResult, null, 2));
+        return emptyResult;
       }
       
       // Calculate EasyJet's position
@@ -340,6 +349,10 @@ export class TelosIntelligenceService {
         },
         competitorCount: pricing.length
       };
+      
+      console.log(`🔍 [SERVICE DEBUG] Final competitive position result:`, JSON.stringify(result, null, 2));
+      console.log(`🔍 [SERVICE DEBUG] Result type:`, typeof result);
+      console.log(`🔍 [SERVICE DEBUG] Result keys:`, Object.keys(result));
       
       return result;
     } catch (error) {
