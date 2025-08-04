@@ -50,7 +50,7 @@ interface BriefingData {
     };
     britishAirways: {
       priceChanges: number;
-      routesAffected: string[];
+      routesAffected: number;
       avgPriceChange: number;
       trend: string;
     };
@@ -70,14 +70,14 @@ interface BriefingData {
     segmentFinderChanges: number;
     avgResponseTime: string;
   };
-  routeInsights: Array<{
+  routeInsights?: Array<{
     route: string;
-    status: 'ATTENTION' | 'OPPORTUNITY' | 'OPTIMAL';
+    status: 'ATTENTION' | 'OPPORTUNITY' | 'OPTIMAL' | 'WATCH' | 'CONCERN';
     loadFactor: number;
     yield: number;
     competitorPressure: string;
     demandTrend: string;
-    lastAction: string;
+    lastAction?: string;
     recommendation: string;
   }>;
 }
@@ -1043,8 +1043,8 @@ ${insight.description}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dark-800">
-                  {briefingData?.routeInsights?.map((route) => (
-                    <tr key={route.route} className="hover:bg-dark-800/30">
+                  {briefingData?.routeInsights?.map((route: any) => (
+                    <tr key={`route-${route.route}`} className="hover:bg-dark-800/30">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-dark-50">
                         {route.route}
                       </td>
