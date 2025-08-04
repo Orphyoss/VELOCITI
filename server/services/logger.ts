@@ -21,12 +21,18 @@ export interface LogEntry {
 }
 
 class VelocitiLogger {
-  private isDevelopment: boolean;
   private logHistory: LogEntry[] = [];
-  private readonly MAX_HISTORY = 1000;
+  private readonly MAX_HISTORY: number;
+  private configModule: any;
 
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV === 'development';
+    try {
+      this.configModule = require('../../shared/config');
+      this.MAX_HISTORY = this.configModule.getConfig().logging.maxHistory;
+    } catch (error) {
+      // Fallback for development
+      this.MAX_HISTORY = 1000;
+    }
   }
 
   private formatTimestamp(): string {
@@ -63,7 +69,21 @@ class VelocitiLogger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    return this.isDevelopment || level >= LogLevel.WARN;
+    try {
+      const config = this.configModule?.getConfig();
+      const configLevel = config?.logging?.level || 'INFO';
+      const minLevel = {
+        'DEBUG': LogLevel.DEBUG,
+        'INFO': LogLevel.INFO,
+        'WARN': LogLevel.WARN,
+        'ERROR': LogLevel.ERROR
+      }[configLevel] || LogLevel.INFO;
+      
+      return level >= minLevel;
+    } catch (error) {
+      // Fallback for development
+      return process.env.NODE_ENV === 'development' || level >= LogLevel.WARN;
+    }
   }
 
   private formatMessage(entry: LogEntry): string {
