@@ -156,15 +156,28 @@ export default function TelosIntelligence() {
   const { data: competitive, isLoading: competitiveLoading, error: competitiveError } = useQuery({
     queryKey: ['/api/telos/competitive-position', competitiveRoute],
     queryFn: async () => {
+      console.log('[Frontend] Fetching competitive data for route:', competitiveRoute);
       const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`);
       if (!response.ok) {
+        console.error('[Frontend] API response not ok:', response.status, response.statusText);
         throw new Error(`Failed to fetch competitive data: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log('[Frontend] Received competitive data:', data);
+      return data;
     },
     enabled: !!competitiveRoute,
     staleTime: 0, // Always fetch fresh data
     cacheTime: 0, // Don't cache
+  });
+  
+  // Log the current state for debugging
+  console.log('[Frontend] Competitive query state:', {
+    route: competitiveRoute,
+    loading: competitiveLoading,
+    hasData: !!competitive,
+    hasRoute: !!(competitive && competitive.route),
+    data: competitive
   });
 
   // Fetch route dashboard
@@ -847,7 +860,7 @@ export default function TelosIntelligence() {
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
-              ) : competitive ? (
+              ) : competitive && competitive.route ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">

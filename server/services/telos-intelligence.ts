@@ -300,8 +300,22 @@ export class TelosIntelligenceService {
   // Generate competitive position summary
   async getCompetitivePosition(routeId: string) {
     try {
+      console.log(`[TelosIntelligence] Getting competitive position for route: ${routeId}`);
+      
       const pricing = await this.getCompetitivePricingAnalysis(routeId, 7);
       const capacity = await this.getMarketCapacityAnalysis(routeId, 7);
+      
+      console.log(`[TelosIntelligence] Found ${pricing.length} pricing records, ${capacity.length} capacity records`);
+      
+      if (pricing.length === 0) {
+        console.warn(`[TelosIntelligence] No pricing data found for route ${routeId}`);
+        return {
+          route: routeId,
+          pricing: { easyjetPrice: 0, competitorAvgPrice: 0, priceAdvantage: 0, priceRank: 0 },
+          marketShare: { easyjetSeats: 0, totalMarketSeats: 0, marketSharePct: 0, capacityRank: 0 },
+          competitorCount: 0
+        };
+      }
       
       // Calculate EasyJet's position
       const easyjetPricing = pricing.find(p => p.airlineCode === 'EZY');
@@ -310,12 +324,11 @@ export class TelosIntelligenceService {
       const totalMarketSeats = capacity.reduce((sum: number, carrier: any) => 
         sum + (Number(carrier.totalSeats) || 0), 0);
       
-      const avgCompetitorPrice = pricing
-        .filter(p => p.airlineCode !== 'EZY')
-        .reduce((sum: number, p: any) => sum + (Number(p.avgPrice) || 0), 0) / 
-        Math.max(1, pricing.filter(p => p.airlineCode !== 'EZY').length);
+      const competitorPrices = pricing.filter(p => p.airlineCode !== 'EZY');
+      const avgCompetitorPrice = competitorPrices.length > 0 ? 
+        competitorPrices.reduce((sum: number, p: any) => sum + (Number(p.avgPrice) || 0), 0) / competitorPrices.length : 0;
 
-      return {
+      const result = {
         route: routeId,
         pricing: {
           easyjetPrice: Number(easyjetPricing?.avgPrice || 0),
@@ -332,6 +345,9 @@ export class TelosIntelligenceService {
         },
         competitorCount: pricing.length
       };
+      
+      console.log(`[TelosIntelligence] Competitive position result:`, result);
+      return result;
     } catch (error) {
       console.error("Error in getCompetitivePosition:", error);
       return {
