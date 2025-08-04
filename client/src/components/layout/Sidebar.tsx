@@ -20,12 +20,7 @@ export default function Sidebar() {
       icon: Sunrise,
       path: '/briefing'
     },
-    {
-      id: 'dashboard-legacy',
-      label: 'Dashboard',
-      icon: Target,
-      path: '/dashboard'
-    },
+
     {
       id: 'workbench',
       label: 'Analyst Workbench',

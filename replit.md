@@ -7,6 +7,7 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **COMPLETED: Platform Rebranding and Navigation Cleanup** - Renamed to Velociti Intelligence Platform, removed legacy Dashboard page (2025-08-04)
 - **COMPLETED: Storage Layer Completely Rewritten** - Successfully fixed all 807 syntax errors, system now fully stable (2025-08-04)
 - **VERIFIED: Architecture Analysis Complete** - Hybrid database + memory fallback architecture confirmed viable and working (2025-08-04)
 - **COMPLETED: Database Integrity Audit** - Verified Supabase PostgreSQL as primary data source with authentic data operations (2025-08-03)
