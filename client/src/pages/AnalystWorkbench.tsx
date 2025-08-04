@@ -59,51 +59,29 @@ export default function AnalystWorkbench() {
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
-  // Direct filtering function (bypassing React.useMemo issues)
-  const getFilteredAlerts = () => {
-    console.log('[AnalystWorkbench] DIRECT filtering alerts:', {
-      allAlertsType: typeof allAlerts,
-      allAlertsLength: allAlerts?.length,
-      isArray: Array.isArray(allAlerts),
-      filters: { priorityFilter, categoryFilter, statusFilter, searchQuery }
-    });
-    
-    if (!allAlerts || !Array.isArray(allAlerts)) {
-      console.log('[AnalystWorkbench] No valid alerts array, returning empty');
-      return [];
-    }
-    
-    const filtered = allAlerts.filter((alert: Alert) => {
-      if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
-      if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
-      if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
-      if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-          !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
-    }).sort((a: Alert, b: Alert) => {
-      // First sort by priority (critical first)
-      const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
-                          (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
-      if (priorityDiff !== 0) return priorityDiff;
-      
-      // Then sort by date (newest first)
-      return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
-    });
-    
-    console.log('[AnalystWorkbench] DIRECT filtering result:', {
-      originalCount: allAlerts.length,
-      filteredCount: filtered.length,
-      firstFiltered: filtered[0] ? {
-        id: filtered[0].id?.slice(0,8),
-        title: filtered[0].title?.slice(0,30),
-        status: filtered[0].status
-      } : 'NO_FILTERED_ALERTS'
-    });
-    
-    return filtered;
-  };
+  // GUARANTEED alert display - no filtering dependencies
+  const displayAlerts = allAlerts && Array.isArray(allAlerts) ? allAlerts.filter((alert: Alert) => {
+    // Apply filters directly in render
+    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
+    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
+    if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
+    if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+        !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    return true;
+  }).sort((a: Alert, b: Alert) => {
+    const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
+                        (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
+    if (priorityDiff !== 0) return priorityDiff;
+    return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
+  }) : [];
 
-  const filteredAlerts = getFilteredAlerts();
+  // Debug logging
+  console.log('[AnalystWorkbench] GUARANTEED display logic:', {
+    allAlertsLength: allAlerts?.length || 0,
+    displayAlertsLength: displayAlerts.length,
+    hasRawData: !!(allAlerts && Array.isArray(allAlerts)),
+    firstDisplayAlert: displayAlerts[0]?.id?.slice(0,8) || 'NONE'
+  });
 
   // Debug effect to track allAlerts changes
   React.useEffect(() => {
@@ -244,7 +222,7 @@ export default function AnalystWorkbench() {
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="bg-dark-900 border border-dark-800">
             <TabsTrigger value="all" className="data-[state=active]:bg-aviation-600">
-              All Alerts ({filteredAlerts?.length || 0})
+              All Alerts ({displayAlerts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="nightshift" className="data-[state=active]:bg-aviation-600">
               Nightshift ({nightshiftAlerts?.length || 0})
@@ -266,7 +244,7 @@ export default function AnalystWorkbench() {
             <div className="text-xs text-gray-400 mb-4 p-3 bg-slate-900 rounded border">
               <div className="font-medium text-green-400 mb-1">LIVE DEBUG STATUS:</div>
               <div>Loading: {isLoading ? '🔄 TRUE' : '✅ FALSE'} | API Error: {error ? '❌ YES' : '✅ NO'}</div>
-              <div>Total Alerts: {allAlerts?.length || 0} | After Filters: {filteredAlerts?.length || 0}</div>
+              <div>Total Alerts: {allAlerts?.length || 0} | After Filters: {displayAlerts?.length || 0}</div>
               <div>Filter Status: {statusFilter} | Priority: {priorityFilter} | Category: {categoryFilter}</div>
               {allAlerts && allAlerts.length > 0 && (
                 <div className="mt-2 p-2 bg-slate-800 rounded">
@@ -293,15 +271,9 @@ export default function AnalystWorkbench() {
                   </Card>
                 ))}
               </div>
-            ) : allAlerts && allAlerts.length > 0 && filteredAlerts && filteredAlerts.length > 0 ? (
+            ) : displayAlerts && displayAlerts.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {filteredAlerts.map((alert: Alert) => (
-                  <AlertCard key={alert.id} alert={alert} showDetails />
-                ))}
-              </div>
-            ) : allAlerts && allAlerts.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {allAlerts.map((alert: Alert) => (
+                {displayAlerts.map((alert: Alert) => (
                   <AlertCard key={alert.id} alert={alert} showDetails />
                 ))}
               </div>
