@@ -58,7 +58,7 @@ export default function AnalystWorkbench() {
     if (priorityDiff !== 0) return priorityDiff;
     
     // Then sort by date (newest first)
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime();
   }) || [];
 
   // Apply same sorting to other alert lists
@@ -67,19 +67,19 @@ export default function AnalystWorkbench() {
       const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
                           (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
       if (priorityDiff !== 0) return priorityDiff;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime();
     });
   };
 
   const activeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => alert.status === 'active') || []);
   const nightshiftAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
-    const createdDate = new Date(alert.createdAt);
+    const createdDate = new Date(alert.created_at || alert.createdAt);
     const hour = createdDate.getHours();
     return hour >= 22 || hour <= 6; // 10 PM to 6 AM
   }) || []);
 
   const realtimeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
-    const createdDate = new Date(alert.createdAt);
+    const createdDate = new Date(alert.created_at || alert.createdAt);
     const hour = createdDate.getHours();
     return hour > 6 && hour < 22; // 6 AM to 10 PM
   }) || []);
@@ -182,16 +182,16 @@ export default function AnalystWorkbench() {
         <Tabs defaultValue="all" className="space-y-6">
           <TabsList className="bg-dark-900 border border-dark-800">
             <TabsTrigger value="all" className="data-[state=active]:bg-aviation-600">
-              All Alerts ({filteredAlerts.length})
+              All Alerts ({filteredAlerts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="nightshift" className="data-[state=active]:bg-aviation-600">
-              Nightshift ({nightshiftAlerts.length})
+              Nightshift ({nightshiftAlerts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="realtime" className="data-[state=active]:bg-aviation-600">
-              Real-time ({realtimeAlerts.length})
+              Real-time ({realtimeAlerts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="active" className="data-[state=active]:bg-aviation-600">
-              Active ({activeAlerts.length})
+              Active ({activeAlerts?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="feedback" className="data-[state=active]:bg-aviation-600">
               <MessageSquare className="w-4 h-4 mr-2" />
@@ -200,6 +200,11 @@ export default function AnalystWorkbench() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
+            {/* Debug Info */}
+            <div className="text-xs text-muted-foreground mb-4 p-2 bg-slate-900 rounded">
+              Debug: Loading={isLoading ? 'true' : 'false'} | AllAlerts={allAlerts?.length || 0} | Filtered={filteredAlerts?.length || 0} | Status Filter={statusFilter}
+            </div>
+            
             {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map(i => (
