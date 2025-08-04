@@ -83,48 +83,27 @@ function TodaysPriorities() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                       {alert.description}
                     </p>
-                    {(() => {
-                      const dbAlert = alert as any;
-                      const impactScore = dbAlert.impact_score;
-                      const revenueImpact = dbAlert.revenue_impact;
-                      const regularImpact = alert.impact;
-                      
-                      if (impactScore && typeof impactScore === 'number') {
-                        return (
-                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
-                            <TrendingUp className="h-4 w-4" />
-                            Impact: {impactScore}%
-                          </div>
-                        );
-                      }
-                      
-                      if (revenueImpact && typeof revenueImpact === 'number' && revenueImpact > 0) {
-                        return (
-                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
-                            <TrendingUp className="h-4 w-4" />
-                            Impact: £{Math.round(revenueImpact / 1000)}K
-                          </div>
-                        );
-                      }
-                      
-                      if (regularImpact) {
-                        return (
-                          <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
-                            <TrendingUp className="h-4 w-4" />
-                            Impact: {typeof regularImpact === 'number' ? `${regularImpact}%` : regularImpact}
-                          </div>
-                        );
-                      }
-                      
-                      return null;
-                    })()}
+                    {alert.impact_score && (
+                      <div className="flex items-center gap-1 text-sm text-orange-600 dark:text-orange-400">
+                        <TrendingUp className="h-4 w-4" />
+                        Impact: {alert.impact_score}%
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ml-4">
                     <Clock className="h-3 w-3" />
-                    {new Date(alert.created_at || alert.createdAt || new Date()).toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {(() => {
+                      try {
+                        const dateStr = alert.created_at || alert.createdAt;
+                        if (!dateStr) return 'Now';
+                        return new Date(dateStr).toLocaleTimeString('en-GB', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        });
+                      } catch (e) {
+                        return 'Now';
+                      }
+                    })()}
                   </div>
                 </div>
               </div>
