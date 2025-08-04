@@ -56,10 +56,10 @@ export default function Sidebar() {
       path: '/agents'
     },
     {
-      id: 'data-generation',
-      label: 'Data Generation',
-      icon: BarChart3,
-      path: '/data-generation'
+      id: 'settings',
+      label: 'RAG Management',
+      icon: Cog,
+      path: '/settings'
     },
     {
       id: 'system-monitoring',
@@ -68,10 +68,10 @@ export default function Sidebar() {
       path: '/system-monitoring'
     },
     {
-      id: 'settings',
-      label: 'RAG Management',
-      icon: Cog,
-      path: '/settings'
+      id: 'data-generation',
+      label: 'Data Generation',
+      icon: BarChart3,
+      path: '/data-generation'
     }
   ];
 
