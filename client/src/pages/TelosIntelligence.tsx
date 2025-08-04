@@ -623,8 +623,8 @@ export default function TelosIntelligence() {
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="dashboard" className="space-y-4 border-4 border-white rounded-lg p-4 bg-slate-900">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
+      <Tabs defaultValue="dashboard" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 border-4 border-white rounded-lg p-4 bg-slate-900">
           <TabsTrigger value="dashboard" className="text-xs sm:text-sm">RM Dashboard</TabsTrigger>
           <TabsTrigger value="yield" className="text-xs sm:text-sm">Yield Opt.</TabsTrigger>
           <TabsTrigger value="competitive" className="text-xs sm:text-sm">Competitive</TabsTrigger>
