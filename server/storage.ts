@@ -1,12 +1,13 @@
 import { 
   type Alert, type Agent, type User, type RoutePerformance,
-  type Conversation, type SystemMetric, type Activity,
+  type Conversation, type SystemMetric, type Activity, type MorningBriefing,
   type InsertAlert, type InsertAgent, type InsertUser,
   type InsertRoutePerformance, type InsertConversation,
-  type InsertSystemMetric, type InsertActivity, type InsertFeedback
+  type InsertSystemMetric, type InsertActivity, type InsertFeedback,
+  type InsertMorningBriefing
 } from '@shared/schema';
 import { db, client } from './services/supabase.js';
-import { alerts, agents, users, feedback, conversations, systemMetrics, activities, routePerformance } from '@shared/schema';
+import { alerts, agents, users, feedback, conversations, systemMetrics, activities, routePerformance, morningBriefings } from '@shared/schema';
 import { eq, desc, gte, lte, and } from 'drizzle-orm';
 
 // Temporary memory storage for development resilience
@@ -103,6 +104,11 @@ export interface IStorage {
   // Activities
   getRecentActivities(limit?: number): Promise<Activity[]>;
   createActivity(activity: InsertActivity): Promise<void>;
+
+  // Morning Briefings
+  getMorningBriefings(limit?: number): Promise<MorningBriefing[]>;
+  getMorningBriefingByDate(date: string): Promise<MorningBriefing | undefined>;
+  createMorningBriefing(briefing: InsertMorningBriefing): Promise<MorningBriefing>;
 }
 
 export class MemoryStorage implements IStorage {

@@ -61,6 +61,24 @@ export const feedback = pgTable("feedback", {
   created_at: timestamp("created_at").defaultNow(),
 });
 
+// Morning Briefings
+export const morningBriefings = pgTable("morning_briefings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  briefing_date: date("briefing_date").notNull(),
+  analyst_name: text("analyst_name").notNull(),
+  analyst_role: text("analyst_role").notNull(),
+  executive_summary: jsonb("executive_summary").notNull(), // status, keyMessage, confidence
+  priority_actions: jsonb("priority_actions").notNull(), // array of priority actions
+  competitive_intelligence: jsonb("competitive_intelligence").notNull(),
+  demand_signals: jsonb("demand_signals").notNull(),
+  rm_activity: jsonb("rm_activity").notNull(),
+  route_insights: jsonb("route_insights").notNull(),
+  processing_time: text("processing_time"),
+  generated_by: text("generated_by").default("system"), // system, manual
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 // ============================================================================
 // TELOS INTELLIGENCE PLATFORM SCHEMA - EXISTING TABLES
 // ============================================================================
@@ -445,6 +463,11 @@ export type SystemMetric = typeof systemMetrics.$inferSelect;
 
 export type InsertActivity = z.infer<typeof insertActivitySchema>;
 export type Activity = typeof activities.$inferSelect;
+
+// Morning Briefing types
+export const insertMorningBriefingSchema = createInsertSchema(morningBriefings);
+export type InsertMorningBriefing = z.infer<typeof insertMorningBriefingSchema>;
+export type MorningBriefing = typeof morningBriefings.$inferSelect;
 
 // Action Agent types
 export type InsertActionAgentConfig = z.infer<typeof insertActionAgentConfigSchema>;

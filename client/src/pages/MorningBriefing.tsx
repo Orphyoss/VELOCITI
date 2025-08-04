@@ -87,6 +87,9 @@ export default function MorningBriefing() {
   const [selectedInsight, setSelectedInsight] = useState<PriorityAction | null>(null);
   const [aiNarrative, setAiNarrative] = useState('');
   const [narrativeLoading, setNarrativeLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [showHistory, setShowHistory] = useState(false);
+  const [generatingAnalysis, setGeneratingAnalysis] = useState(false);
 
   useEffect(() => {
     console.log('[MorningBriefing] Component initialized');
@@ -94,28 +97,21 @@ export default function MorningBriefing() {
   }, [setCurrentModule]);
 
   // Fetch briefing data
-  const { data: briefingData, isLoading, error } = useQuery({
-    queryKey: ['/api/morning-briefing'],
+  const { data: briefingData, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/metrics/morning-briefing', selectedDate],
     queryFn: async () => {
       try {
-        console.log('[MorningBriefing] Fetching briefing data...');
+        console.log('[MorningBriefing] Fetching briefing data for:', selectedDate);
         
-        // Since we don't have the backend implementation yet, generate realistic data
-        // using our existing data sources
-        const [alerts, activities] = await Promise.all([
-          api.getAlerts('all', 10),
-          api.getActivities()
-        ]);
-
-        console.log('[MorningBriefing] Retrieved data:', {
-          alertsCount: alerts?.length || 0,
-          activitiesCount: activities?.length || 0
-        });
-
-        const briefingData = generateBriefingData(alerts, activities, {});
-        console.log('[MorningBriefing] Generated briefing data:', briefingData);
+        const response = await fetch(`/api/metrics/morning-briefing?date=${selectedDate}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch briefing data');
+        }
         
-        return briefingData;
+        const result = await response.json();
+        console.log('[MorningBriefing] Retrieved briefing data:', result.data);
+        
+        return result.data;
       } catch (error) {
         console.error('[MorningBriefing] Error fetching briefing data:', error);
         throw error;
@@ -123,8 +119,58 @@ export default function MorningBriefing() {
     },
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 2 * 60 * 1000, // Consider data fresh for 2 minutes
+    gcTime: 5 * 60 * 1000 // Cache for 5 minutes
   });
+
+  // Fetch briefing history
+  const { data: historyData, isLoading: historyLoading } = useQuery({
+    queryKey: ['/api/metrics/morning-briefing/history'],
+    queryFn: async () => {
+      try {
+        const response = await fetch('/api/metrics/morning-briefing/history?limit=10');
+        if (!response.ok) {
+          throw new Error('Failed to fetch briefing history');
+        }
+        
+        const result = await response.json();
+        return result.data;
+      } catch (error) {
+        console.error('[MorningBriefing] Error fetching history:', error);
+        throw error;
+      }
+    },
+    enabled: showHistory
+  });
+
+  // Generate new analysis
+  const runNewAnalysis = async () => {
+    setGeneratingAnalysis(true);
+    try {
+      const response = await fetch('/api/metrics/morning-briefing/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ date: selectedDate })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate analysis');
+      }
+      
+      const result = await response.json();
+      console.log('[MorningBriefing] New analysis generated:', result.data);
+      
+      // Refetch the briefing data to show the new analysis
+      refetch();
+      
+    } catch (error) {
+      console.error('[MorningBriefing] Error generating analysis:', error);
+    } finally {
+      setGeneratingAnalysis(false);
+    }
+  };
 
   const generateBriefingData = (alerts: any[], activities: any[], rmMetrics: any): BriefingData => {
     console.log('[MorningBriefing] Generating briefing data with inputs:', {
@@ -625,18 +671,43 @@ ${insight.description}
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-white">
-                  {new Date().toLocaleDateString('en-GB', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-dark-700 border border-dark-600 rounded px-2 py-1 text-dark-200 text-sm mb-1"
+                />
                 <p className="text-xs text-dark-400">
                   Generated at {briefingData?.processingTime || new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })} GMT
                 </p>
               </div>
+              <Button 
+                onClick={() => setShowHistory(!showHistory)}
+                variant="outline" 
+                size="sm"
+                className="text-dark-300 hover:text-dark-100"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                {showHistory ? 'Hide History' : 'View History'}
+              </Button>
+              <Button 
+                onClick={runNewAnalysis}
+                disabled={generatingAnalysis}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                size="sm"
+              >
+                {generatingAnalysis ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Run Analysis
+                  </>
+                )}
+              </Button>
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-2" />
                 Export
@@ -648,6 +719,62 @@ ${insight.description}
             </div>
           </div>
         </div>
+
+        {/* History Panel */}
+        {showHistory && (
+          <Card className="bg-dark-800 border-dark-600">
+            <CardHeader>
+              <CardTitle className="text-dark-50 flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Previous Briefings
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-6 h-6 animate-spin text-dark-400" />
+                  <span className="ml-2 text-dark-400">Loading history...</span>
+                </div>
+              ) : historyData && historyData.length > 0 ? (
+                <div className="space-y-3">
+                  {historyData.map((briefing: any, index: number) => (
+                    <div
+                      key={briefing.id}
+                      className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                        briefing.briefing_date === selectedDate
+                          ? 'bg-blue-900/20 border-blue-500'
+                          : 'bg-dark-700 border-dark-600 hover:bg-dark-700/70'
+                      }`}
+                      onClick={() => setSelectedDate(briefing.briefing_date)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="text-sm text-dark-300">
+                            {new Date(briefing.briefing_date).toLocaleDateString()}
+                          </div>
+                          <Badge 
+                            variant={briefing.generated_by === 'manual' ? 'default' : 'secondary'}
+                            className="text-xs"
+                          >
+                            {briefing.generated_by === 'manual' ? 'Manual' : 'Auto'}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-dark-400">
+                          Generated at {briefing.processing_time}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-dark-400">
+                  <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No previous briefings found</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Analyst Context */}
         <Card className="bg-dark-900 border-dark-800 analyst-context-card">
