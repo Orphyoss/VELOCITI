@@ -164,7 +164,7 @@ export default function APIMonitor() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 api-monitor-forced-dark">
         {/* Controls */}
         <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
