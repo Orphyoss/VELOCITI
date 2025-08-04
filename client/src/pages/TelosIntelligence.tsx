@@ -162,17 +162,29 @@ export default function TelosIntelligence() {
     refetchInterval: 300000, // Refresh every 5 minutes
   });
 
-  // Fetch competitive pricing with comprehensive logging
+  // Fetch competitive pricing with comprehensive logging and error handling
   const { data: competitive, isLoading: competitiveLoading, error: competitiveError } = useQuery({
     queryKey: ['competitive-position', competitiveRoute],
     queryFn: async () => {
       console.log(`[TelosIntelligence] Fetching competitive data for route: ${competitiveRoute}`);
       try {
-        const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`, {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        clearTimeout(timeoutId);
         console.log(`[TelosIntelligence] Competitive API response status: ${response.status}`);
         
         if (!response.ok) {
-          console.error(`[TelosIntelligence] Competitive API error: ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error(`[TelosIntelligence] Competitive API error: ${response.status} ${response.statusText}`, errorText);
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
@@ -187,13 +199,19 @@ export default function TelosIntelligence() {
         
         return data;
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.error(`[TelosIntelligence] Request timeout for competitive data: ${competitiveRoute}`);
+          throw new Error('Request timeout - please try again');
+        }
         console.error(`[TelosIntelligence] Error fetching competitive data for ${competitiveRoute}:`, error);
-        throw error;
+        throw error instanceof Error ? error : new Error('Unknown error occurred');
       }
     },
     enabled: !!competitiveRoute,
-    retry: 1,
+    retry: 2,
+    retryDelay: 1000,
     refetchOnWindowFocus: false,
+    staleTime: 30000, // Consider data fresh for 30 seconds
   });
 
   // Log competitive data changes after it's defined
@@ -379,6 +397,18 @@ export default function TelosIntelligence() {
   return (
     <AppShell title="Velociti Intelligence Platform">
       <div className="space-y-6">
+      
+      {/* Network Status Alert */}
+      {(competitiveError && !(competitiveError.message?.includes('Request timeout'))) && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Network connectivity issue detected. Some features may be temporarily unavailable. 
+            {competitiveError instanceof Error && competitiveError.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">

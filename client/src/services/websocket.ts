@@ -104,18 +104,26 @@ class WebSocketService {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      console.log(`[WebSocket] Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
       // Exponential backoff with max delay of 10 seconds
       const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
       
       setTimeout(() => {
-        if (this.reconnectAttempts <= this.maxReconnectAttempts) {
-          this.connect();
+        try {
+          if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+            this.connect();
+          }
+        } catch (error) {
+          console.error('[WebSocket] Reconnection attempt failed:', error);
+          // Continue trying with next attempt if within limits
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect();
+          }
         }
       }, delay);
     } else {
-      console.log('Max reconnection attempts reached');
+      console.log('[WebSocket] Max reconnection attempts reached. Disabling automatic reconnection.');
       useVelocitiStore.getState().setConnectionStatus(false);
     }
   }
