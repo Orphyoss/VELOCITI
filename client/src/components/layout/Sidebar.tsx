@@ -1,11 +1,13 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Sunrise, Zap } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Sunrise, Zap, ChevronDown, ChevronRight, BarChart3, Activity, Cog } from 'lucide-react';
+import { useState } from 'react';
 import AgentStatus from '../agents/AgentStatus';
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { currentModule, setCurrentModule } = useVelocitiStore();
+  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
 
   const mainNavigationItems = [
     {
@@ -20,18 +22,11 @@ export default function Sidebar() {
       icon: Sunrise,
       path: '/briefing'
     },
-
     {
       id: 'workbench',
       label: 'Analyst Workbench',
       icon: ClipboardList,
       path: '/workbench'
-    },
-    {
-      id: 'action-agents',
-      label: 'Action Agents',
-      icon: Zap,
-      path: '/action-agents'
     },
     {
       id: 'strategic',
@@ -44,21 +39,39 @@ export default function Sidebar() {
       label: 'Databricks Genie',
       icon: Database,
       path: '/genie'
+    }
+  ];
+
+  const adminNavigationItems = [
+    {
+      id: 'action-agents',
+      label: 'Action Agents',
+      icon: Zap,
+      path: '/action-agents'
     },
     {
       id: 'agents',
       label: 'AI Agents',
       icon: Users,
       path: '/agents'
-    }
-  ];
-
-  const adminNavigationItems = [
+    },
     {
-      id: 'admin',
-      label: 'Admin',
-      icon: Settings,
-      path: '/admin'
+      id: 'data-generation',
+      label: 'Data Generation',
+      icon: BarChart3,
+      path: '/admin?tab=data-generation'
+    },
+    {
+      id: 'system-monitoring',
+      label: 'System Monitoring',
+      icon: Activity,
+      path: '/admin?tab=system-monitoring'
+    },
+    {
+      id: 'admin-settings',
+      label: 'Settings',
+      icon: Cog,
+      path: '/admin?tab=settings'
     }
   ];
 
@@ -96,27 +109,44 @@ export default function Sidebar() {
           );
         })}
         
-        {/* Admin Section - Separated */}
+        {/* Admin Section - Collapsible */}
         <div className="pt-6 mt-6 border-t border-gray-600 dark:border-gray-700">
-          <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3 px-2">
-            System
+          {/* Admin Header - Clickable to toggle */}
+          <div 
+            className="flex items-center justify-between px-2 py-2 mb-2 cursor-pointer hover:bg-gray-800 rounded-md"
+            onClick={() => setIsAdminExpanded(!isAdminExpanded)}
+          >
+            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              Admin
+            </div>
+            {isAdminExpanded ? (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            )}
           </div>
-          {adminNavigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location === item.path;
-            
-            return (
-              <Link key={item.id} href={item.path}>
-                <div 
-                  className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer ml-2`}
-                  onClick={() => setCurrentModule(item.id as any)}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-              </Link>
-            );
-          })}
+          
+          {/* Admin Navigation Items - Collapsible */}
+          {isAdminExpanded && (
+            <div className="space-y-1">
+              {adminNavigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location === item.path || location.startsWith(item.path.split('?')[0]);
+                
+                return (
+                  <Link key={item.id} href={item.path}>
+                    <div 
+                      className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-lg font-medium cursor-pointer ml-4`}
+                      onClick={() => setCurrentModule(item.id as any)}
+                      >
+                        <Icon className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{item.label}</span>
+                      </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
       </nav>
 
