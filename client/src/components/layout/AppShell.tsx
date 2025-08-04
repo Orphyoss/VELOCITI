@@ -8,9 +8,10 @@ import MobileSidebar from './MobileSidebar';
 interface AppShellProps {
   children: React.ReactNode;
   title?: string;
+  hidePageTitle?: boolean;
 }
 
-export default function AppShell({ children, title }: AppShellProps) {
+export default function AppShell({ children, title, hidePageTitle }: AppShellProps) {
   const { setConnectionStatus } = useVelocitiStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -37,7 +38,7 @@ export default function AppShell({ children, title }: AppShellProps) {
       />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+        <Header onMobileMenuToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)} hidePageTitle={hidePageTitle} />
         <main className="flex-1 overflow-auto bg-dark-950">
           <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-4 max-w-7xl">
             {children}

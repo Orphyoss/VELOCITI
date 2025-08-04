@@ -10,9 +10,10 @@ import { useQuery } from '@tanstack/react-query';
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
+  hidePageTitle?: boolean;
 }
 
-export default function Header({ onMobileMenuToggle }: HeaderProps) {
+export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProps) {
   const { currentModule, llmProvider, setLLMProvider, isConnected, dashboardSummary } = useVelocitiStore();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
@@ -90,12 +91,14 @@ export default function Header({ onMobileMenuToggle }: HeaderProps) {
             <Menu className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
           
-          <div>
-            <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-dark-50">{getModuleTitle()}</h2>
-            <p className="text-xs sm:text-sm text-dark-400 hidden sm:block">
-              {formatTime(currentTime)} • Last updated 2 minutes ago
-            </p>
-          </div>
+          {!hidePageTitle && (
+            <div>
+              <h2 className="text-base sm:text-lg lg:text-2xl font-bold text-dark-50">{getModuleTitle()}</h2>
+              <p className="text-xs sm:text-sm text-dark-400 hidden sm:block">
+                {formatTime(currentTime)} • Last updated 2 minutes ago
+              </p>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center space-x-2 sm:space-x-6">
