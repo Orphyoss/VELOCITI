@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { api } from '@/services/api';
@@ -26,9 +26,24 @@ export default function AnalystWorkbench() {
 
   const { data: allAlerts, isLoading, error } = useQuery({
     queryKey: ['/api/alerts', 100],
-    queryFn: () => api.getAlerts(undefined, 100),
-    refetchInterval: 15000, // Refresh every 15 seconds
-    staleTime: 0, // Always fetch fresh data
+    queryFn: async () => {
+      console.log('[AnalystWorkbench] Fetching alerts...');
+      const result = await api.getAlerts(undefined, 100);
+      console.log('[AnalystWorkbench] Raw API result:', {
+        type: typeof result,
+        isArray: Array.isArray(result),
+        length: result?.length,
+        firstAlert: result?.[0] ? {
+          id: result[0].id?.slice(0,8),
+          title: result[0].title?.slice(0,30),
+          status: result[0].status,
+          priority: result[0].priority
+        } : 'NO_FIRST_ALERT'
+      });
+      return result;
+    },
+    refetchInterval: 15000,
+    staleTime: 0,
   });
 
   const { data: criticalAlerts } = useQuery({
@@ -45,22 +60,48 @@ export default function AnalystWorkbench() {
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
   // Filter and sort alerts by criticality then date
-  const filteredAlerts = allAlerts?.filter((alert: Alert) => {
-    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
-    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
-    if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
-    if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  }).sort((a: Alert, b: Alert) => {
-    // First sort by priority (critical first)
-    const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
-                        (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
-    if (priorityDiff !== 0) return priorityDiff;
+  const filteredAlerts = React.useMemo(() => {
+    console.log('[AnalystWorkbench] Processing alerts:', {
+      allAlertsType: typeof allAlerts,
+      allAlertsLength: allAlerts?.length,
+      isArray: Array.isArray(allAlerts),
+      filters: { priorityFilter, categoryFilter, statusFilter, searchQuery }
+    });
     
-    // Then sort by date (newest first)
-    return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
-  }) || [];
+    if (!allAlerts || !Array.isArray(allAlerts)) {
+      console.log('[AnalystWorkbench] No valid alerts array, returning empty');
+      return [];
+    }
+    
+    const filtered = allAlerts.filter((alert: Alert) => {
+      if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
+      if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
+      if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
+      if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
+          !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      return true;
+    }).sort((a: Alert, b: Alert) => {
+      // First sort by priority (critical first)
+      const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
+                          (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // Then sort by date (newest first)
+      return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
+    });
+    
+    console.log('[AnalystWorkbench] Filtered alerts result:', {
+      originalCount: allAlerts.length,
+      filteredCount: filtered.length,
+      firstFiltered: filtered[0] ? {
+        id: filtered[0].id?.slice(0,8),
+        title: filtered[0].title?.slice(0,30),
+        status: filtered[0].status
+      } : 'NO_FILTERED_ALERTS'
+    });
+    
+    return filtered;
+  }, [allAlerts, priorityFilter, categoryFilter, statusFilter, searchQuery]);
 
   // Apply same sorting to other alert lists
   const sortAlerts = (alerts: Alert[]) => {
