@@ -262,22 +262,25 @@ export default function TelosIntelligence() {
 
 
   // Real RM metrics data from live backend metrics
+  const performanceData = Array.isArray(performance) ? performance : [];
+  const insightsData = Array.isArray(insights) ? insights : [];
+  
   const rmMetrics: RMMetrics = {
     revenueImpact: {
-      daily: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / ((performance as any)?.length || 1) / 30 || 0, // Daily average from total revenue
-      weekly: ((performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / ((performance as any)?.length || 1) / 30 || 0) * 7,
-      monthly: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) || 0,
-      trend: (insights as any)?.length > 0 ? (insights as any).length * 1.5 : 0 // Trend based on active insights
+      daily: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / performanceData.length / 30 : 0,
+      weekly: performanceData.length > 0 ? (performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) / performanceData.length / 30) * 7 : 0,
+      monthly: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.totalRevenue || '0'), 0) : 0,
+      trend: insightsData.length > 0 ? insightsData.length * 1.5 : 0
     },
     yieldOptimization: {
-      currentYield: (performance as any)?.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0,
-      targetYield: ((performance as any)?.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0) * 1.12,
+      currentYield: performanceData.length > 0 ? performanceData.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / performanceData.length : 0,
+      targetYield: performanceData.length > 0 ? (performanceData.reduce((sum: number, route: any) => sum + parseFloat(route.avgYield || '0'), 0) / performanceData.length) * 1.12 : 0,
       improvement: (businessMetrics as any)?.data?.analystTimeSavings?.productivityGain || 0,
-      topRoutes: (performance as any)?.slice(0, 5).map((route: any) => ({
+      topRoutes: performanceData.length > 0 ? performanceData.slice(0, 5).map((route: any) => ({
         route: route.routeId,
         yield: parseFloat(route.avgYield || '0'),
         change: parseFloat(route.totalRevenue || '0') / 50000
-      })) || []
+      })) : []
     },
     competitiveIntelligence: {
       priceAdvantageRoutes: (competitive as any)?.pricing?.priceAdvantage > 0 ? 1 : 0,
@@ -286,23 +289,23 @@ export default function TelosIntelligence() {
       marketShare: 25.3 // EasyJet's typical market share percentage
     },
     operationalEfficiency: {
-      loadFactorVariance: (performance as any)?.reduce((acc: number, route: any) => {
+      loadFactorVariance: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => {
         const lf = parseFloat(route.avgLoadFactor || '0');
         return acc + Math.abs(lf - 80); // Variance from 80% target load factor
-      }, 0) / Math.max(1, (performance as any)?.length || 1) || 0,
+      }, 0) / performanceData.length : 0,
       demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 80,
       bookingPaceVariance: (routeDashboard as any)?.demandVariance || 0,
-      capacityUtilization: (performance as any)?.reduce((acc: number, route: any) => acc + parseFloat(route.avgLoadFactor || '0'), 0) / Math.max(1, (performance as any)?.length || 1) || 0
+      capacityUtilization: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.avgLoadFactor || '0'), 0) / performanceData.length : 0
     },
     riskMetrics: {
-      routesAtRisk: (insights as any)?.filter((insight: any) => insight.priorityLevel === 'Critical').length || 0,
-      volatilityIndex: (performance as any)?.reduce((acc: number, route: any) => {
+      routesAtRisk: insightsData.filter((insight: any) => insight.priorityLevel === 'Critical').length,
+      volatilityIndex: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => {
         const routeYield = parseFloat(route.avgYield || '0');
         const avgYield = 100; // Average yield baseline
         return acc + Math.abs(routeYield - avgYield);
-      }, 0) / Math.max(1, (performance as any)?.length || 1) || 0,
-      competitorThreats: (insights as any)?.filter((insight: any) => insight.insightType === 'Alert' && insight.agentSource === 'Competitive Agent').length || 0,
-      seasonalRisks: (insights as any)?.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal') || insight.description?.toLowerCase().includes('demand')).length || 0
+      }, 0) / performanceData.length : 0,
+      competitorThreats: insightsData.filter((insight: any) => insight.insightType === 'Alert' && insight.agentSource === 'Competitive Agent').length,
+      seasonalRisks: insightsData.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal') || insight.description?.toLowerCase().includes('demand')).length
     }
   };
 
