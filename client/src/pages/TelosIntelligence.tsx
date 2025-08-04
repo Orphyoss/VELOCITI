@@ -169,9 +169,6 @@ export default function TelosIntelligence() {
 
   // Network performance timeframe state
   const [networkTimeframe, setNetworkTimeframe] = useState('7');
-  
-  // Competitive analysis route filter state
-  const [competitiveRoute, setCompetitiveRoute] = useState<string>('all');
 
   // Real RM metrics data from live backend metrics
   const rmMetrics: RMMetrics = {
@@ -821,29 +818,8 @@ export default function TelosIntelligence() {
         <TabsContent value="competitive" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                <div>
-                  <CardTitle>Competitive Positioning Analysis</CardTitle>
-                  <CardDescription>EasyJet vs competitors across key routes</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Route:</span>
-                  <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Select route" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Routes</SelectItem>
-                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
-                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
-                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
-                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
-                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
-                      <SelectItem value="LGW-ZUR">LGW-ZUR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <CardTitle>Competitive Positioning Analysis</CardTitle>
+              <CardDescription>EasyJet vs competitors across key routes</CardDescription>
             </CardHeader>
             <CardContent>
               {competitiveLoading ? (
@@ -854,9 +830,7 @@ export default function TelosIntelligence() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {(competitive as any)?.filter((comp: any) => 
-                    competitiveRoute === 'all' || comp.route === competitiveRoute
-                  )?.slice(0, 8).map((comp: any, index: number) => (
+                  {(competitive as any)?.slice(0, 8).map((comp: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{comp.airlineCode}</div>
