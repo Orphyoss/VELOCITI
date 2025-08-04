@@ -26,6 +26,7 @@ import { TelosIntelligenceService } from "./services/telos-intelligence.js";
 import { logger, logAPI } from "./services/logger.js";
 import { duplicatePreventionService } from "./services/duplicatePreventionService.js";
 import { db } from "./services/supabase.js";
+import OpenAI from 'openai';
 
 // Function to calculate real dashboard metrics from actual data
 async function calculateRealDashboardMetrics(alerts: any[], agents: any[], activities: any[]) {
@@ -1606,6 +1607,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return baseRecords;
   }
+
+  // AI-Generated Morning Briefing Endpoint
+  app.get("/api/morning-briefing/ai-generated", async (req, res) => {
+    const startTime = Date.now();
+    try {
+      console.log('[API] Generating AI-powered morning briefing...');
+      
+      // Gather real system data
+      const [alerts, agents, activities, systemMetrics] = await Promise.all([
+        storage.getAlerts(50), // Get more alerts for better analysis
+        storage.getAgents(),
+        storage.getActivities(),
+        storage.getSystemMetrics()
+      ]);
+
+      // Get competitive intelligence data
+      const telosService = new TelosIntelligenceService();
+      const [competitivePosition, routePerformance, intelligenceInsights] = await Promise.all([
+        telosService.getCompetitivePosition('LGW-BCN').catch(() => null),
+        telosService.getRoutePerformanceMetrics('LGW-BCN', 7).catch(() => null),
+        telosService.getIntelligenceInsights().catch(() => [])
+      ]);
+
+      // Calculate performance metrics
+      const dashboardMetrics = await calculateRealDashboardMetrics(alerts, agents, activities);
+      
+      // Initialize OpenAI
+      const openai = new OpenAI({ 
+        apiKey: process.env.OPENAI_API_KEY 
+      });
+
+      // Prepare data context for AI analysis
+      const dataContext = {
+        alerts: {
+          total: alerts.length,
+          critical: alerts.filter(a => a.priority === 'critical').length,
+          byCategory: alerts.reduce((acc, alert) => {
+            acc[alert.category] = (acc[alert.category] || 0) + 1;
+            return acc;
+          }, {} as Record<string, number>),
+          recent: alerts.slice(0, 10).map(a => ({
+            title: a.title,
+            description: a.description,
+            priority: a.priority,
+            category: a.category,
+            createdAt: a.createdAt
+          }))
+        },
+        agents: {
+          count: agents.length,
+          avgAccuracy: agents.reduce((sum, a) => sum + parseFloat(a.accuracy || '0'), 0) / Math.max(agents.length, 1),
+          statuses: agents.map(a => ({ id: a.id, name: a.name, status: a.status, accuracy: a.accuracy }))
+        },
+        performance: {
+          networkYield: dashboardMetrics.networkYield,
+          loadFactor: dashboardMetrics.loadFactor,
+          revenueImpact: dashboardMetrics.revenueImpact,
+          routesMonitored: dashboardMetrics.routesMonitored
+        },
+        competitive: competitivePosition,
+        routeData: routePerformance,
+        insights: intelligenceInsights.slice(0, 5).map(i => ({
+          type: i.insightType,
+          priority: i.priorityLevel,
+          description: i.description,
+          confidence: i.confidenceScore
+        }))
+      };
+
+      console.log('[API] Sending data to OpenAI for analysis...');
+      
+      // Generate AI briefing using OpenAI
+      const briefingResponse = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert airline revenue management analyst generating a morning briefing for EasyJet. 
+
+Analyze the provided real-time data and generate a comprehensive intelligence briefing. Focus on:
+1. Critical competitive threats and opportunities
+2. Revenue optimization recommendations  
+3. Operational performance insights
+4. Priority actions with specific impact estimates
+
+Data context: ${JSON.stringify(dataContext, null, 2)}
+
+Respond with a JSON object containing:
+- executiveSummary: { status, aiGeneratedSummary, keyInsights[], confidence }
+- priorityActions: [{ id, priority, category, title, aiAnalysis, recommendation, estimatedImpact, timeframe, confidence, dataSource }]
+- marketIntelligence: { aiGeneratedInsight, competitiveThreats[], opportunities[] }
+- performanceMetrics: { networkYield, loadFactor, revenueImpact, alertsProcessed, systemHealth, aiAccuracy }
+
+Be specific, actionable, and base all insights on the actual data provided. Estimate financial impacts in GBP.`
+          },
+          {
+            role: "user", 
+            content: "Generate a comprehensive morning briefing based on the current system data. Focus on actionable insights and specific recommendations for EasyJet's revenue management team."
+          }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3 // Lower temperature for more consistent, factual analysis
+      });
+
+      const aiAnalysis = JSON.parse(briefingResponse.choices[0].message.content || '{}');
+      
+      // Structure the final briefing response
+      const briefingData = {
+        date: new Date().toISOString().split('T')[0],
+        generatedAt: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+        analyst: {
+          name: "Sarah Mitchell",
+          role: "Senior Revenue Management Analyst",
+          focus: "European Short-haul Network"
+        },
+        executiveSummary: {
+          status: aiAnalysis.executiveSummary?.status || 'NORMAL',
+          aiGeneratedSummary: aiAnalysis.executiveSummary?.aiGeneratedSummary || 'AI analysis in progress',
+          keyInsights: aiAnalysis.executiveSummary?.keyInsights || [],
+          confidence: aiAnalysis.executiveSummary?.confidence || 0.85
+        },
+        priorityActions: aiAnalysis.priorityActions || [],
+        marketIntelligence: {
+          aiGeneratedInsight: aiAnalysis.marketIntelligence?.aiGeneratedInsight || 'Market analysis in progress',
+          competitiveThreats: aiAnalysis.marketIntelligence?.competitiveThreats || [],
+          opportunities: aiAnalysis.marketIntelligence?.opportunities || []
+        },
+        performanceMetrics: {
+          networkYield: dashboardMetrics.networkYield,
+          loadFactor: dashboardMetrics.loadFactor,
+          revenueImpact: dashboardMetrics.revenueImpact,
+          alertsProcessed: alerts.length,
+          systemHealth: alerts.filter(a => a.priority === 'critical').length > 10 ? 'ATTENTION_REQUIRED' : 'OPTIMAL',
+          aiAccuracy: dashboardMetrics.agentAccuracy
+        }
+      };
+
+      const duration = Date.now() - startTime;
+      console.log(`[API] AI morning briefing generated successfully in ${duration}ms`);
+      
+      res.json(briefingData);
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      console.error(`[API] Failed to generate AI morning briefing (${duration}ms):`, error);
+      
+      // Fallback response if AI generation fails
+      res.status(500).json({
+        error: 'AI briefing generation failed',
+        message: 'Unable to generate intelligent briefing at this time',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
 
   return httpServer;
 }
