@@ -7,6 +7,7 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **ONGOING: Production Deployment Issue** - Fixed local endpoint conflict (£52K working locally) but production still shows £0 revenue, investigating deployment pipeline lag or caching issue, may require manual redeploy to update production with latest fixes (2025-08-04)
 - **CRITICAL: Fixed Duplicate API Endpoints Issue** - Identified and resolved conflicting rm-metrics endpoints in routes.ts vs telos.ts causing production £0 revenue display, removed broken routes.ts endpoint that was querying non-existent flight_performance table, now production uses real competitive_pricing data (£52K daily from 1,893 pricing records) (2025-08-04)
 - **VERIFIED: Post-Deployment Issue Resolved** - Fixed revenue display showing £0 by restoring TelosIntelligence as homepage and updating to use real RM metrics API, now correctly displays £52K daily, £365K weekly, £1.56M monthly from authentic PostgreSQL data, deployment-ready with all competitive intelligence features preserved (2025-08-04)
 - **VERIFIED: Production Deployment Ready** - Comprehensive production readiness validation completed with 11/11 critical endpoints working, 74 business alerts in database, all external APIs (OpenAI, Writer, Pinecone) connected, robust table existence checks and memory fallbacks tested, confirmed all data flows using authentic PostgreSQL data (2025-08-04)
