@@ -1729,17 +1729,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('[API] Sending data to OpenAI for analysis...');
       
-      // Create a simplified prompt to avoid token limits
+      // Create detailed prompt data for comprehensive analysis
       const promptData = {
-        alertCount: dataContext.alerts.total,
-        criticalAlerts: dataContext.alerts.critical, 
-        agentCount: dataContext.agents.count,
-        avgAccuracy: dataContext.agents.avgAccuracy,
-        networkYield: dataContext.performance.networkYield,
-        recentAlerts: dataContext.alerts.recent.slice(0, 3) // Limit to 3 alerts
+        systemOverview: {
+          alertCount: dataContext.alerts.total,
+          criticalAlerts: dataContext.alerts.critical,
+          agentCount: dataContext.agents.count,
+          avgAccuracy: dataContext.agents.avgAccuracy,
+          networkYield: dataContext.performance.networkYield,
+          loadFactor: dataContext.performance.loadFactor,
+          revenueImpact: dataContext.performance.revenueImpact
+        },
+        recentAlerts: dataContext.alerts.recent.slice(0, 5).map(alert => ({
+          title: alert.title,
+          category: alert.category,
+          priority: alert.priority,
+          description: alert.description.substring(0, 200) // Truncate long descriptions
+        })),
+        agentStatuses: dataContext.agents.statuses.slice(0, 3),
+        competitiveData: competitivePosition ? {
+          route: 'LGW-BCN',
+          pricing: competitivePosition.pricing,
+          marketShare: competitivePosition.marketShare
+        } : null,
+        insights: dataContext.insights.slice(0, 3)
       };
       
-      // Generate AI briefing using OpenAI with simplified approach
+      // Generate AI briefing using OpenAI with enhanced prompt
       let briefingResponse;
       try {
         briefingResponse = await openai.chat.completions.create({
@@ -1747,25 +1763,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `You are an airline revenue management analyst generating a morning briefing for EasyJet. 
+              content: `You are a senior airline revenue management analyst at EasyJet generating a comprehensive morning briefing.
 
-Based on this data: ${JSON.stringify(promptData)}
+Analyze this system data and provide strategic insights:
+${JSON.stringify(promptData, null, 2)}
 
-Generate a JSON response with:
-- executiveSummary: { status: "CRITICAL"|"ATTENTION_REQUIRED"|"NORMAL"|"OPTIMAL", aiGeneratedSummary: string, keyInsights: string[], confidence: number }
-- priorityActions: [{ id: string, priority: "CRITICAL"|"HIGH"|"MEDIUM"|"LOW", category: string, title: string, aiAnalysis: string, recommendation: string, estimatedImpact: string, timeframe: string, confidence: number, dataSource: string }]
-- marketIntelligence: { aiGeneratedInsight: string, competitiveThreats: [], opportunities: [] }
+Generate a detailed JSON response with:
 
-Focus on actionable insights. Be concise but specific.`
+1. executiveSummary: {
+   status: "CRITICAL"|"ATTENTION_REQUIRED"|"NORMAL"|"OPTIMAL",
+   aiGeneratedSummary: "3-4 sentence executive summary highlighting key findings and immediate concerns",
+   keyInsights: ["insight 1", "insight 2", "insight 3"] // 3-5 bullet points,
+   confidence: number (0-1)
+}
+
+2. priorityActions: [
+   {
+     id: "action_1",
+     priority: "CRITICAL"|"HIGH"|"MEDIUM"|"LOW",
+     category: "Revenue Management"|"Competitive Response"|"Operational"|"Strategic",
+     title: "Specific actionable title",
+     aiAnalysis: "2-3 sentence analysis of the situation",
+     recommendation: "Clear recommended action",
+     estimatedImpact: "£XXK revenue impact or % improvement",
+     timeframe: "Immediate"|"24 hours"|"This week"|"This month",
+     confidence: number (0-1),
+     dataSource: "System alerts"|"Competitive data"|"Performance metrics"
+   }
+] // Generate 2-4 actions
+
+3. marketIntelligence: {
+   aiGeneratedInsight: "2-3 sentence market analysis with competitive positioning insights",
+   competitiveThreats: [], // Leave empty for now
+   opportunities: [] // Leave empty for now
+}
+
+Focus on revenue optimization, competitive threats, and operational efficiency. Be specific with financial impacts.`
             },
             {
               role: "user", 
-              content: "Generate a comprehensive morning briefing based on the system data provided."
+              content: "Generate a comprehensive morning briefing for EasyJet's revenue management team. Focus on actionable insights that drive revenue and competitive advantage."
             }
           ],
           response_format: { type: "json_object" },
-          temperature: 0.3,
-          max_tokens: 2000 // Limit response size
+          temperature: 0.2, // Lower temperature for more consistent analysis
+          max_tokens: 3000 // Increased token limit for detailed analysis
         });
         console.log('[API] OpenAI analysis completed successfully');
       } catch (openaiError) {

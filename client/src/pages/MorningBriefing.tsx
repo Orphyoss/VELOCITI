@@ -232,8 +232,8 @@ export default function MorningBriefing() {
               )}
               
               <div className="flex items-center justify-between text-sm text-dark-400">
-                <span>AI Confidence: {Math.round(briefingData.executiveSummary.confidence * 100)}%</span>
-                <span>Analyst: {briefingData.analyst.name}</span>
+                <span>AI Confidence: {Math.round((briefingData.executiveSummary.confidence || 0) * 100)}%</span>
+                <span>Analyst: {briefingData.analyst?.name || 'AI Assistant'}</span>
               </div>
             </div>
           </CardContent>
@@ -272,10 +272,10 @@ export default function MorningBriefing() {
                         </div>
                         <p className="text-dark-300 text-sm mb-3">{action.recommendation}</p>
                         <div className="flex items-center space-x-4 text-xs text-dark-400">
-                          <span>Impact: {action.estimatedImpact}</span>
-                          <span>Timeframe: {action.timeframe}</span>
-                          <span>Confidence: {Math.round(action.confidence * 100)}%</span>
-                          <span>Source: {action.dataSource}</span>
+                          <span>Impact: {action.estimatedImpact || 'TBD'}</span>
+                          <span>Timeframe: {action.timeframe || 'TBD'}</span>
+                          <span>Confidence: {Math.round((action.confidence || 0) * 100)}%</span>
+                          <span>Source: {action.dataSource || 'System Data'}</span>
                         </div>
                       </div>
                     </div>
@@ -430,7 +430,7 @@ export default function MorningBriefing() {
                     </div>
                     <div>
                       <h4 className="font-medium text-dark-100 mb-1">Confidence</h4>
-                      <p className="text-dark-200">{Math.round(selectedAction.confidence * 100)}%</p>
+                      <p className="text-dark-200">{Math.round((selectedAction.confidence || 0) * 100)}%</p>
                     </div>
                     <div>
                       <h4 className="font-medium text-dark-100 mb-1">Data Source</h4>
