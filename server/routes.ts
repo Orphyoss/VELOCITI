@@ -1503,6 +1503,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         });
         
+        pythonProcess.on('error', (error) => {
+          console.log(`[DataGeneration] Python spawn error, falling back to simulation: ${error.message}`);
+          resolve(simulateDataGeneration(date, scenario));
+        });
+        
         // Timeout after 30 seconds
         setTimeout(() => {
           pythonProcess.kill();
