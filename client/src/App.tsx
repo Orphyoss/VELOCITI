@@ -13,6 +13,7 @@ import StrategicAnalysis from "@/pages/StrategicAnalysis";
 import TelosIntelligence from "@/pages/TelosIntelligence";
 import MorningBriefing from "@/pages/MorningBriefing";
 import Admin from "@/pages/Admin";
+import DataGeneration from "@/pages/DataGeneration";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,12 +23,13 @@ function Router() {
       <Route path="/workbench" component={AnalystWorkbench} />
       <Route path="/agents" component={Agents} />
       <Route path="/action-agents" component={ActionAgents} />
-      <Route path="/action-agents-new" component={ActionAgentsNew} />
+      <Route path="/action-agents-new">{() => <ActionAgentsNew />}</Route>
       <Route path="/genie" component={DatabricsGenie} />
       <Route path="/strategic" component={StrategicAnalysis} />
       <Route path="/telos" component={TelosIntelligence} />
       <Route path="/briefing" component={MorningBriefing} />
       <Route path="/admin" component={Admin} />
+      <Route path="/data-generation" component={DataGeneration} />
       <Route component={NotFound} />
     </Switch>
   );
