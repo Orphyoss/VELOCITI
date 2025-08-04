@@ -26,24 +26,7 @@ export default function AnalystWorkbench() {
 
   const { data: allAlerts, isLoading, error } = useQuery({
     queryKey: ['/api/alerts', 100],
-    queryFn: async () => {
-      console.log('[AnalystWorkbench] Fetching alerts...');
-      const result = await api.getAlerts(undefined, 100);
-      console.log('[AnalystWorkbench] Raw API result:', {
-        type: typeof result,
-        isArray: Array.isArray(result),
-        length: result?.length,
-        firstAlert: result?.[0] ? {
-          id: result[0].id?.slice(0,8),
-          title: result[0].title?.slice(0,30),
-          status: result[0].status,
-          priority: result[0].priority,
-          category: result[0].category
-        } : 'NO_FIRST_ALERT',
-        env: window.location.hostname.includes('replit.dev') ? 'production' : 'development'
-      });
-      return result;
-    },
+    queryFn: () => api.getAlerts(undefined, 100),
     refetchInterval: 15000,
     staleTime: 0,
   });
@@ -61,44 +44,17 @@ export default function AnalystWorkbench() {
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
-  // PRODUCTION-SAFE alert display with comprehensive debugging
+  // Clean alert display - no debugging clutter
   const displayAlerts = allAlerts && Array.isArray(allAlerts) ? allAlerts.filter((alert: Alert) => {
-    console.log('[AnalystWorkbench] Filtering alert:', {
-      id: alert.id?.slice(0,8),
-      status: alert.status,
-      category: alert.category,
-      priority: alert.priority,
-      statusFilter,
-      categoryFilter,
-      priorityFilter,
-      statusMatch: statusFilter === 'all' || alert.status === statusFilter,
-      categoryMatch: categoryFilter === 'all' || alert.category === categoryFilter,
-      priorityMatch: priorityFilter === 'all' || alert.priority === priorityFilter
-    });
-    
-    // Apply filters directly in render with explicit logging
-    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) {
-      console.log('[AnalystWorkbench] Filtered out by priority:', alert.priority, 'vs', priorityFilter);
-      return false;
-    }
-    if (categoryFilter !== 'all' && alert.category !== categoryFilter) {
-      console.log('[AnalystWorkbench] Filtered out by category:', alert.category, 'vs', categoryFilter);
-      return false;
-    }
-    if (statusFilter !== 'all' && alert.status !== statusFilter) {
-      console.log('[AnalystWorkbench] Filtered out by status:', alert.status, 'vs', statusFilter);
-      return false;
-    }
+    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
+    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
+    if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
     if (searchQuery) {
       const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
       const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
-      if (!titleMatch && !descriptionMatch && !messageMatch) {
-        console.log('[AnalystWorkbench] Filtered out by search:', searchQuery);
-        return false;
-      }
+      if (!titleMatch && !descriptionMatch && !messageMatch) return false;
     }
-    console.log('[AnalystWorkbench] Alert PASSED filters:', alert.id?.slice(0,8));
     return true;
   }).sort((a: Alert, b: Alert) => {
     const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
@@ -107,38 +63,7 @@ export default function AnalystWorkbench() {
     return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
   }) : [];
 
-  // Debug logging
-  console.log('[AnalystWorkbench] PRODUCTION DEBUG display logic:', {
-    allAlertsLength: allAlerts?.length || 0,
-    displayAlertsLength: displayAlerts.length,
-    hasRawData: !!(allAlerts && Array.isArray(allAlerts)),
-    firstDisplayAlert: displayAlerts[0]?.id?.slice(0,8) || 'NONE',
-    filters: { priorityFilter, categoryFilter, statusFilter, searchQuery },
-    isProduction: window.location.hostname.includes('replit.dev'),
-    rawFirstAlert: allAlerts?.[0] ? {
-      status: allAlerts[0].status,
-      category: allAlerts[0].category,
-      priority: allAlerts[0].priority
-    } : null
-  });
 
-  // Debug effect to track allAlerts changes
-  React.useEffect(() => {
-    console.log('[AnalystWorkbench] allAlerts changed:', {
-      length: allAlerts?.length,
-      isArray: Array.isArray(allAlerts),
-      firstAlert: allAlerts?.[0]?.id?.slice(0,8)
-    });
-  }, [allAlerts]);
-
-  // Force re-render when allAlerts changes
-  React.useEffect(() => {
-    console.log('[AnalystWorkbench] useEffect triggered - allAlerts changed:', {
-      length: allAlerts?.length,
-      isArray: Array.isArray(allAlerts),
-      firstAlert: allAlerts?.[0]?.id?.slice(0,8)
-    });
-  }, [allAlerts]);
 
   // Apply same sorting to other alert lists
   const sortAlerts = (alerts: Alert[]) => {
