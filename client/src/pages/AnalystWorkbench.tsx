@@ -24,10 +24,11 @@ export default function AnalystWorkbench() {
     setCurrentModule('workbench');
   }, [setCurrentModule]);
 
-  const { data: allAlerts, isLoading } = useQuery({
+  const { data: allAlerts, isLoading, error } = useQuery({
     queryKey: ['/api/alerts', 100],
     queryFn: () => api.getAlerts(undefined, 100),
     refetchInterval: 15000, // Refresh every 15 seconds
+    staleTime: 0, // Always fetch fresh data
   });
 
   const { data: criticalAlerts } = useQuery({
@@ -58,7 +59,7 @@ export default function AnalystWorkbench() {
     if (priorityDiff !== 0) return priorityDiff;
     
     // Then sort by date (newest first)
-    return new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime();
+    return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
   }) || [];
 
   // Apply same sorting to other alert lists
@@ -67,19 +68,19 @@ export default function AnalystWorkbench() {
       const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
                           (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
       if (priorityDiff !== 0) return priorityDiff;
-      return new Date(b.created_at || b.createdAt).getTime() - new Date(a.created_at || a.createdAt).getTime();
+      return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
     });
   };
 
   const activeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => alert.status === 'active') || []);
   const nightshiftAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
-    const createdDate = new Date(alert.created_at || alert.createdAt);
+    const createdDate = new Date(alert.created_at || alert.createdAt || new Date());
     const hour = createdDate.getHours();
     return hour >= 22 || hour <= 6; // 10 PM to 6 AM
   }) || []);
 
   const realtimeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => {
-    const createdDate = new Date(alert.created_at || alert.createdAt);
+    const createdDate = new Date(alert.created_at || alert.createdAt || new Date());
     const hour = createdDate.getHours();
     return hour > 6 && hour < 22; // 6 AM to 10 PM
   }) || []);
@@ -200,9 +201,21 @@ export default function AnalystWorkbench() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
-            {/* Debug Info */}
-            <div className="text-xs text-muted-foreground mb-4 p-2 bg-slate-900 rounded">
-              Debug: Loading={isLoading ? 'true' : 'false'} | AllAlerts={allAlerts?.length || 0} | Filtered={filteredAlerts?.length || 0} | Status Filter={statusFilter}
+            {/* Real-Time Debug Info */}
+            <div className="text-xs text-gray-400 mb-4 p-3 bg-slate-900 rounded border">
+              <div className="font-medium text-green-400 mb-1">LIVE DEBUG STATUS:</div>
+              <div>Loading: {isLoading ? '🔄 TRUE' : '✅ FALSE'} | API Error: {error ? '❌ YES' : '✅ NO'}</div>
+              <div>Total Alerts: {allAlerts?.length || 0} | After Filters: {filteredAlerts?.length || 0}</div>
+              <div>Filter Status: {statusFilter} | Priority: {priorityFilter} | Category: {categoryFilter}</div>
+              {allAlerts && allAlerts.length > 0 && (
+                <div className="mt-2 p-2 bg-slate-800 rounded">
+                  <div className="text-blue-400">First Alert Sample:</div>
+                  <div>ID: {allAlerts[0].id?.slice(0,12)}...</div>
+                  <div>Status: {allAlerts[0].status} | Priority: {allAlerts[0].priority}</div>
+                  <div>Title: {allAlerts[0].title?.slice(0,40)}...</div>
+                  <div>Created: {allAlerts[0].created_at || allAlerts[0].createdAt || 'NO DATE'}</div>
+                </div>
+              )}
             </div>
             
             {isLoading ? (

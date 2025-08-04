@@ -10,8 +10,9 @@ export interface Alert {
   agentId: string;
   status: 'active' | 'dismissed' | 'escalated';
   metadata?: any;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string; // Database field name
+  createdAt?: string; // Legacy support
+  updatedAt?: string;
 }
 
 export interface Agent {
