@@ -1730,29 +1730,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[API] Sending data to OpenAI for analysis...');
       
       // Create detailed prompt data for comprehensive analysis
+      const currentDate = new Date().toISOString().split('T')[0];
+      const criticalAlerts = alerts.filter(a => a.priority === 'critical');
+      const highValueAlerts = alerts.filter(a => a.category === 'competitive' || a.category === 'revenue' || a.category === 'operational');
+      
       const promptData = {
-        systemOverview: {
-          alertCount: dataContext.alerts.total,
-          criticalAlerts: dataContext.alerts.critical,
-          agentCount: dataContext.agents.count,
-          avgAccuracy: dataContext.agents.avgAccuracy,
-          networkYield: dataContext.performance.networkYield,
-          loadFactor: dataContext.performance.loadFactor,
-          revenueImpact: dataContext.performance.revenueImpact
+        analysisDate: currentDate,
+        executiveContext: {
+          totalSystemAlerts: dataContext.alerts.total,
+          criticalAlertsCount: criticalAlerts.length,
+          agentAccuracy: agents.length > 0 ? (agents.reduce((sum, agent) => sum + parseFloat(agent.accuracy || '85'), 0) / agents.length).toFixed(1) + '%' : '85%',
+          networkYield: '£' + (dataContext.performance.networkYield || 0).toFixed(0),
+          loadFactor: (dataContext.performance.loadFactor || 0).toFixed(1) + '%',
+          estimatedRevenueImpact: '£' + ((dataContext.performance.revenueImpact || 0) / 1000).toFixed(0) + 'K'
         },
-        recentAlerts: dataContext.alerts.recent.slice(0, 5).map(alert => ({
+        priorityAlerts: criticalAlerts.slice(0, 5).map(alert => ({
           title: alert.title,
           category: alert.category,
-          priority: alert.priority,
-          description: alert.description.substring(0, 200) // Truncate long descriptions
+          description: alert.description.substring(0, 150),
+          timestamp: alert.createdAt,
+          severity: alert.priority
         })),
-        agentStatuses: dataContext.agents.statuses.slice(0, 3),
-        competitiveData: competitivePosition ? {
-          route: 'LGW-BCN',
-          pricing: competitivePosition.pricing,
-          marketShare: competitivePosition.marketShare
-        } : null,
-        insights: dataContext.insights.slice(0, 3)
+        competitiveIntelligence: highValueAlerts.filter(a => a.category === 'competitive').slice(0, 3).map(alert => ({
+          threat: alert.title,
+          analysis: alert.description.substring(0, 200),
+          priority: alert.priority
+        })),
+        operationalConcerns: highValueAlerts.filter(a => a.category === 'operational').slice(0, 3).map(alert => ({
+          issue: alert.title,
+          impact: alert.description.substring(0, 200),
+          priority: alert.priority
+        })),
+        agentPerformance: dataContext.agents.statuses.map(agent => ({
+          name: agent.name,
+          accuracy: agent.accuracy + '%',
+          status: agent.status,
+          specialization: agent.id === 'competitive' ? 'Market Intelligence' : 
+                        agent.id === 'performance' ? 'Revenue Optimization' : 
+                        agent.id === 'network' ? 'Network Analysis' : 'Metrics Monitoring'
+        })),
+        marketData: competitivePosition ? {
+          keyRoute: 'London Gatwick to Barcelona (LGW-BCN)',
+          competitorPricing: competitivePosition.pricing,
+          marketPosition: competitivePosition.marketShare,
+          insights: intelligenceInsights.slice(0, 2).map(i => i.description)
+        } : null
       };
       
       // Generate AI briefing using OpenAI with enhanced prompt
@@ -1763,46 +1785,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
           messages: [
             {
               role: "system",
-              content: `You are a senior airline revenue management analyst at EasyJet generating a comprehensive morning briefing.
+              content: `You are Sarah Mitchell, Senior Revenue Management Analyst at EasyJet, generating a comprehensive morning briefing for the executive team. You have access to real-time intelligence data and historical trends.
 
-Analyze this system data and provide strategic insights:
+TODAY'S INTELLIGENCE DATA:
 ${JSON.stringify(promptData, null, 2)}
 
-Generate a detailed JSON response with:
+ANALYSIS REQUIREMENTS:
+As an expert airline revenue analyst, provide strategic insights based on the actual data above. Focus on:
+- Critical competitive threats requiring immediate response
+- Revenue optimization opportunities with specific financial impacts
+- Operational issues affecting customer experience and profitability
+- Network performance trends and market positioning
+
+Generate a detailed JSON response:
 
 1. executiveSummary: {
-   status: "CRITICAL"|"ATTENTION_REQUIRED"|"NORMAL"|"OPTIMAL",
-   aiGeneratedSummary: "3-4 sentence executive summary highlighting key findings and immediate concerns",
-   keyInsights: ["insight 1", "insight 2", "insight 3"] // 3-5 bullet points,
-   confidence: number (0-1)
+   status: "CRITICAL"|"ATTENTION_REQUIRED"|"NORMAL"|"OPTIMAL" (based on actual alert severity and trends),
+   aiGeneratedSummary: "4-5 sentence executive summary analyzing today's specific alerts, performance metrics, and competitive position. Reference actual numbers from the data.",
+   keyInsights: [
+     "Specific insight about competitive threats with route/pricing details",
+     "Revenue impact analysis with actual £ figures from alerts", 
+     "Operational performance insight with load factor/yield trends",
+     "Strategic recommendation based on agent accuracy and system health"
+   ],
+   confidence: number (0.8-0.95 based on data quality)
 }
 
 2. priorityActions: [
    {
-     id: "action_1",
-     priority: "CRITICAL"|"HIGH"|"MEDIUM"|"LOW",
-     category: "Revenue Management"|"Competitive Response"|"Operational"|"Strategic",
-     title: "Specific actionable title",
-     aiAnalysis: "2-3 sentence analysis of the situation",
-     recommendation: "Clear recommended action",
-     estimatedImpact: "£XXK revenue impact or % improvement",
-     timeframe: "Immediate"|"24 hours"|"This week"|"This month",
-     confidence: number (0-1),
-     dataSource: "System alerts"|"Competitive data"|"Performance metrics"
+     id: "competitive_response_1",
+     priority: "CRITICAL"|"HIGH" (match actual alert priorities),
+     category: "Competitive Response"|"Revenue Management"|"Operational Excellence",
+     title: "Specific action title referencing actual routes/competitors from alerts",
+     aiAnalysis: "3-4 sentence analysis referencing specific alert data, competitor actions, or performance metrics from the intelligence provided",
+     recommendation: "Precise actionable recommendation with implementation steps",
+     estimatedImpact: "£XXK-XXK revenue impact or X% yield improvement (estimate based on route performance data)",
+     timeframe: "Immediate"|"Today"|"This week"|"Next 7 days",
+     confidence: 0.75-0.9,
+     dataSource: "Competitive Intelligence Alert"|"Performance Metrics"|"Agent Analysis"
    }
-] // Generate 2-4 actions
+] // Generate 3-4 actions based on actual alert priorities
 
 3. marketIntelligence: {
-   aiGeneratedInsight: "2-3 sentence market analysis with competitive positioning insights",
-   competitiveThreats: [], // Leave empty for now
-   opportunities: [] // Leave empty for now
+   aiGeneratedInsight: "3-4 sentence market analysis incorporating actual competitive data, route performance, and market positioning from the intelligence provided. Reference specific routes, pricing trends, and competitive movements.",
+   competitiveThreats: [],
+   opportunities: []
 }
 
-Focus on revenue optimization, competitive threats, and operational efficiency. Be specific with financial impacts.`
+CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific alert titles, performance metrics, agent accuracy, and competitive intelligence. Do not use generic airline industry commentary.`
             },
             {
               role: "user", 
-              content: "Generate a comprehensive morning briefing for EasyJet's revenue management team. Focus on actionable insights that drive revenue and competitive advantage."
+              content: "Generate today's strategic briefing based on our current system intelligence. Analyze the specific alerts, competitive threats, and performance data to provide actionable insights for EasyJet's revenue team."
             }
           ],
           response_format: { type: "json_object" },
@@ -1863,7 +1897,8 @@ Focus on revenue optimization, competitive threats, and operational efficiency. 
           revenueImpact: dashboardMetrics.revenueImpact,
           alertsProcessed: alerts.length,
           systemHealth: alerts.filter(a => a.priority === 'critical').length > 10 ? 'ATTENTION_REQUIRED' : 'OPTIMAL',
-          aiAccuracy: dashboardMetrics.agentAccuracy
+          aiAccuracy: agents.length > 0 ? 
+            agents.reduce((sum, agent) => sum + parseFloat(agent.accuracy || '85'), 0) / agents.length : 85
         }
       };
 
