@@ -214,7 +214,7 @@ export default function StrategicAnalysis() {
         <Card className="bg-dark-900 border-dark-800">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg font-semibold text-dark-50 flex items-center">
+              <CardTitle className="text-xl font-semibold text-dark-50 flex items-center">
                 <Brain className="text-aviation-500 mr-2" />
                 Generative AI Strategic Analysis
               </CardTitle>

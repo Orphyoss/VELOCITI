@@ -11,7 +11,7 @@ export default function StrategicAnalysis() {
   }, [setCurrentModule]);
 
   return (
-    <AppShell>
+    <AppShell title="">
       <StrategicAnalysisComponent />
     </AppShell>
   );
