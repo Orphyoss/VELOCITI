@@ -43,8 +43,8 @@ interface BriefingData {
   priorityActions: PriorityAction[];
   competitiveIntelligence: {
     ryanairActivity: {
-      priceChanges: number;
-      routesAffected: string[];
+      priceDecreases: number;
+      routesAffected: number;
       avgPriceChange: number;
       trend: string;
     };
@@ -241,14 +241,14 @@ export default function MorningBriefing() {
       priorityActions,
       competitiveIntelligence: {
         ryanairActivity: {
-          priceChanges: 14,
-          routesAffected: ["LGW-BCN", "STN-BCN", "LGW-PMI", "LGW-AGP"],
+          priceDecreases: 14,
+          routesAffected: 4,
           avgPriceChange: -22.3,
           trend: "COORDINATED_ASSAULT"
         },
         britishAirways: {
           priceChanges: 2,
-          routesAffected: ["LGW-CDG", "LTN-CDG"],
+          routesAffected: 2,
           avgPriceChange: 3.1,
           trend: "DEFENSIVE_POSITIONING"
         },
@@ -880,11 +880,11 @@ ${insight.description}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-dark-50">Ryanair Activity</span>
                     <span className="text-red-400 font-semibold">
-                      {briefingData?.competitiveIntelligence.ryanairActivity.priceChanges} changes
+                      {briefingData?.competitiveIntelligence?.ryanairActivity?.priceDecreases || 0} changes
                     </span>
                   </div>
                   <p className="text-xs text-dark-400 mt-1">
-                    Avg price change: {briefingData?.competitiveIntelligence.ryanairActivity.avgPriceChange}%
+                    Avg price change: {briefingData?.competitiveIntelligence?.ryanairActivity?.avgPriceChange || 0}%
                   </p>
                 </div>
                 
@@ -892,17 +892,17 @@ ${insight.description}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-dark-50">British Airways</span>
                     <span className="text-blue-400 font-semibold">
-                      {briefingData?.competitiveIntelligence.britishAirways.priceChanges} changes
+                      {briefingData?.competitiveIntelligence?.britishAirways?.priceChanges || 0} changes
                     </span>
                   </div>
                   <p className="text-xs text-dark-400 mt-1">
-                    Avg price change: +{briefingData?.competitiveIntelligence.britishAirways.avgPriceChange}%
+                    Avg price change: +{briefingData?.competitiveIntelligence?.britishAirways?.avgPriceChange || 0}%
                   </p>
                 </div>
                 
                 <div className="mt-4 p-3 bg-yellow-900/30 border border-yellow-800/50 rounded-lg">
                   <p className="text-sm text-yellow-200">
-                    {briefingData?.competitiveIntelligence.marketContext}
+                    {briefingData?.competitiveIntelligence?.marketContext || 'Loading market context...'}
                   </p>
                 </div>
               </CardContent>
