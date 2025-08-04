@@ -110,6 +110,9 @@ interface RMMetrics {
 
 export default function TelosIntelligence() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
+  const [networkTimeframe, setNetworkTimeframe] = useState('7');
+  const [competitiveRoute, setCompetitiveRoute] = useState<string>('LGW-BCN');
+  
   const queryClient = useQueryClient();
   const { setCurrentModule } = useVelocitiStore();
 
@@ -151,7 +154,7 @@ export default function TelosIntelligence() {
 
   // Fetch competitive pricing
   const { data: competitive, isLoading: competitiveLoading } = useQuery({
-    queryKey: ['/api/telos/competitive-pricing'],
+    queryKey: ['/api/telos/competitive-position', competitiveRoute],
     enabled: true,
   });
 
@@ -167,8 +170,7 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
-  // Network performance timeframe state
-  const [networkTimeframe, setNetworkTimeframe] = useState('7');
+
 
   // Real RM metrics data from live backend metrics
   const rmMetrics: RMMetrics = {
@@ -818,8 +820,28 @@ export default function TelosIntelligence() {
         <TabsContent value="competitive" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Competitive Positioning Analysis</CardTitle>
-              <CardDescription>EasyJet vs competitors across key routes</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div>
+                  <CardTitle>Competitive Positioning Analysis</CardTitle>
+                  <CardDescription>EasyJet vs competitors across key routes</CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Route:</span>
+                  <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select route" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
+                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
+                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
+                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
+                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
+                      <SelectItem value="LGW-ZUR">LGW-ZUR</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {competitiveLoading ? (
@@ -828,36 +850,67 @@ export default function TelosIntelligence() {
                     <div key={i} className="animate-pulse bg-muted h-16 rounded" />
                   ))}
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {(competitive as any)?.slice(0, 8).map((comp: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+              ) : competitive ? (
+                <div className="space-y-6">
+                  {/* Route Overview */}
+                  <div className="p-4 bg-muted/30 rounded-lg">
+                    <div className="flex justify-between items-center">
                       <div>
-                        <div className="font-medium">{comp.airlineCode}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {comp.observationCount} observations
+                        <h3 className="font-medium">{(competitive as any).route}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {(competitive as any).competitorCount} competitors • Market Share: {((competitive as any).marketShare?.marketSharePct || 0).toFixed(1)}%
+                        </p>
+                      </div>
+                      <Badge variant={((competitive as any).pricing?.priceAdvantage || 0) > 0 ? 'secondary' : 'outline'}>
+                        {((competitive as any).pricing?.priceAdvantage || 0) > 0 ? 'Price Advantage' : 'Price Competitive'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Pricing Analysis */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Pricing Position</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">EasyJet Price</span>
+                          <span className="font-medium">£{((competitive as any).pricing?.easyjetPrice || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Competitor Avg</span>
+                          <span className="font-medium">£{((competitive as any).pricing?.competitorAvgPrice || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Price Advantage</span>
+                          <span className={`font-medium ${((competitive as any).pricing?.priceAdvantage || 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {((competitive as any).pricing?.priceAdvantage || 0) > 0 ? '+' : ''}£{((competitive as any).pricing?.priceAdvantage || 0).toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                      <div className="text-right space-y-1">
-                        <div className="font-bold">
-                          Avg: £{parseFloat(comp.avgPrice || '0').toFixed(2)}
+                    </div>
+
+                    <div className="space-y-3">
+                      <h4 className="font-medium">Market Position</h4>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-sm">EasyJet Capacity</span>
+                          <span className="font-medium">{((competitive as any).marketShare?.easyjetSeats || 0).toLocaleString()} seats</span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Range: £{parseFloat(comp.minPrice || '0').toFixed(0)} - £{parseFloat(comp.maxPrice || '0').toFixed(0)}
+                        <div className="flex justify-between">
+                          <span className="text-sm">Total Market</span>
+                          <span className="font-medium">{((competitive as any).marketShare?.totalMarketSeats || 0).toLocaleString()} seats</span>
                         </div>
-                        <Badge variant={comp.airlineCode === 'EZY' ? 'secondary' : 
-                                     parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}
-                               className={comp.airlineCode === 'EZY' ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-blue-100 font-medium' : 
-                                         parseFloat(comp.avgPrice || '0') > 150 ? 'bg-purple-600 dark:bg-purple-700 text-white dark:text-purple-100 font-medium' : ''}>
-                          {parseFloat(comp.avgPrice || '0') > 150 ? 'Premium' : parseFloat(comp.avgPrice || '0') < 100 ? 'Budget' : 'Competitive'}
-                        </Badge>
+                        <div className="flex justify-between">
+                          <span className="text-sm">Market Rank</span>
+                          <span className="font-medium">#{(competitive as any).marketShare?.capacityRank || 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
-                  )) || (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No competitive data available
-                    </div>
-                  )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No competitive data available for selected route
                 </div>
               )}
             </CardContent>
