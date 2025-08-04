@@ -149,17 +149,22 @@ export class MemoryStorage implements IStorage {
             id: alert.id,
             type: alert.type || 'alert',
             priority: alert.priority,
+            message: alert.title || alert.description || 'Alert notification', // Map title/description to message
             title: alert.title,
             description: alert.description,
+            details: alert.metadata ? JSON.stringify(alert.metadata) : null,
             route: alert.route || null,
             route_name: alert.route_name || null,
             metric_value: alert.metric_value || null,  
             threshold_value: alert.threshold_value || null,
             impact_score: alert.impact_score || null,
             confidence: alert.confidence || null,
+            agentId: alert.agent_id, // Map agent_id to agentId
             agent_id: alert.agent_id,
             metadata: alert.metadata || {},
             status: alert.status,
+            createdAt: alert.created_at, // Map created_at to createdAt
+            updatedAt: alert.created_at, // Use created_at as updatedAt fallback
             created_at: alert.created_at,
             acknowledged_at: alert.acknowledged_at || null,
             resolved_at: alert.resolved_at || null,
