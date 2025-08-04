@@ -60,13 +60,32 @@ export default function Admin() {
 
             <div className="bg-dark-900/50 rounded-lg p-6 min-h-[600px]">
               <TabsContent value="agents" className="space-y-6 m-0">
-                <div className="space-y-6">
-                  <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Configuration</h3>
-                  <p className="text-dark-400 mb-6">Configure and monitor AI agent behavior and performance.</p>
-                  <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
-                    <p className="text-dark-300">Agent configuration interface coming soon...</p>
-                  </div>
-                </div>
+                <Tabs defaultValue="agent-status" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="agent-status">Agent Status</TabsTrigger>
+                    <TabsTrigger value="agent-setup">Agent Setup</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="agent-status" className="space-y-4">
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Status</h3>
+                      <p className="text-dark-400 mb-6">Monitor agent performance and activity.</p>
+                      <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
+                        <p className="text-dark-300">Agent status monitoring interface coming soon...</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="agent-setup" className="space-y-4">
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-dark-50 mb-4">Agent Setup</h3>
+                      <p className="text-dark-400 mb-6">Configure agent parameters and thresholds.</p>
+                      <div className="bg-dark-800 rounded-lg p-6 border border-dark-700">
+                        <p className="text-dark-300">Agent setup configuration interface coming soon...</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </TabsContent>
             </div>
           </Tabs>
