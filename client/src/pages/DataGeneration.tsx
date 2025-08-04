@@ -51,18 +51,45 @@ export default function DataGeneration() {
   const queryClient = useQueryClient();
 
   // Fetch recent data generation jobs
-  const { data: recentJobs, isLoading } = useQuery({
+  const { data: recentJobs, isLoading, error: jobsError } = useQuery({
     queryKey: ['/api/admin/data-generation/jobs'],
-    queryFn: () => api.request('GET', '/api/admin/data-generation/jobs'),
+    queryFn: async () => {
+      console.log('[DataGeneration] Fetching jobs from API...');
+      try {
+        const result = await api.request('GET', '/api/admin/data-generation/jobs');
+        console.log('[DataGeneration] Jobs API response:', result);
+        return result;
+      } catch (error) {
+        console.error('[DataGeneration] Jobs API error:', error);
+        throw error;
+      }
+    },
     refetchInterval: 5000, // Refresh every 5 seconds to show progress
   });
 
   // Fetch last available data date
-  const { data: lastDataInfo } = useQuery({
+  const { data: lastDataInfo, error: lastDataError } = useQuery({
     queryKey: ['/api/admin/data-generation/last-data-date'],
-    queryFn: () => api.request('GET', '/api/admin/data-generation/last-data-date'),
+    queryFn: async () => {
+      console.log('[DataGeneration] Fetching last data date...');
+      try {
+        const result = await api.request('GET', '/api/admin/data-generation/last-data-date');
+        console.log('[DataGeneration] Last data date response:', result);
+        return result;
+      } catch (error) {
+        console.error('[DataGeneration] Last data date error:', error);
+        throw error;
+      }
+    },
     staleTime: 300000, // 5 minutes - data changes infrequently
   });
+
+  // Add logging after queries are defined
+  console.log('[DataGeneration] Component render - recentJobs:', recentJobs);
+  console.log('[DataGeneration] Component render - isLoading:', isLoading);
+  console.log('[DataGeneration] Component render - jobsError:', jobsError);
+  console.log('[DataGeneration] Component render - lastDataInfo:', lastDataInfo);
+  console.log('[DataGeneration] Component render - lastDataError:', lastDataError);
 
   // Mutation to trigger data generation
   const generateDataMutation = useMutation({
@@ -86,6 +113,7 @@ export default function DataGeneration() {
   });
 
   const handleGenerate = () => {
+    console.log('[DataGeneration] Starting generation:', { date: selectedDate, scenario: selectedScenario });
     generateDataMutation.mutate({
       date: selectedDate,
       scenario: selectedScenario
@@ -260,7 +288,15 @@ export default function DataGeneration() {
                   
                   {job.error && (
                     <div className="mt-3 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+                      <div className="font-medium">Error Details:</div>
                       {job.error}
+                    </div>
+                  )}
+                  
+                  {job.status === 'failed' && !job.error && (
+                    <div className="mt-3 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-300">
+                      <div className="font-medium">Generation Failed</div>
+                      No error details available
                     </div>
                   )}
                   
@@ -271,6 +307,12 @@ export default function DataGeneration() {
                   )}
                 </div>
               ))}
+            </div>
+          ) : jobsError ? (
+            <div className="text-center py-8 text-red-500 dark:text-red-400">
+              <AlertCircle className="h-12 w-12 mx-auto mb-4" />
+              <p className="text-lg font-medium">Error Loading Jobs</p>
+              <p className="text-sm">{jobsError?.message || 'Failed to load generation jobs'}</p>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">

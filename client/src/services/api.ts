@@ -74,6 +74,12 @@ export const api = {
     return response.json();
   },
 
+  // Generic request method for Data Generation
+  request: async (method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string, data?: any) => {
+    const response = await apiRequest(method, url, data);
+    return response.json();
+  },
+
   // Conversations
   getConversations: async () => {
     const response = await apiRequest('GET', '/api/conversations');
