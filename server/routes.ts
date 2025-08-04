@@ -1298,13 +1298,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (routePerformance.length > 0) {
         currentYield = routePerformance.reduce((sum: number, route: any) => 
-          sum + parseFloat(route.yield || '0'), 0) / routePerformance.length;
+          sum + parseFloat(route.avgYield || '0'), 0) / routePerformance.length;
         
         totalRevenue = routePerformance.reduce((sum: number, route: any) => 
           sum + parseFloat(route.totalRevenue || '0'), 0);
         
         totalLoadFactor = routePerformance.reduce((sum: number, route: any) => 
-          sum + parseFloat(route.loadFactor || '0'), 0) / routePerformance.length;
+          sum + parseFloat(route.avgLoadFactor || '0'), 0) / routePerformance.length;
       }
       
       // Get competitive pricing for advantage calculations
@@ -1332,8 +1332,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           targetYield: Math.round(currentYield * 1.15 * 100) / 100, // 15% improvement target
           improvement: (totalLoadFactor * 100) > 75 ? 8.5 : 12.3, // % improvement based on load factor
           topRoutes: routePerformance.slice(0, 5).map((route: any) => ({
-            route: route.route,
-            yield: parseFloat(route.yield || '0'),
+            route: route.routeId,
+            yield: parseFloat(route.avgYield || '0'),
             change: Math.random() * 10 - 5 // Simulated change percentage
           }))
         },
@@ -1350,7 +1350,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           marketShare: Math.min(25.3, 15 + ((totalLoadFactor * 100) - 70) * 0.5) // Market share estimate
         },
         operationalEfficiency: {
-          loadFactor: Math.round(totalLoadFactor * 100 * 100) / 100, // Convert decimal to percentage (0.8 -> 80.0)
+          loadFactor: Math.round(totalLoadFactor * 100 * 100) / 100, // Convert decimal to percentage (0.795 -> 79.5)
           utilizationRate: Math.min(95, 85 + (totalLoadFactor * 100 - 70) * 0.8),
           onTimePerformance: routeCount > 5 ? 87.4 : 82.1,
           routesMonitored: routeCount
