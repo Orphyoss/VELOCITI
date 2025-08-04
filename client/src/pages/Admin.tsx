@@ -53,7 +53,7 @@ export default function Admin() {
                 className="flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-dark-700"
               >
                 <Zap className="w-4 h-4" />
-                <span>Action Agents Setup</span>
+                <span>Action Agents Status</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="ai-agents" 

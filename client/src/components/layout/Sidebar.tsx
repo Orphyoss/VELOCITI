@@ -45,15 +45,15 @@ export default function Sidebar() {
   const adminNavigationItems = [
     {
       id: 'action-agents',
-      label: 'Action Agents Setup',
+      label: 'Action Agents Status',
       icon: Zap,
       path: '/action-agents'
     },
     {
-      id: 'agents',
+      id: 'admin',
       label: 'AI Agents',
       icon: Users,
-      path: '/agents'
+      path: '/admin'
     },
     {
       id: 'settings',
@@ -137,7 +137,7 @@ export default function Sidebar() {
                 return (
                   <Link key={item.id} href={item.path}>
                     <div 
-                      className={`nav-item ${isActive ? 'active' : ''} flex items-center space-x-3 text-sm font-medium cursor-pointer ml-4`}
+                      className={`nav-item ${isActive ? 'active bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'} flex items-center space-x-3 text-sm font-medium cursor-pointer ml-4 px-3 py-2 rounded-lg transition-colors duration-200`}
                       onClick={() => setCurrentModule(item.id as any)}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
