@@ -107,6 +107,16 @@ export interface IStorage {
 
 export class MemoryStorage implements IStorage {
   
+  // Helper method to get agent display name
+  private getAgentDisplayName(agentId: string): string {
+    switch (agentId) {
+      case 'competitive': return 'Competitive';
+      case 'performance': return 'Performance';
+      case 'network': return 'Network';
+      default: return 'System';
+    }
+  }
+  
   async getUser(id: string): Promise<User | undefined> {
     return memoryStore.users.get(id);
   }
@@ -161,6 +171,8 @@ export class MemoryStorage implements IStorage {
             confidence: alert.confidence || null,
             agentId: alert.agent_id, // Map agent_id to agentId
             agent_id: alert.agent_id,
+            agent: alert.agent_id, // Add agent field for Header component
+            agentName: this.getAgentDisplayName(alert.agent_id), // Add agentName for ActionAgents component
             metadata: alert.metadata || {},
             status: alert.status,
             createdAt: alert.created_at, // Map created_at to createdAt

@@ -163,7 +163,7 @@ export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProp
                                     {alert.priority?.toUpperCase() || 'UNKNOWN'}
                                   </Badge>
                                   <span className="text-xs text-dark-400">
-                                    {alert.agent ? alert.agent.charAt(0).toUpperCase() + alert.agent.slice(1) : 'System'}
+                                    {(alert.agentName || alert.agent || alert.agentId || alert.agent_id) ? (alert.agentName || alert.agent || alert.agentId || alert.agent_id).charAt(0).toUpperCase() + (alert.agentName || alert.agent || alert.agentId || alert.agent_id).slice(1) : 'System'}
                                   </span>
                                 </div>
                                 <h4 className="text-sm font-medium text-dark-50 line-clamp-2">
