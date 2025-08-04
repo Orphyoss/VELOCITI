@@ -7,6 +7,7 @@ import { Router } from 'express';
 import { metricsCalculator } from '../services/metricsCalculator.js';
 import { metricsMonitoring } from '../services/metricsMonitoring.js';
 import { metricsRegistry } from '../services/metricsRegistry.js';
+import { storage } from '../storage.js';
 
 const router = Router();
 
@@ -311,25 +312,34 @@ router.get('/registry', async (req, res) => {
 
 /**
  * GET /api/metrics/alerts
- * Get active metric alerts and monitoring status
+ * Get active business intelligence alerts and monitoring status
  */
 router.get('/alerts', async (req, res) => {
   try {
     console.log('[API] GET /metrics/alerts');
     
-    const activeAlerts = metricsMonitoring.getActiveAlerts();
+    // Get business intelligence alerts from database (the important alerts users see)
+    const businessAlerts = await storage.getAlerts(10);
+    console.log(`[API] Retrieved ${businessAlerts.length} business alerts from database`);
+    
+    // Don't filter by status since all alerts should be shown unless explicitly resolved
+    const activeBusinessAlerts = businessAlerts;
+    
+    // Get system performance threshold alerts (technical monitoring)
+    const systemAlerts = metricsMonitoring.getActiveAlerts();
     const monitoringStatus = metricsMonitoring.getMetricsStatus();
     
     res.json({
       success: true,
       data: {
-        activeAlerts,
+        activeAlerts: activeBusinessAlerts, // Return business alerts (what users expect to see)
+        systemAlerts, // Include system alerts for technical monitoring
         monitoringStatus,
         alertSummary: {
-          total: activeAlerts.length,
-          critical: activeAlerts.filter(a => a.severity === 'critical').length,
-          warning: activeAlerts.filter(a => a.severity === 'warning').length,
-          info: activeAlerts.filter(a => a.severity === 'info').length
+          total: activeBusinessAlerts.length,
+          critical: activeBusinessAlerts.filter(a => a.priority === 'critical').length,
+          high: activeBusinessAlerts.filter(a => a.priority === 'high').length,
+          medium: activeBusinessAlerts.filter(a => a.priority === 'medium').length
         }
       },
       metadata: {
