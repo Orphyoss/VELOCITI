@@ -92,11 +92,17 @@ class WebSocketService {
       this.reconnectAttempts++;
       console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
+      // Exponential backoff with max delay of 10 seconds
+      const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
+      
       setTimeout(() => {
-        this.connect();
-      }, this.reconnectDelay * this.reconnectAttempts);
+        if (this.reconnectAttempts <= this.maxReconnectAttempts) {
+          this.connect();
+        }
+      }, delay);
     } else {
       console.log('Max reconnection attempts reached');
+      useVelocitiStore.getState().setConnectionStatus(false);
     }
   }
 

@@ -14,22 +14,26 @@ export default function MetricsOverview() {
   const { data: rmMetrics } = useQuery({
     queryKey: ['/api/telos/rm-metrics'],
     enabled: true,
-    staleTime: 0, // Force fresh data
+    staleTime: 30000, // Cache for 30 seconds to reduce requests
+    retry: 1, // Only retry once on failure
   });
 
   const { data: routePerformance } = useQuery({
     queryKey: ['/api/routes/performance'],
     enabled: true,
-    staleTime: 0, // Force fresh data
+    staleTime: 30000, // Cache for 30 seconds
+    retry: 1,
   });
 
   const { data: competitiveData } = useQuery({
     queryKey: ['/api/telos/competitive-pricing'],
     enabled: true,
+    staleTime: 60000, // Cache competitive data for 1 minute
+    retry: 1,
   });
 
-  // Don't show loading state if we have some data
-  if (isLoading && !summary && !rmMetrics && !routePerformance) {
+  // Show loading state only if no data is available at all
+  if (isLoading && !summary) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
         {[...Array(6)].map((_, i) => (
