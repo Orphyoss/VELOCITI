@@ -72,12 +72,6 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       label: 'System Monitoring',
       icon: Activity,
       path: '/admin?tab=system-monitoring'
-    },
-    {
-      id: 'admin-settings',
-      label: 'Settings',
-      icon: Cog,
-      path: '/admin?tab=settings'
     }
   ];
 
@@ -149,7 +143,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 className="flex items-center justify-between px-3 py-2 mb-2 cursor-pointer hover:bg-dark-800 rounded-lg"
                 onClick={() => setIsAdminExpanded(!isAdminExpanded)}
               >
-                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <div className="text-xs font-bold text-orange-400 uppercase tracking-wider font-mono">
                   Admin
                 </div>
                 {isAdminExpanded ? (

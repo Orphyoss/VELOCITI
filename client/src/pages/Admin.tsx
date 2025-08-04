@@ -47,7 +47,7 @@ export default function Admin() {
         {/* Enhanced Admin Tabs with distinct styling */}
         <div className="bg-gradient-to-r from-dark-900 via-dark-800 to-dark-900 p-1 rounded-xl shadow-xl border border-orange-500/20">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-            <TabsList className="grid w-full grid-cols-3 bg-dark-850 border-2 border-orange-500/30 rounded-lg p-2 shadow-lg">
+            <TabsList className="grid w-full grid-cols-2 bg-dark-850 border-2 border-orange-500/30 rounded-lg p-2 shadow-lg">
               <TabsTrigger 
                 value="data-generation" 
                 className="flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-dark-700"
@@ -62,13 +62,7 @@ export default function Admin() {
                 <Activity className="w-4 h-4" />
                 <span>System Monitoring</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="settings" 
-                className="flex items-center space-x-2 px-4 py-3 rounded-md text-sm font-semibold transition-all duration-200 data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-600 data-[state=active]:to-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg hover:bg-dark-700"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Settings</span>
-              </TabsTrigger>
+
             </TabsList>
 
             <div className="bg-dark-900/50 rounded-lg p-6 min-h-[600px]">
@@ -83,9 +77,7 @@ export default function Admin() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="settings" className="space-y-6 m-0">
-                <DocumentManager />
-              </TabsContent>
+
             </div>
           </Tabs>
         </div>

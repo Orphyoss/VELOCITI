@@ -7,7 +7,7 @@ import AgentStatus from '../agents/AgentStatus';
 export default function Sidebar() {
   const [location] = useLocation();
   const { currentModule, setCurrentModule } = useVelocitiStore();
-  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
+  const [isAdminExpanded, setIsAdminExpanded] = useState(false);
 
   const mainNavigationItems = [
     {
@@ -66,12 +66,6 @@ export default function Sidebar() {
       label: 'System Monitoring',
       icon: Activity,
       path: '/admin?tab=system-monitoring'
-    },
-    {
-      id: 'admin-settings',
-      label: 'Settings',
-      icon: Cog,
-      path: '/admin?tab=settings'
     }
   ];
 
@@ -116,7 +110,7 @@ export default function Sidebar() {
             className="flex items-center justify-between px-2 py-2 mb-2 cursor-pointer hover:bg-gray-800 rounded-md"
             onClick={() => setIsAdminExpanded(!isAdminExpanded)}
           >
-            <div className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+            <div className="text-xs font-bold text-orange-400 dark:text-orange-300 uppercase tracking-wider font-mono">
               Admin
             </div>
             {isAdminExpanded ? (
