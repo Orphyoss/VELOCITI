@@ -161,7 +161,7 @@ export default function TelosIntelligence() {
   });
 
   // Fetch RM metrics directly from the dedicated endpoint
-  const { data: rmMetricsData, isLoading: rmMetricsLoading } = useQuery({
+  const { data: rmMetricsData, isLoading: rmMetricsLoading } = useQuery<any>({
     queryKey: ['/api/telos/rm-metrics'],
     enabled: true,
     refetchInterval: 300000, // Refresh every 5 minutes
@@ -778,7 +778,7 @@ export default function TelosIntelligence() {
                 <CardDescription>Load factor and revenue performance vs forecast</CardDescription>
               </CardHeader>
               <CardContent>
-                {performanceLoading ? (
+                {rmMetricsLoading ? (
                   <div className="space-y-4">
                     {[1, 2, 3, 4].map(i => (
                       <div key={i} className="animate-pulse bg-muted h-16 rounded" />
@@ -786,28 +786,28 @@ export default function TelosIntelligence() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {(performance as any)?.slice(0, 8).map((perf: any, index: number) => (
+                    {rmMetrics.yieldOptimization.topRoutes?.slice(0, 8).map((route: any, index: number) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="space-y-1">
-                          <div className="font-medium">{perf.routeId}</div>
+                          <div className="font-medium">{route.route}</div>
                           <div className="text-sm text-muted-foreground">
-                            {perf.flightCount} flights • {perf.observationCount} observations
+                            Top performing route
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">Load Factor</div>
-                            <div className="font-bold">{perf.avgLoadFactor || 0}%</div>
+                            <div className="font-bold">{rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</div>
                           </div>
                           <div className="text-right">
-                            <div className="text-sm text-muted-foreground">Revenue</div>
-                            <div className="font-bold">£{parseFloat(perf.totalRevenue || '0').toFixed(0)}</div>
+                            <div className="text-sm text-muted-foreground">Yield</div>
+                            <div className="font-bold">£{route.yield.toFixed(2)}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm text-muted-foreground">vs Forecast</div>
                             <div className="flex items-center gap-1">
-                              {perf.avgLoadFactor >= 75 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
-                              <span className="text-sm">{perf.avgLoadFactor >= 75 ? '+Above' : '-Below'}</span>
+                              {route.change >= 0 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                              <span className="text-sm">{route.change >= 0 ? '+Above' : '-Below'}</span>
                             </div>
                           </div>
                         </div>
@@ -1043,36 +1043,36 @@ export default function TelosIntelligence() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {performanceLoading ? (
+              {rmMetricsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="text-center">
                     <div className="w-8 h-8 border-4 border-gray-200 dark:border-gray-600 rounded-full animate-spin border-t-blue-600 dark:border-t-blue-400 mx-auto"></div>
                     <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">Loading performance data...</p>
                   </div>
                 </div>
-              ) : performance && (performance as any).length > 0 ? (
+              ) : rmMetrics.yieldOptimization.topRoutes && rmMetrics.yieldOptimization.topRoutes.length > 0 ? (
                 <div className="space-y-4">
-                  {(performance as any).slice(0, 15).map((perf: any, index: number) => (
+                  {rmMetrics.yieldOptimization.topRoutes.slice(0, 15).map((route: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <div className="font-semibold flex items-center gap-2">
-                          {perf.routeId}
-                          {perf.avgLoadFactor >= 80 ? <TrendingUp className="h-4 w-4 text-green-500" /> : 
-                           perf.avgLoadFactor >= 70 ? <TrendingUp className="h-4 w-4 text-yellow-500" /> : 
+                          {route.route}
+                          {rmMetrics.operationalEfficiency.capacityUtilization >= 80 ? <TrendingUp className="h-4 w-4 text-green-500" /> : 
+                           rmMetrics.operationalEfficiency.capacityUtilization >= 70 ? <TrendingUp className="h-4 w-4 text-yellow-500" /> : 
                            <TrendingDown className="h-4 w-4 text-red-500" />}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {perf.flightCount} flights • {perf.observationCount} observations
+                          Top performing route in network
                         </div>
                       </div>
                       <div className="text-right space-y-1">
                         <div className="flex items-center gap-4 text-sm">
-                          <span>LF: {perf.avgLoadFactor?.toFixed(1) || '0.0'}%</span>
-                          <span>Revenue: £{parseFloat(perf.totalRevenue || '0').toFixed(0)}</span>
-                          <span>Yield: £{parseFloat(perf.avgYield || '0').toFixed(2)}</span>
+                          <span>LF: {rmMetrics.operationalEfficiency.capacityUtilization.toFixed(1)}%</span>
+                          <span>Yield: £{route.yield.toFixed(2)}</span>
+                          <span>Change: {formatPercentage(route.change)}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {perf.totalBookings || 0} bookings • Price: £{parseFloat(perf.avgPrice || '0').toFixed(2)}
+                          Revenue optimization target route
                         </div>
                       </div>
                     </div>
