@@ -28,10 +28,11 @@ export default function MetricsOverview() {
     enabled: true,
   });
 
-  if (isLoading) {
+  // Don't show loading state if we have some data
+  if (isLoading && !summary && !rmMetrics && !routePerformance) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(6)].map((_, i) => (
           <Card key={i} className="bg-dark-900 border-dark-800">
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="animate-pulse space-y-2 sm:space-y-4">
@@ -51,19 +52,11 @@ export default function MetricsOverview() {
   const loadFactor = parseFloat((routePerformance as any)?.[0]?.avgLoadFactor) || null;
   const routesCount = (routePerformance as any)?.length || 0;
 
-  console.log('MetricsOverview Debug - Summary Data:', summary);
-  console.log('MetricsOverview Debug - RM Metrics:', rmMetrics);
-  console.log('MetricsOverview Debug - Route Performance:', routePerformance);
-
   // Calculate real metrics from authenticated database sources
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;
   const activeAgents = summary?.agents?.length || 0;
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
-
-  console.log('MetricsOverview Debug - Calculated Values:', {
-    totalAlerts, criticalAlerts, activeAgents, networkYield, loadFactor, routesCount, dailyRevenue
-  });
 
   // Always show core metrics with real data
   const metrics = [
@@ -84,28 +77,28 @@ export default function MetricsOverview() {
     },
     {
       title: 'Network Yield',
-      value: networkYield ? `£${Math.round(networkYield)}` : 'No Data',
+      value: networkYield ? `£${Math.round(networkYield)}` : 'Loading...',
       change: 'Per passenger',
       trend: networkYield ? 'up' : 'neutral',
       icon: BarChart3,
     },
     {
-      title: 'Load Factor',
-      value: loadFactor ? `${Math.round(loadFactor)}%` : 'No Data',
+      title: 'Load Factor',  
+      value: loadFactor ? `${Math.round(loadFactor)}%` : 'Loading...',
       change: 'Current average',
       trend: loadFactor ? 'up' : 'neutral',
       icon: Users,
     },
     {
       title: 'Routes Monitored',
-      value: routesCount,
+      value: routesCount || 'Loading...',
       change: 'European network',
       trend: 'neutral',
       icon: Plane,
     },
     {
       title: 'Daily Revenue',
-      value: dailyRevenue ? `£${Math.round(dailyRevenue / 1000)}K` : 'No Data',
+      value: dailyRevenue ? `£${Math.round(dailyRevenue / 1000)}K` : 'Loading...',
       change: 'Today',
       trend: dailyRevenue ? 'up' : 'neutral',
       icon: Target,
