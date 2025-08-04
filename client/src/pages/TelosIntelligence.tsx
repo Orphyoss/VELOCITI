@@ -551,7 +551,7 @@ export default function TelosIntelligence() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Top Performing Routes */}
               <div>
                 <h5 className="text-xs sm:text-sm font-medium text-green-400 mb-2 flex items-center">
@@ -624,12 +624,12 @@ export default function TelosIntelligence() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1 border-4 border-white rounded-lg p-4 bg-slate-900">
-          <TabsTrigger value="dashboard" className="text-xs sm:text-sm">RM Dashboard</TabsTrigger>
-          <TabsTrigger value="yield" className="text-xs sm:text-sm">Yield Opt.</TabsTrigger>
-          <TabsTrigger value="competitive" className="text-xs sm:text-sm">Competitive</TabsTrigger>
-          <TabsTrigger value="performance" className="text-xs sm:text-sm">Performance</TabsTrigger>
-          <TabsTrigger value="risk" className="text-xs sm:text-sm">Risk Mgmt</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1 sm:gap-2 border-4 border-white rounded-lg p-2 sm:p-4 bg-slate-900">
+          <TabsTrigger value="dashboard" className="text-xs sm:text-sm px-2 py-2 sm:px-3">RM Dashboard</TabsTrigger>
+          <TabsTrigger value="yield" className="text-xs sm:text-sm px-2 py-2 sm:px-3">Yield Opt.</TabsTrigger>
+          <TabsTrigger value="competitive" className="text-xs sm:text-sm px-2 py-2 sm:px-3">Competitive</TabsTrigger>
+          <TabsTrigger value="performance" className="text-xs sm:text-sm px-2 py-2 sm:px-3">Performance</TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs sm:text-sm px-2 py-2 sm:px-3">Risk Mgmt</TabsTrigger>
         </TabsList>
 
         {/* RM Dashboard Tab */}
@@ -851,7 +851,7 @@ export default function TelosIntelligence() {
 
         {/* Yield Optimization Tab */}
         <TabsContent value="yield" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle>Route Yield Performance</CardTitle>
@@ -982,7 +982,7 @@ export default function TelosIntelligence() {
                   </div>
 
                   {/* Pricing Analysis */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <h4 className="font-medium">Pricing Position</h4>
                       <div className="space-y-2">
