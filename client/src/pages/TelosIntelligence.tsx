@@ -816,106 +816,52 @@ export default function TelosIntelligence() {
 
         {/* Competitive Intelligence Tab */}
         <TabsContent value="competitive" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Competitive Positioning Analysis</CardTitle>
-                <CardDescription>EasyJet vs competitors across key routes</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {competitiveLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="animate-pulse bg-muted h-16 rounded" />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {(competitive as any)?.slice(0, 6).map((comp: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <div className="font-medium">{comp.airlineCode}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {comp.observationCount} observations
-                          </div>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <div className="font-bold">
-                            Avg: £{parseFloat(comp.avgPrice || '0').toFixed(2)}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            Range: £{parseFloat(comp.minPrice || '0').toFixed(0)} - £{parseFloat(comp.maxPrice || '0').toFixed(0)}
-                          </div>
-                          <Badge variant={comp.airlineCode === 'EZY' ? 'secondary' : 
-                                       parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}
-                                 className={comp.airlineCode === 'EZY' ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-blue-100 font-medium' : 
-                                           parseFloat(comp.avgPrice || '0') > 150 ? 'bg-purple-600 dark:bg-purple-700 text-white dark:text-purple-100 font-medium' : ''}>
-                            {parseFloat(comp.avgPrice || '0') > 150 ? 'Premium' : parseFloat(comp.avgPrice || '0') < 100 ? 'Budget' : 'Competitive'}
-                          </Badge>
-                        </div>
-                      </div>
-                    )) || (
-                      <div className="text-center py-8 text-muted-foreground">
-                        No competitive data available
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Market Response Metrics</CardTitle>
-                <CardDescription>Speed and effectiveness of competitive responses</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Competitive Positioning Analysis</CardTitle>
+              <CardDescription>EasyJet vs competitors across key routes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {competitiveLoading ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Average Response Time</span>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-blue-600">{rmMetrics.competitiveIntelligence.responseTime}h</div>
-                      <div className="text-xs text-muted-foreground">Industry leader</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Market Share</span>
-                    <div className="text-right">
-                      <div className="text-xl font-bold">{rmMetrics.competitiveIntelligence.marketShare.toFixed(1)}%</div>
-                      <Progress value={rmMetrics.competitiveIntelligence.marketShare} className="w-20 h-2 mt-1" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Price Optimization Rate</span>
-                    <div className="text-right">
-                      <div className="text-xl font-bold text-green-600">94.2%</div>
-                      <div className="text-xs text-muted-foreground">Successfully optimized</div>
-                    </div>
-                  </div>
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="animate-pulse bg-muted h-16 rounded" />
+                  ))}
                 </div>
-
-                <div className="border-t pt-4">
-                  <div className="text-sm font-medium mb-3">Competitive Threats</div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Ryanair aggressive pricing</span>
-                      <Badge variant="destructive">High</Badge>
+              ) : (
+                <div className="space-y-4">
+                  {(competitive as any)?.slice(0, 8).map((comp: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <div className="font-medium">{comp.airlineCode}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {comp.observationCount} observations
+                        </div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <div className="font-bold">
+                          Avg: £{parseFloat(comp.avgPrice || '0').toFixed(2)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Range: £{parseFloat(comp.minPrice || '0').toFixed(0)} - £{parseFloat(comp.maxPrice || '0').toFixed(0)}
+                        </div>
+                        <Badge variant={comp.airlineCode === 'EZY' ? 'secondary' : 
+                                     parseFloat(comp.avgPrice || '0') > 150 ? 'secondary' : 'outline'}
+                               className={comp.airlineCode === 'EZY' ? 'bg-blue-600 dark:bg-blue-700 text-white dark:text-blue-100 font-medium' : 
+                                         parseFloat(comp.avgPrice || '0') > 150 ? 'bg-purple-600 dark:bg-purple-700 text-white dark:text-purple-100 font-medium' : ''}>
+                          {parseFloat(comp.avgPrice || '0') > 150 ? 'Premium' : parseFloat(comp.avgPrice || '0') < 100 ? 'Budget' : 'Competitive'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Wizz Air capacity expansion</span>
-                      <Badge variant="secondary">Medium</Badge>
+                  )) || (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No competitive data available
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span>New LCC entrants</span>
-                      <Badge variant="outline">Low</Badge>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Performance Tab */}
