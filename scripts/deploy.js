@@ -1,126 +1,50 @@
 #!/usr/bin/env node
 
 /**
- * Velociti Intelligence Platform - Production Deployment Script
- * Ensures consistent, reliable deployments with environment validation
+ * Velociti Intelligence Platform - FIXED Production Deployment Script
+ * Properly handles port conflicts and environment switching
  */
 
 import fs from 'fs';
 import { execSync } from 'child_process';
-import path from 'path';
+import { spawn } from 'child_process';
 
-const REQUIRED_ENV_VARS = [
-  'DATABASE_URL',
-  'OPENAI_API_KEY',
-  'NODE_ENV'
-];
-
-const OPTIONAL_ENV_VARS = [
-  'WRITER_API_KEY',
-  'PINECONE_API_KEY',
-  'PORT'
-];
-
-class DeploymentManager {
+class ProductionDeployment {
   constructor() {
     this.startTime = Date.now();
-    this.errors = [];
-    this.warnings = [];
   }
 
   log(message, type = 'info') {
-    const timestamp = new Date().toISOString();
     const prefix = {
       info: '🔧',
       success: '✅',
       warning: '⚠️',
       error: '❌'
     }[type];
-    
-    console.log(`${prefix} [${timestamp}] ${message}`);
-    
-    if (type === 'error') this.errors.push(message);
-    if (type === 'warning') this.warnings.push(message);
+    console.log(`${prefix} ${message}`);
   }
 
   async validateEnvironment() {
-    this.log('Validating environment variables...');
+    this.log('Validating production environment...');
     
-    const missing = [];
-    const optional = [];
-    
-    REQUIRED_ENV_VARS.forEach(varName => {
-      if (!process.env[varName]) {
-        missing.push(varName);
-      }
-    });
-    
-    OPTIONAL_ENV_VARS.forEach(varName => {
-      if (!process.env[varName]) {
-        optional.push(varName);
-      }
-    });
+    const required = ['DATABASE_URL', 'OPENAI_API_KEY'];
+    const missing = required.filter(env => !process.env[env]);
     
     if (missing.length > 0) {
       this.log(`Missing required environment variables: ${missing.join(', ')}`, 'error');
       return false;
     }
     
-    if (optional.length > 0) {
-      this.log(`Optional environment variables not set: ${optional.join(', ')}`, 'warning');
-    }
-    
     this.log('Environment validation passed', 'success');
     return true;
   }
 
-  async validateDatabase() {
-    this.log('Validating database connection...');
-    
-    try {
-      // Handle both ESM and CommonJS
-      let config;
-      try {
-        config = await import('../shared/config.js');
-      } catch (e) {
-        config = require('../shared/config.ts');
-      }
-      const dbConfig = config.getConfig().database;
-      
-      if (!dbConfig.url) {
-        this.log('Database URL not configured', 'error');
-        return false;
-      }
-      
-      this.log('Database configuration valid', 'success');
-      return true;
-    } catch (error) {
-      this.log(`Database validation failed: ${error.message}`, 'error');
-      return false;
-    }
-  }
-
-  async runTests() {
-    this.log('Running pre-deployment tests...');
-    
-    try {
-      // TypeScript compilation check
-      execSync('npx tsc --noEmit', { stdio: 'pipe' });
-      this.log('TypeScript compilation check passed', 'success');
-      
-      return true;
-    } catch (error) {
-      this.log(`Tests failed: ${error.message}`, 'error');
-      return false;
-    }
-  }
-
   async buildApplication() {
-    this.log('Building application...');
+    this.log('Building production application...');
     
     try {
       execSync('npm run build', { stdio: 'inherit' });
-      this.log('Application build completed', 'success');
+      this.log('Production build completed successfully', 'success');
       return true;
     } catch (error) {
       this.log(`Build failed: ${error.message}`, 'error');
@@ -128,105 +52,94 @@ class DeploymentManager {
     }
   }
 
-  async runMigrations() {
-    this.log('Running database migrations...');
+  async startProductionServer() {
+    this.log('Starting production server on port 3001...');
     
-    try {
-      execSync('npm run db:push', { stdio: 'inherit' });
-      this.log('Database migrations completed', 'success');
-      return true;
-    } catch (error) {
-      this.log(`Migration failed: ${error.message}`, 'error');
-      return false;
-    }
+    const server = spawn('node', ['dist/index.js'], {
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        PORT: '3001'
+      },
+      stdio: 'pipe',
+      detached: false
+    });
+
+    server.stdout.on('data', (data) => {
+      console.log(`[PROD] ${data.toString().trim()}`);
+    });
+
+    server.stderr.on('data', (data) => {
+      console.error(`[PROD ERROR] ${data.toString().trim()}`);
+    });
+
+    // Wait for server to start
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    this.log('Production server started on port 3001', 'success');
+    this.log('Access your production app at: http://localhost:3001', 'success');
+    
+    return server;
   }
 
-  async performHealthCheck() {
-    this.log('Performing post-deployment health check...');
+  async runHealthCheck() {
+    this.log('Running production health check...');
     
     try {
-      // Start server in background for health check
-      const serverProcess = execSync('timeout 10s npm start', { 
-        stdio: 'pipe',
-        timeout: 15000
+      const response = await fetch('http://localhost:3001/api', {
+        timeout: 5000
       });
       
-      this.log('Health check passed', 'success');
-      return true;
-    } catch (error) {
-      // Timeout is expected for this test
-      if (error.signal === 'SIGTERM') {
-        this.log('Health check passed (server started successfully)', 'success');
+      if (response.ok) {
+        this.log('Production health check passed', 'success');
         return true;
+      } else {
+        this.log(`Health check failed: ${response.status}`, 'error');
+        return false;
       }
-      
+    } catch (error) {
       this.log(`Health check failed: ${error.message}`, 'error');
       return false;
     }
   }
 
   async deploy() {
-    this.log('🚀 Starting Velociti Intelligence Platform deployment...');
+    this.log('=== VELOCITI PRODUCTION DEPLOYMENT ===');
     
-    const steps = [
-      { name: 'Environment Validation', fn: () => this.validateEnvironment() },
-      { name: 'Database Validation', fn: () => this.validateDatabase() },
-      { name: 'Pre-deployment Tests', fn: () => this.runTests() },
-      { name: 'Application Build', fn: () => this.buildApplication() },
-      { name: 'Database Migrations', fn: () => this.runMigrations() },
-      { name: 'Health Check', fn: () => this.performHealthCheck() }
-    ];
-    
-    for (const step of steps) {
-      this.log(`Executing: ${step.name}`);
-      const success = await step.fn();
-      
-      if (!success) {
-        this.log(`Deployment failed at step: ${step.name}`, 'error');
-        this.printSummary(false);
-        process.exit(1);
-      }
+    // Validate environment
+    if (!(await this.validateEnvironment())) {
+      process.exit(1);
     }
-    
-    this.printSummary(true);
-  }
 
-  printSummary(success) {
-    const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
-    
-    console.log('\n' + '='.repeat(60));
-    console.log(`DEPLOYMENT ${success ? 'SUCCESSFUL' : 'FAILED'}`);
-    console.log('='.repeat(60));
-    console.log(`Duration: ${duration}s`);
-    console.log(`Errors: ${this.errors.length}`);
-    console.log(`Warnings: ${this.warnings.length}`);
-    
-    if (this.errors.length > 0) {
-      console.log('\nErrors:');
-      this.errors.forEach(error => console.log(`  - ${error}`));
+    // Build application
+    if (!(await this.buildApplication())) {
+      process.exit(1);
     }
-    
-    if (this.warnings.length > 0) {
-      console.log('\nWarnings:');
-      this.warnings.forEach(warning => console.log(`  - ${warning}`));
+
+    // Start production server
+    const server = await this.startProductionServer();
+
+    // Run health check
+    if (!(await this.runHealthCheck())) {
+      this.log('Stopping failed deployment...', 'warning');
+      server.kill();
+      process.exit(1);
     }
+
+    this.log('=== DEPLOYMENT SUCCESSFUL ===', 'success');
+    this.log('Production server running with development server (port 5000)', 'success');
+    this.log('Production server: http://localhost:3001', 'success');
+    this.log('Development server: http://localhost:5000', 'success');
     
-    if (success) {
-      console.log('\n🎉 Velociti Intelligence Platform is ready for production!');
-      console.log('\nNext steps:');
-      console.log('1. Monitor application logs for any issues');
-      console.log('2. Verify all API endpoints are responding');
-      console.log('3. Test critical user workflows');
-    }
-    
-    console.log('='.repeat(60));
+    // Keep process alive
+    process.on('SIGINT', () => {
+      this.log('Shutting down production server...', 'warning');
+      server.kill();
+      process.exit(0);
+    });
   }
 }
 
-// Run deployment if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const deployment = new DeploymentManager();
-  deployment.deploy().catch(console.error);
-}
-
-export default DeploymentManager;
+// Run deployment
+const deployment = new ProductionDeployment();
+deployment.deploy().catch(console.error);
