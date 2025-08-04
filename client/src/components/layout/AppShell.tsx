@@ -7,9 +7,10 @@ import MobileSidebar from './MobileSidebar';
 
 interface AppShellProps {
   children: React.ReactNode;
+  title?: string;
 }
 
-export default function AppShell({ children }: AppShellProps) {
+export default function AppShell({ children, title }: AppShellProps) {
   const { setConnectionStatus } = useVelocitiStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 

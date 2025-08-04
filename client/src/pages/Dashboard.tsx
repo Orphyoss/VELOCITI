@@ -27,7 +27,7 @@ export default function Dashboard() {
   }, [summary, setDashboardSummary]);
 
   return (
-    <AppShell>
+    <AppShell title="Dashboard">
       <div className="space-y-4 sm:space-y-6 lg:space-y-8">
         {/* Key Metrics */}
         <MetricsOverview />

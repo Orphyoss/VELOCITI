@@ -10,7 +10,7 @@ export default function Sidebar() {
   const mainNavigationItems = [
     {
       id: 'dashboard',
-      label: 'Dashboard',
+      label: 'Velociti Intelligence Platform',
       icon: ChartLine,
       path: '/'
     },
@@ -21,10 +21,10 @@ export default function Sidebar() {
       path: '/briefing'
     },
     {
-      id: 'telos',
-      label: 'Telos Intelligence',
+      id: 'dashboard-legacy',
+      label: 'Dashboard',
       icon: Target,
-      path: '/telos'
+      path: '/dashboard'
     },
     {
       id: 'workbench',
