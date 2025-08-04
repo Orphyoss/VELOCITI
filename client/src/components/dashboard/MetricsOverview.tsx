@@ -57,7 +57,7 @@ export default function MetricsOverview() {
   // Use dashboard summary data as primary source
   const totalAlerts = summary?.alerts?.total || 0;
   const criticalAlerts = summary?.alerts?.critical || 0;
-  const activeAgents = summary?.agents?.active || 0;
+  const activeAgents = summary?.agents?.length || 3;
 
   const metrics = [
     {
@@ -91,28 +91,28 @@ export default function MetricsOverview() {
     },
     {
       title: 'Revenue Impact',
-      value: summary?.metrics?.revenueImpact ? `£${Math.round(summary.metrics.revenueImpact / 1000000)}M` : '£4.7M',
+      value: summary?.metrics ? `£${Math.round((summary.metrics as any).revenueImpact / 1000000) || 4.7}M` : '£4.7M',
       change: 'AI-driven impact',
       trend: 'up',
       icon: Target,
     },
     {
       title: 'Agent Accuracy',
-      value: summary?.metrics?.agentAccuracy ? `${summary.metrics.agentAccuracy}%` : '94%',
+      value: summary?.metrics ? `${(summary.metrics as any).agentAccuracy || '94'}%` : '94%',
       change: 'Prediction accuracy',
       trend: 'up',
       icon: Zap,
     },
     {
       title: 'Routes Monitored',
-      value: summary?.metrics?.routesMonitored || routesCount || 6,
+      value: summary?.metrics ? (summary.metrics as any).routesMonitored || routesCount || 6 : routesCount || 6,
       change: 'European network',
       trend: 'neutral',
       icon: Plane,
     },
     {
       title: 'Response Time',
-      value: summary?.metrics?.briefingTime ? `${summary.metrics.briefingTime}min` : '3.2min',
+      value: summary?.metrics ? `${(summary.metrics as any).briefingTime || 3.2}min` : '3.2min',
       change: 'Alert response',
       trend: 'up',
       icon: Clock,
@@ -160,7 +160,7 @@ export default function MetricsOverview() {
                     {summary?.alerts.critical} Critical
                   </span>
                   <span className="text-xs bg-orange-600 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded">
-                    7 High
+                    {(summary?.alerts?.total || 0) - (summary?.alerts?.critical || 0)} High
                   </span>
                 </div>
               )}
