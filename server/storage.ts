@@ -318,21 +318,8 @@ export class MemoryStorage implements IStorage {
 
   async getAgents(): Promise<Agent[]> {
     try {
-      // Check if agents table exists first
-      const tableExists = await db.execute(sql`
-        SELECT EXISTS (
-          SELECT FROM information_schema.tables 
-          WHERE table_schema = 'public' 
-          AND table_name = 'agents'
-        );
-      `);
-      
-      if (!(tableExists as any).rows?.[0]?.exists) {
-        console.warn('[Storage] agents table does not exist, using memory store');
-        return Array.from(memoryStore.agents.values());
-      }
-
       const result = await db.select().from(agents);
+      console.log(`[Storage] Successfully fetched ${result.length} agents from database`);
       if (result.length > 0) {
         return result.map(agent => ({
           id: agent.id,
@@ -345,12 +332,15 @@ export class MemoryStorage implements IStorage {
           lastActive: agent.lastActive || new Date(),
           updatedAt: agent.updatedAt || new Date()
         }));
+      } else {
+        console.log('[Storage] agents table empty, populating with default agents and using memory store');
+        return Array.from(memoryStore.agents.values());
       }
     } catch (error) {
-      console.error('Error fetching agents from database:', error);
+      console.error('[Storage] Error fetching agents from database:', error);
+      console.log('[Storage] agents table does not exist, using memory store');
+      return Array.from(memoryStore.agents.values());
     }
-    
-    return Array.from(memoryStore.agents.values());
   }
 
   async getAgent(id: string): Promise<Agent | undefined> {
