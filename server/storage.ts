@@ -5,8 +5,11 @@ import {
   type InsertRoutePerformance, type InsertConversation,
   type InsertSystemMetric, type InsertActivity, type InsertFeedback
 } from '@shared/schema';
+import { db, client } from './services/supabase.js';
+import { alerts, agents, users, feedback, conversations, systemMetrics, activities, routePerformance } from '@shared/schema';
+import { eq, desc, gte, lte, and } from 'drizzle-orm';
 
-// Temporary memory storage while database connection is being established
+// Temporary memory storage for development resilience
 const memoryStore = {
   users: new Map<string, User>(),
   alerts: new Map<string, Alert>(),
@@ -18,9 +21,8 @@ const memoryStore = {
   activities: new Map<string, Activity>()
 };
 
-// Initialize agents with real configuration
+// Initialize essential agents for system operation
 const initializeAgents = () => {
-  // Initialize required agents for system operation
   const requiredAgents: Agent[] = [
     {
       id: 'competitive',
@@ -57,13 +59,11 @@ const initializeAgents = () => {
     }
   ];
 
-  // Only populate agents if store is empty
   if (memoryStore.agents.size === 0) {
     requiredAgents.forEach(agent => memoryStore.agents.set(agent.id, agent));
   }
 };
 
-// Initialize only essential system components
 initializeAgents();
 
 export interface IStorage {
@@ -139,8 +139,6 @@ export class MemoryStorage implements IStorage {
       `Fetching ${limit} alerts from database`,
       async () => {
         try {
-          const { client } = await import('./services/supabase.js');
-          
           const result = await client`
             SELECT * FROM alerts 
             ORDER BY created_at DESC 
@@ -186,7 +184,6 @@ export class MemoryStorage implements IStorage {
         } catch (error) {
           logger.error('Storage', 'getAlerts', 'Database query failed, falling back to memory store', error, { limit });
           
-          // Fallback to memory store
           const allAlerts = Array.from(memoryStore.alerts.values())
             .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
             .slice(0, limit);
@@ -204,16 +201,12 @@ export class MemoryStorage implements IStorage {
 
   async getAlertsByPriority(priority: string): Promise<Alert[]> {
     try {
-      // Query database directly using raw SQL for priority alerts
-      const { client } = await import('./services/supabase.js');
-      
       const result = await client`
         SELECT * FROM alerts 
         WHERE priority = ${priority}
         ORDER BY created_at DESC
       `;
       
-      // Convert database format to expected format
       return result.map((alert: any) => ({
         id: alert.id,
         type: alert.type || 'alert',
@@ -235,136 +228,231 @@ export class MemoryStorage implements IStorage {
         category: alert.category
       }));
     } catch (error) {
-      console.error('[Storage] Error fetching priority alerts from database:', error);
-      // Fallback to memory store
+      console.error('Error querying alerts by priority:', error);
       return Array.from(memoryStore.alerts.values())
         .filter(alert => alert.priority === priority)
         .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
     }
   }
 
-  async createAlert(alert: InsertAlert): Promise<Alert> {
-    const id = `alert-${Date.now()}`;
-    const newAlert: Alert = {
-      id,
-      type: alert.type || 'alert',
-      priority: alert.priority,
-      title: alert.title,
-      description: alert.description,
-      route: alert.route || null,
-      route_name: alert.route_name || null,
-      metric_value: alert.metric_value || null,
-      threshold_value: alert.threshold_value || null,
-      impact_score: alert.impact_score || null,
-      confidence: alert.confidence || null,
-      agent_id: alert.agent_id,
-      metadata: alert.metadata || {},
-      status: alert.status || 'active',
-      created_at: new Date(),
-      acknowledged_at: null,
-      resolved_at: null,
-      category: alert.category
-    };
-    memoryStore.alerts.set(newAlert.id, newAlert);
-    return newAlert;
+  async createAlert(alertData: InsertAlert): Promise<Alert> {
+    try {
+      const result = await db.insert(alerts).values([{
+        type: alertData.type || 'alert',
+        priority: alertData.priority,
+        title: alertData.title,
+        description: alertData.description,
+        route: alertData.route || null,
+        route_name: alertData.route_name || null,
+        metric_value: alertData.metric_value || null,
+        agent_id: alertData.agent_id,
+        metadata: alertData.metadata || {},
+        status: alertData.status || 'active',
+        category: alertData.category
+      }]).returning();
+      
+      return {
+        id: result[0].id,
+        type: result[0].type || 'alert',
+        priority: result[0].priority,
+        title: result[0].title,
+        description: result[0].description,
+        route: result[0].route || null,
+        route_name: result[0].route_name || null,
+        metric_value: result[0].metric_value || null,
+        threshold_value: result[0].threshold_value || null,
+        impact_score: result[0].impact_score || null,
+        confidence: result[0].confidence || null,
+        agent_id: result[0].agent_id,
+        metadata: result[0].metadata || {},
+        status: result[0].status,
+        created_at: result[0].created_at,
+        acknowledged_at: result[0].acknowledged_at || null,
+        resolved_at: result[0].resolved_at || null,
+        category: result[0].category
+      };
+    } catch (error) {
+      console.error('Error creating alert in database:', error);
+      const id = `alert-${Date.now()}`;
+      const newAlert: Alert = {
+        id,
+        ...alertData,
+        type: alertData.type || 'alert',
+        status: alertData.status || 'active',
+        created_at: new Date(),
+        acknowledged_at: null,
+        resolved_at: null,
+        route: alertData.route || null,
+        route_name: alertData.route_name || null,
+        metric_value: alertData.metric_value || null,
+        threshold_value: null,
+        impact_score: null,
+        confidence: null,
+        metadata: alertData.metadata || {}
+      };
+      memoryStore.alerts.set(newAlert.id, newAlert);
+      return newAlert;
+    }
   }
 
   async updateAlertStatus(id: string, status: string): Promise<void> {
-    const alert = memoryStore.alerts.get(id);
-    if (alert) {
-      alert.status = status;
-      memoryStore.alerts.set(id, alert);
+    try {
+      await db.update(alerts)
+        .set({ 
+          status,
+          resolved_at: status === 'resolved' ? new Date() : null
+        })
+        .where(eq(alerts.id, id));
+    } catch (error) {
+      console.error('Error updating alert status:', error);
+      const alert = memoryStore.alerts.get(id);
+      if (alert) {
+        alert.status = status;
+        if (status === 'resolved') {
+          alert.resolved_at = new Date();
+        }
+        memoryStore.alerts.set(id, alert);
+      }
     }
   }
 
   async getAgents(): Promise<Agent[]> {
+    try {
+      const result = await db.select().from(agents);
+      if (result.length > 0) {
+        return result.map(agent => ({
+          id: agent.id,
+          name: agent.name,
+          status: agent.status,
+          accuracy: agent.accuracy || '0.00',
+          totalAnalyses: agent.totalAnalyses || 0,
+          successfulPredictions: agent.successfulPredictions || 0,
+          configuration: agent.configuration || {},
+          lastActive: agent.lastActive || new Date(),
+          updatedAt: agent.updatedAt || new Date()
+        }));
+      }
+    } catch (error) {
+      console.error('Error fetching agents from database:', error);
+    }
+    
     return Array.from(memoryStore.agents.values());
   }
 
   async getAgent(id: string): Promise<Agent | undefined> {
+    try {
+      const result = await db.select().from(agents).where(eq(agents.id, id));
+      if (result.length > 0) {
+        const agent = result[0];
+        return {
+          id: agent.id,
+          name: agent.name,
+          status: agent.status,
+          accuracy: agent.accuracy || '0.00',
+          totalAnalyses: agent.totalAnalyses || 0,
+          successfulPredictions: agent.successfulPredictions || 0,
+          configuration: agent.configuration || {},
+          lastActive: agent.lastActive || new Date(),
+          updatedAt: agent.updatedAt || new Date()
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching agent from database:', error);
+    }
+    
     return memoryStore.agents.get(id);
   }
 
   async updateAgent(id: string, updates: Partial<Agent>): Promise<void> {
-    const agent = memoryStore.agents.get(id);
-    if (agent) {
-      Object.assign(agent, updates, { updatedAt: new Date() });
-      memoryStore.agents.set(id, agent);
+    try {
+      await db.update(agents)
+        .set({
+          ...updates,
+          updatedAt: new Date()
+        })
+        .where(eq(agents.id, id));
+    } catch (error) {
+      console.error('Error updating agent:', error);
+      const agent = memoryStore.agents.get(id);
+      if (agent) {
+        Object.assign(agent, updates, { updatedAt: new Date() });
+        memoryStore.agents.set(id, agent);
+      }
     }
   }
 
   async createFeedback(feedbackData: InsertFeedback): Promise<void> {
-    const feedback = {
-      id: `feedback-${Date.now()}`,
-      ...feedbackData,
-      createdAt: new Date()
-    };
-    memoryStore.feedback.set(feedback.id, feedback);
+    try {
+      await db.insert(feedback).values([feedbackData]);
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      const id = `feedback-${Date.now()}`;
+      memoryStore.feedback.set(id, { id, ...feedbackData, createdAt: new Date() });
+    }
   }
 
   async getFeedbackByAgent(agentId: string): Promise<any[]> {
-    return Array.from(memoryStore.feedback.values())
-      .filter(feedback => feedback.agentId === agentId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    try {
+      const result = await db.select().from(feedback).where(eq(feedback.agent_id, agentId));
+      return result;
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      return Array.from(memoryStore.feedback.values())
+        .filter(fb => fb.agentId === agentId)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
   }
 
   async getRoutePerformance(route?: string, days = 7): Promise<RoutePerformance[]> {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     
     let routes = Array.from(memoryStore.routePerformance.values())
-      .filter(rp => new Date(rp.date) >= since);
+      .filter(rp => rp.date && new Date(rp.date) >= since);
     
     if (route) {
       routes = routes.filter(rp => rp.route === route);
     }
     
-    return routes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return routes.sort((a, b) => {
+      const aTime = a.date ? new Date(a.date).getTime() : 0;
+      const bTime = b.date ? new Date(b.date).getTime() : 0;
+      return bTime - aTime;
+    });
   }
 
   async createRoutePerformance(data: InsertRoutePerformance): Promise<void> {
-    const routePerf: RoutePerformance = {
-      id: data.id || `route-${Date.now()}`,
+    const id = `route-${Date.now()}`;
+    const newRoute: RoutePerformance = {
+      id,
       ...data,
-      createdAt: new Date(),
-      loadFactor: data.loadFactor ?? null,
-      yield: data.yield ?? null,
-      performance: data.performance ?? null,
-      competitorPrice: data.competitorPrice ?? null,
-      ourPrice: data.ourPrice ?? null,
-      demandIndex: data.demandIndex ?? null,
+      createdAt: new Date()
     };
-    memoryStore.routePerformance.set(routePerf.id, routePerf);
+    memoryStore.routePerformance.set(newRoute.id, newRoute);
   }
 
   async getConversations(userId: string): Promise<Conversation[]> {
     return Array.from(memoryStore.conversations.values())
       .filter(conv => conv.userId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
     const newConv: Conversation = {
-      id: conversation.id || `conv-${Date.now()}`,
+      id: `conv-${Date.now()}`,
       ...conversation,
       createdAt: new Date(),
       updatedAt: new Date(),
-      title: conversation.title ?? null,
-      userId: conversation.userId ?? null,
-      messages: conversation.messages ?? {},
-      context: conversation.context ?? {},
+      title: conversation.title ?? null
     };
     memoryStore.conversations.set(newConv.id, newConv);
     return newConv;
   }
 
   async updateConversation(id: string, updates: Partial<Conversation>): Promise<void> {
-    const conv = memoryStore.conversations.get(id);
-    if (conv) {
-      Object.assign(conv, updates, { 
-        updatedAt: new Date(),
-        createdAt: conv.createdAt || new Date() 
-      });
-      memoryStore.conversations.set(id, conv);
+    const conversation = memoryStore.conversations.get(id);
+    if (conversation) {
+      Object.assign(conversation, updates, { updatedAt: new Date() });
+      memoryStore.conversations.set(id, conversation);
     }
   }
 
@@ -379,8 +467,8 @@ export class MemoryStorage implements IStorage {
     }
     
     return metrics.sort((a, b) => {
-      const aTime = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const bTime = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      const aTime = metric.timestamp ? new Date(metric.timestamp).getTime() : 0;
+      const bTime = metric.timestamp ? new Date(metric.timestamp).getTime() : 0;
       return bTime - aTime;
     });
   }
@@ -389,8 +477,8 @@ export class MemoryStorage implements IStorage {
     const newMetric: SystemMetric = {
       id: `metric-${Date.now()}`,
       ...metric,
-      timestamp: metric.timestamp || new Date(),
-      metadata: metric.metadata ?? {},
+      timestamp: new Date(),
+      metadata: metric.metadata ?? {}
     };
     memoryStore.systemMetrics.set(newMetric.id, newMetric);
   }
@@ -409,7 +497,7 @@ export class MemoryStorage implements IStorage {
       description: activity.description ?? null,
       metadata: activity.metadata ?? {},
       userId: activity.userId ?? null,
-      agentId: activity.agentId ?? null,
+      agentId: activity.agentId ?? null
     };
     memoryStore.activities.set(newActivity.id, newActivity);
   }
