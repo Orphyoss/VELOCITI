@@ -77,6 +77,13 @@ Preferred communication style: Simple, everyday language.
 - **Data Structure**: Relational design for users, alerts, agents, feedback, route performance, conversations, system metrics, and activities.
 - **High Availability**: Designed for high availability with automatic failover and scalable architecture.
 
+### Deployment Configuration
+- **Production Deployment**: Replit Deployments with custom build/run scripts configured in `.replit` file
+- **Build Command**: `npm run build` - Creates optimized Vite frontend bundle and Node.js backend
+- **Run Command**: `npm run start` - Runs production server with PostgreSQL connection
+- **Deployment Scripts**: Professional deployment pipeline (`scripts/deploy.js`) with health checks and rollback capabilities
+- **Environment**: Autoscale deployment target with proper environment variable configuration
+
 ## External Dependencies
 
 ### Core Infrastructure
