@@ -65,8 +65,12 @@ export default function AnalystWorkbench() {
     if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
     if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
     if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
-    if (searchQuery && !alert.title.toLowerCase().includes(searchQuery.toLowerCase()) && 
-        !alert.description.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (searchQuery) {
+      const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
+      const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
+      if (!titleMatch && !descriptionMatch && !messageMatch) return false;
+    }
     return true;
   }).sort((a: Alert, b: Alert) => {
     const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 

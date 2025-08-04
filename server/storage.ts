@@ -168,7 +168,7 @@ export class MemoryStorage implements IStorage {
             created_at: alert.created_at,
             acknowledged_at: alert.acknowledged_at || null,
             resolved_at: alert.resolved_at || null,
-            category: alert.category
+            category: alert.category || alert.type || 'general' // Fix missing category issue
           }));
           
           logger.debug('Storage', 'getAlerts', `Successfully fetched alerts from database`, {
