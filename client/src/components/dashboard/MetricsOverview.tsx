@@ -61,6 +61,8 @@ export default function MetricsOverview() {
   const criticalAlerts = summary?.alerts?.critical || 0;
   const activeAgents = summary?.agents?.length || 0;
   const dailyRevenue = (rmMetrics as any)?.revenueImpact?.daily || 0;
+  const weeklyRevenue = (rmMetrics as any)?.revenueImpact?.weekly || 0;
+  const monthlyRevenue = (rmMetrics as any)?.revenueImpact?.monthly || 0;
 
   // Always show core metrics with real data
   const metrics = [
@@ -80,10 +82,10 @@ export default function MetricsOverview() {
       icon: Bot,
     },
     {
-      title: 'Network Yield',
-      value: networkYield ? `£${Math.round(networkYield)}` : 'Loading...',
-      change: 'Per passenger',
-      trend: networkYield ? 'up' : 'neutral',
+      title: 'Daily Revenue',
+      value: dailyRevenue ? `£${Math.round(dailyRevenue / 1000)}K` : '£0',
+      change: weeklyRevenue ? `£${Math.round(weeklyRevenue / 1000)}K weekly` : 'Real-time data',
+      trend: dailyRevenue > 0 ? 'up' : 'neutral',
       icon: BarChart3,
     },
     {
@@ -101,10 +103,10 @@ export default function MetricsOverview() {
       icon: Plane,
     },
     {
-      title: 'Daily Revenue',
-      value: dailyRevenue ? `£${Math.round(dailyRevenue / 1000)}K` : 'Loading...',
-      change: 'Today',
-      trend: dailyRevenue ? 'up' : 'neutral',
+      title: 'Network Yield',
+      value: networkYield ? `£${Math.round(networkYield)}` : '£0',
+      change: 'Per passenger',
+      trend: networkYield > 100 ? 'up' : 'neutral',
       icon: Target,
     },
   ];
