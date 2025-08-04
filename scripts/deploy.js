@@ -78,7 +78,13 @@ class DeploymentManager {
     this.log('Validating database connection...');
     
     try {
-      const config = await import('../shared/config.js');
+      // Handle both ESM and CommonJS
+      let config;
+      try {
+        config = await import('../shared/config.js');
+      } catch (e) {
+        config = require('../shared/config.ts');
+      }
       const dbConfig = config.getConfig().database;
       
       if (!dbConfig.url) {

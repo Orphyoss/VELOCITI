@@ -5,7 +5,8 @@
  * Monitors system health and validates all components
  */
 
-import fetch from 'node-fetch';
+// Use built-in fetch in Node.js 18+
+const fetch = globalThis.fetch;
 
 class HealthChecker {
   constructor() {
@@ -59,7 +60,13 @@ class HealthChecker {
     this.log('Checking database connectivity...');
     
     try {
-      const config = await import('../shared/config.js');
+      // Handle both ESM and CommonJS
+      let config;
+      try {
+        config = await import('../shared/config.js');
+      } catch (e) {
+        config = require('../shared/config.ts');
+      }
       const dbConfig = config.getConfig().database;
       
       if (dbConfig.url) {

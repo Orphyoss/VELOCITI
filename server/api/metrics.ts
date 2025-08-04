@@ -47,7 +47,7 @@ router.get('/system-performance', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve system performance metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -88,7 +88,7 @@ router.get('/ai-accuracy', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve AI accuracy metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -129,7 +129,7 @@ router.get('/business-impact', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve business impact metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -170,7 +170,7 @@ router.get('/user-adoption', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve user adoption metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -207,7 +207,7 @@ router.get('/morning-briefing', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to generate morning briefing',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -270,7 +270,7 @@ router.get('/all', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve comprehensive metrics',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -305,7 +305,7 @@ router.get('/registry', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve metrics registry',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -351,7 +351,7 @@ router.get('/alerts', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to retrieve metric alerts',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });
@@ -383,7 +383,7 @@ router.post('/alerts/:alertId/acknowledge', async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: 'Failed to acknowledge alert',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
     });
   }
 });

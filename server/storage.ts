@@ -417,7 +417,7 @@ export class MemoryStorage implements IStorage {
       console.error('Error fetching feedback:', error);
       return Array.from(memoryStore.feedback.values())
         .filter(fb => fb.agentId === agentId)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
     }
   }
 
@@ -486,7 +486,7 @@ export class MemoryStorage implements IStorage {
     
     return metrics.sort((a, b) => {
       const aTime = metric.timestamp ? new Date(metric.timestamp).getTime() : 0;
-      const bTime = metric.timestamp ? new Date(metric.timestamp).getTime() : 0;
+      const bTime = metrics[b].timestamp ? new Date(metrics[b].timestamp).getTime() : 0;
       return bTime - aTime;
     });
   }
@@ -503,7 +503,7 @@ export class MemoryStorage implements IStorage {
 
   async getRecentActivities(limit = 20): Promise<Activity[]> {
     return Array.from(memoryStore.activities.values())
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
       .slice(0, limit);
   }
 

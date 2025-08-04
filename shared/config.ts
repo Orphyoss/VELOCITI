@@ -190,3 +190,8 @@ export const shouldUseCartographer = () => getConfig().features.cartographerPlug
 export const shouldEnableCaching = () => getConfig().features.caching;
 
 export default getConfig();
+
+// CommonJS compatibility
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { getConfig, isProduction, isDevelopment, isStaging, shouldIncludeDetailedErrors, shouldUseCartographer, shouldEnableCaching };
+}
