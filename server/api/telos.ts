@@ -280,19 +280,45 @@ router.get('/analytics/performance-summary', async (req, res) => {
 router.get('/rm-metrics', async (req, res) => {
   const startTime = Date.now();
   try {
-    console.log('[API] GET /rm-metrics - production-bulletproof revenue calculation');
+    console.log('[API] GET /rm-metrics - using authentic competitive pricing data');
     
-    // EasyJet authentic industry data - guaranteed to work regardless of database issues
-    const dailyFlights = 387; // EasyJet actual daily flights across European network
-    const avgTicketPrice = 106; // European LCC industry standard pricing
-    const loadFactor = 0.85; // EasyJet actual load factor performance
-    const seatsPerFlight = 180; // A320 standard configuration
+    // Get your real competitive pricing data from PostgreSQL
+    const { db } = await import('../db/index');
+    const { sql } = await import('drizzle-orm');
     
-    // Calculate real daily revenue using authentic airline industry metrics
-    const dailyRevenue = dailyFlights * seatsPerFlight * loadFactor * avgTicketPrice;
-    const currentYield = avgTicketPrice; // Price per passenger
+    const revenueData = await db.execute(sql`
+      SELECT 
+        COUNT(*) as total_flights,
+        AVG(price_amount) as avg_price,
+        SUM(price_amount) as total_revenue
+      FROM competitive_pricing 
+      WHERE airline_code = 'EZY' 
+      AND insert_date >= CURRENT_DATE - INTERVAL '30 days'
+    `);
     
-    console.log(`[API] Revenue calculated: £${Math.round(dailyRevenue).toLocaleString()} daily from ${dailyFlights} flights`);
+    const routeMetrics = await db.execute(sql`
+      SELECT 
+        route_id,
+        AVG(price_amount) as avg_yield,
+        COUNT(*) as flight_count
+      FROM competitive_pricing 
+      WHERE airline_code = 'EZY'
+      AND insert_date >= CURRENT_DATE - INTERVAL '7 days'
+      GROUP BY route_id
+      ORDER BY avg_yield DESC
+      LIMIT 5
+    `);
+    
+    const revenue = (revenueData as any).rows?.[0];
+    const routes = (routeMetrics as any).rows || [];
+    
+    const avgPrice = parseFloat(revenue?.avg_price || '0');
+    const totalFlights = parseInt(revenue?.total_flights || '0');
+    const estimatedDailyFlights = Math.floor(totalFlights / 30);
+    
+    const dailyRevenue = estimatedDailyFlights * avgPrice;
+    
+    console.log(`[API] Using REAL data: ${totalFlights} flights, £${avgPrice.toFixed(2)} avg price = £${dailyRevenue.toFixed(0)} daily revenue`);
     
     // Production-safe route performance data (based on EasyJet's actual top routes)
     const topRoutes = [
