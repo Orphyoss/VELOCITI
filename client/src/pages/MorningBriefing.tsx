@@ -69,7 +69,7 @@ export default function MorningBriefing() {
     setCurrentModule('dashboard');
   }, [setCurrentModule]);
 
-  // Fetch AI-generated briefing data
+  // Fetch AI-generated briefing data (cached for 3 hours)
   const { data: briefingData, isLoading, error, refetch } = useQuery({
     queryKey: ['/api/morning-briefing/ai-generated'],
     queryFn: async (): Promise<MorningBriefingData> => {
@@ -79,9 +79,10 @@ export default function MorningBriefing() {
       }
       return response.json();
     },
-    refetchInterval: 15 * 60 * 1000, // Refresh every 15 minutes
+    refetchInterval: 3 * 60 * 60 * 1000, // Refresh every 3 hours
     retry: 3,
-    staleTime: 10 * 60 * 1000, // Consider data stale after 10 minutes
+    staleTime: 3 * 60 * 60 * 1000, // Consider data stale after 3 hours
+    gcTime: 3 * 60 * 60 * 1000, // Keep in cache for 3 hours
   });
 
   const getStatusColor = (status: string) => {

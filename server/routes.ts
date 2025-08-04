@@ -1614,6 +1614,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('[API] Generating AI-powered morning briefing...');
       
+      // Check cache first (3-hour TTL)
+      const currentDate = new Date().toISOString().slice(0, 10);
+      const cacheKey = `morning-briefing-${currentDate}`;
+      const cachedBriefing = cacheService.get(cacheKey);
+      
+      if (cachedBriefing) {
+        const duration = Date.now() - startTime;
+        console.log(`[API] Returning cached morning briefing (${duration}ms)`);
+        return res.json(cachedBriefing);
+      }
+      
       // Check if OpenAI API key is available
       if (!process.env.OPENAI_API_KEY) {
         console.error('[API] OpenAI API key not found');
@@ -1730,7 +1741,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('[API] Sending data to OpenAI for analysis...');
       
       // Create detailed prompt data for comprehensive analysis
-      const currentDate = new Date().toISOString().split('T')[0];
       const criticalAlerts = alerts.filter(a => a.priority === 'critical');
       const highValueAlerts = alerts.filter(a => a.category === 'competitive' || a.category === 'revenue' || a.category === 'operational');
       
@@ -1902,8 +1912,11 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
         }
       };
 
+      // Cache the generated briefing for 3 hours
+      cacheService.setMorningBriefing(cacheKey, briefingData);
+      
       const duration = Date.now() - startTime;
-      console.log(`[API] AI morning briefing generated successfully in ${duration}ms`);
+      console.log(`[API] AI morning briefing generated and cached successfully in ${duration}ms`);
       
       res.json(briefingData);
     } catch (error) {

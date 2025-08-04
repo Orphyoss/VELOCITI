@@ -10,6 +10,7 @@ class CacheService {
   private cache = new Map<string, CacheEntry>();
   private readonly DEFAULT_TTL = 30 * 60 * 1000; // 30 minutes
   private readonly STRATEGIC_TTL = 60 * 60 * 1000; // 1 hour for strategic analysis
+  private readonly MORNING_BRIEFING_TTL = 3 * 60 * 60 * 1000; // 3 hours for morning briefing
   
   constructor() {
     // Clean expired entries every 5 minutes
@@ -48,6 +49,10 @@ class CacheService {
 
   setStrategicAnalysis(key: string, data: any): void {
     this.set(key, data, this.STRATEGIC_TTL);
+  }
+
+  setMorningBriefing(key: string, data: any): void {
+    this.set(key, data, this.MORNING_BRIEFING_TTL);
   }
 
   invalidatePattern(pattern: string): void {

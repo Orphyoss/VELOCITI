@@ -7,6 +7,7 @@ Velociti is an AI-powered revenue management and analytics platform for EasyJet.
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes  
+- **COMPLETED: Morning Briefing 3-Hour Caching** - Implemented server-side caching for Morning Briefing with 3-hour TTL to prevent regeneration on every page access, updated frontend query settings with matching staleTime and gcTime, added specialized cacheService method for morning briefing data (2025-08-04)
 - **COMPLETED: Navigation and Card Styling Fixes** - Fixed Data Generation page sidebar by wrapping in AppShell, implemented persistent admin expansion when sub-tabs are selected, added blue highlighting to all main navigation items and admin sub-tabs for consistent selection indicators across desktop and mobile (2025-08-04)
 - **COMPLETED: System Monitoring Dark Theme** - Applied dark theme styling to all card components in APIMonitor and MemoryStats with proper contrast and readability (2025-08-04)
 - **COMPLETED: Admin Navigation Final Structure** - Renamed Action Agents Setup to Action Agents Status as first sub-tab, reordered admin items: Action Agents Status, AI Agents, RAG Management, System Monitoring, Data Generation, added visual selection indicators for active tabs/subtabs (2025-08-04)
