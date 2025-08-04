@@ -1335,6 +1335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const currentYield = parseFloat(route.avgYield || '0');
             const baselineYield = 100; // Industry baseline
             const changePercent = ((currentYield - baselineYield) / baselineYield) * 100;
+            console.log(`[DEBUG] Route ${route.routeId}: yield=${currentYield}, baseline=${baselineYield}, change=${changePercent}%`);
             return {
               route: route.routeId,
               yield: currentYield,
@@ -1363,6 +1364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       console.log(`[Telos RM Metrics] Calculated metrics from ${routeCount} routes: yield=${currentYield.toFixed(2)}, revenue=${totalRevenue.toFixed(0)}, load factor=${(totalLoadFactor * 100).toFixed(1)}%`);
+      console.log(`[Telos RM Metrics] First route data:`, routePerformance[0]);
       
       res.json(rmMetrics);
     } catch (error) {
