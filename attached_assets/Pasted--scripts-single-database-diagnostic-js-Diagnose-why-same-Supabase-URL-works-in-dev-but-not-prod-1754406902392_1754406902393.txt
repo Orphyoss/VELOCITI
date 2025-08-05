@@ -1,0 +1,153 @@
+// scripts/single-database-diagnostic.js
+// Diagnose why same Supabase URL works in dev but not production
+
+import { createClient } from '@supabase/supabase-js';
+
+console.log('🔍 SINGLE DATABASE DIAGNOSTIC');
+console.log('===============================');
+
+// Environment info
+console.log('\n📋 ENVIRONMENT INFO:');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'undefined');
+console.log('Platform:', process.platform);
+console.log('Runtime:', process.version);
+
+// Database configuration
+console.log('\n🗄️ DATABASE CONFIGURATION:');
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+console.log('SUPABASE_URL exists:', !!supabaseUrl);
+console.log('SUPABASE_URL preview:', supabaseUrl ? supabaseUrl.substring(0, 30) + '***' : 'MISSING');
+console.log('SUPABASE_ANON_KEY exists:', !!supabaseKey);
+console.log('SUPABASE_ANON_KEY preview:', supabaseKey ? supabaseKey.substring(0, 20) + '***' : 'MISSING');
+
+if (!supabaseUrl || !supabaseKey) {
+  console.log('❌ CRITICAL: Missing Supabase credentials');
+  process.exit(1);
+}
+
+// Test database connection
+console.log('\n🔌 DATABASE CONNECTION TEST:');
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+try {
+  // Test 1: Basic connection
+  console.log('Testing basic connection...');
+  const { data: connectionTest, error: connectionError } = await supabase
+    .from('alerts')
+    .select('id', { count: 'exact', head: true });
+  
+  if (connectionError) {
+    console.log('❌ Connection failed:', connectionError.message);
+    console.log('Error details:', connectionError);
+  } else {
+    console.log('✅ Connection successful');
+  }
+
+  // Test 2: Count alerts
+  console.log('\nCounting alerts...');
+  const { count: alertCount, error: countError } = await supabase
+    .from('alerts')
+    .select('*', { count: 'exact', head: true });
+    
+  if (countError) {
+    console.log('❌ Count query failed:', countError.message);
+  } else {
+    console.log(`✅ Found ${alertCount} alerts in database`);
+  }
+
+  // Test 3: Fetch sample data
+  console.log('\nFetching sample alerts...');
+  const { data: sampleAlerts, error: fetchError } = await supabase
+    .from('alerts')
+    .select('*')
+    .limit(3);
+    
+  if (fetchError) {
+    console.log('❌ Fetch query failed:', fetchError.message);
+  } else {
+    console.log(`✅ Retrieved ${sampleAlerts?.length || 0} sample alerts`);
+    if (sampleAlerts?.[0]) {
+      console.log('Sample alert structure:', Object.keys(sampleAlerts[0]));
+    }
+  }
+
+  // Test 4: Check agents table
+  console.log('\nChecking agents table...');
+  const { count: agentCount, error: agentError } = await supabase
+    .from('agents')
+    .select('*', { count: 'exact', head: true });
+    
+  if (agentError) {
+    console.log('❌ Agents query failed:', agentError.message);
+  } else {
+    console.log(`✅ Found ${agentCount} agents in database`);
+  }
+
+} catch (error) {
+  console.log('❌ CRITICAL ERROR:', error.message);
+  console.log('Stack trace:', error.stack);
+}
+
+// Test 5: Simulate API call
+console.log('\n🌐 API SIMULATION TEST:');
+try {
+  // Simulate what your API route does
+  const { data: apiSimulation, error: apiError } = await supabase
+    .from('alerts')
+    .select(`
+      id,
+      title,
+      description,
+      priority,
+      status,
+      route,
+      competitor,
+      created_at,
+      impact_score,
+      confidence_score
+    `)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (apiError) {
+    console.log('❌ API simulation failed:', apiError.message);
+  } else {
+    console.log(`✅ API simulation successful: ${apiSimulation?.length || 0} alerts`);
+    console.log('API response preview:', apiSimulation?.[0] ? {
+      id: apiSimulation[0].id,
+      title: apiSimulation[0].title?.substring(0, 50) + '...',
+      priority: apiSimulation[0].priority
+    } : 'No data');
+  }
+} catch (error) {
+  console.log('❌ API simulation error:', error.message);
+}
+
+// Test 6: Check if this is a build/deployment issue
+console.log('\n🏗️ BUILD CONTEXT CHECK:');
+console.log('Current working directory:', process.cwd());
+console.log('Script location:', import.meta.url);
+
+// Check if we can access files that should exist
+import fs from 'fs';
+const checkFiles = ['package.json', 'server/index.ts', 'server/routes.ts'];
+checkFiles.forEach(file => {
+  console.log(`${file} exists:`, fs.existsSync(file));
+});
+
+console.log('\n📊 DIAGNOSTIC SUMMARY:');
+console.log('========================');
+console.log('If you see this running in DEVELOPMENT and it shows alerts,');
+console.log('but PRODUCTION returns empty arrays, then the issue is:');
+console.log('1. Build/deployment process not including latest code');
+console.log('2. Production environment not loading environment variables');
+console.log('3. API routing differences between dev and production');
+console.log('4. CORS or network connectivity issues in production');
+
+console.log('\n🔧 NEXT STEPS:');
+console.log('1. Run this script in development: tsx scripts/single-database-diagnostic.js');
+console.log('2. Check production API directly: curl https://velociti.replit.app/api/debug');
+console.log('3. Compare the outputs to find the exact difference');

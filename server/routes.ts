@@ -191,6 +191,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
   });
 
+  // PRODUCTION DEBUG ENDPOINTS - Added to diagnose deployment issues
+  app.get('/api/debug', async (req, res) => {
+    console.log('🔍 Debug endpoint called');
+    
+    const debug = {
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      platform: process.platform,
+      nodeVersion: process.version,
+      
+      // Environment variables (safely)
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseUrlPreview: process.env.DATABASE_URL?.substring(0, 30) + '***',
+      
+      // Request info
+      userAgent: req.headers['user-agent'],
+      origin: req.headers.origin,
+      host: req.headers.host,
+      
+      // Database test results
+      databaseTest: null,
+      alertsTest: null,
+      agentsTest: null
+    };
+
+    // Test database connection
+    try {
+      // Import modules dynamically to ensure they're available
+      const { client } = await import('./services/supabase.js');
+      const { db } = await import('./services/supabase.js');
+      const { alerts: alertsTable } = await import('../shared/schema.js');
+      
+      // Test 1: Basic connection
+      const connectionTest = await client`SELECT COUNT(*) as count FROM alerts`;
+      debug.alertsTest = {
+        success: true,
+        count: parseInt(connectionTest[0].count)
+      };
+
+      // Test 2: Sample data fetch with Drizzle
+      const sampleAlerts = await db.select()
+        .from(alertsTable)
+        .orderBy(alertsTable.created_at)
+        .limit(3);
+
+      debug.sampleData = {
+        success: true,
+        sampleCount: sampleAlerts.length,
+        sample: sampleAlerts[0] || null
+      };
+
+      // Test 3: Agents table
+      const agentTest = await client`SELECT COUNT(*) as count FROM agents`;
+      debug.agentsTest = {
+        success: true,
+        count: parseInt(agentTest[0].count)
+      };
+
+      debug.databaseTest = {
+        success: true,
+        message: 'Database connection successful'
+      };
+
+    } catch (error) {
+      debug.databaseTest = {
+        success: false,
+        error: error.message,
+        code: error.code,
+        stack: error.stack?.split('\n').slice(0, 3)
+      };
+    }
+
+    res.json(debug);
+  });
+
+  // Specific alerts debug endpoint
+  app.get('/api/debug/alerts', async (req, res) => {
+    console.log('🚨 Alerts debug endpoint called');
+    
+    try {
+      // Import modules dynamically 
+      const { client } = await import('./services/supabase.js');
+      const { db } = await import('./services/supabase.js');
+      const { alerts: alertsTable } = await import('../shared/schema.js');
+      
+      // Test both direct SQL and Drizzle ORM
+      const directSql = await client`
+        SELECT id, title, description, priority, status, route, created_at
+        FROM alerts 
+        ORDER BY created_at DESC 
+        LIMIT 50
+      `;
+
+      const drizzleQuery = await db.select()
+        .from(alertsTable)
+        .orderBy(alertsTable.created_at)
+        .limit(50);
+
+      console.log(`✅ Direct SQL: ${directSql.length} alerts`);
+      console.log(`✅ Drizzle ORM: ${drizzleQuery.length} alerts`);
+      
+      res.json({
+        success: true,
+        directSqlCount: directSql.length,
+        drizzleCount: drizzleQuery.length,
+        directSqlSample: directSql.slice(0, 3),
+        drizzleSample: drizzleQuery.slice(0, 3),
+        query: 'ORDER BY created_at DESC, LIMIT 50',
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      console.error('❌ Critical error in alerts debug:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+    }
+  });
+
   // Dashboard endpoints
   app.get("/api/dashboard/summary", async (req, res) => {
     try {

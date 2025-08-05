@@ -1,0 +1,150 @@
+// Add this to your server/routes.ts or server/index.ts
+
+app.get('/api/debug', async (req, res) => {
+  console.log('🔍 Debug endpoint called');
+  
+  const debug = {
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    platform: process.platform,
+    nodeVersion: process.version,
+    
+    // Environment variables (safely)
+    hasSupabaseUrl: !!process.env.SUPABASE_URL,
+    supabaseUrlPreview: process.env.SUPABASE_URL?.substring(0, 30) + '***',
+    hasSupabaseKey: !!process.env.SUPABASE_ANON_KEY,
+    
+    // Request info
+    userAgent: req.headers['user-agent'],
+    origin: req.headers.origin,
+    host: req.headers.host,
+    
+    // Database test results
+    databaseTest: null,
+    alertsTest: null,
+    agentsTest: null
+  };
+
+  // Test database connection
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+
+    // Test 1: Basic connection
+    const { count: alertCount, error: alertError } = await supabase
+      .from('alerts')
+      .select('*', { count: 'exact', head: true });
+
+    debug.alertsTest = alertError ? {
+      success: false,
+      error: alertError.message,
+      code: alertError.code
+    } : {
+      success: true,
+      count: alertCount
+    };
+
+    // Test 2: Sample data fetch
+    const { data: sampleAlerts, error: fetchError } = await supabase
+      .from('alerts')
+      .select('id, title, priority, status')
+      .limit(3);
+
+    debug.sampleData = fetchError ? {
+      success: false,
+      error: fetchError.message
+    } : {
+      success: true,
+      sampleCount: sampleAlerts?.length || 0,
+      sample: sampleAlerts?.[0] || null
+    };
+
+    // Test 3: Agents table
+    const { count: agentCount, error: agentError } = await supabase
+      .from('agents')
+      .select('*', { count: 'exact', head: true });
+
+    debug.agentsTest = agentError ? {
+      success: false,
+      error: agentError.message
+    } : {
+      success: true,
+      count: agentCount
+    };
+
+    debug.databaseTest = {
+      success: true,
+      message: 'Database connection successful'
+    };
+
+  } catch (error) {
+    debug.databaseTest = {
+      success: false,
+      error: error.message,
+      stack: error.stack?.split('\n').slice(0, 3) // First 3 lines only
+    };
+  }
+
+  res.json(debug);
+});
+
+// Also add a specific alerts debug endpoint
+app.get('/api/debug/alerts', async (req, res) => {
+  console.log('🚨 Alerts debug endpoint called');
+  
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_ANON_KEY
+    );
+
+    // Exactly mimic your alerts endpoint logic
+    const { data, error } = await supabase
+      .from('alerts')
+      .select(`
+        id,
+        title,
+        description,
+        priority,
+        status,
+        route,
+        competitor,
+        created_at,
+        impact_score,
+        confidence_score
+      `)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('❌ Alerts query error:', error);
+      return res.status(500).json({
+        success: false,
+        error: error.message,
+        code: error.code,
+        details: error.details
+      });
+    }
+
+    console.log(`✅ Alerts query successful: ${data?.length || 0} results`);
+    
+    res.json({
+      success: true,
+      count: data?.length || 0,
+      alerts: data || [],
+      query: 'SELECT with status=active, ORDER BY created_at DESC, LIMIT 50',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Critical error in alerts debug:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      stack: error.stack
+    });
+  }
+});
