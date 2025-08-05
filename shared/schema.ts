@@ -315,49 +315,57 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 
 // Action Agents Configuration and Management
 export const actionAgentConfigs = pgTable("action_agent_configs", {
-  id: text("id").primaryKey(), // surge-detector, booking-curve, elasticity-monitor
-  name: text("name").notNull(),
-  className: text("class_name").notNull(),
-  description: text("description").notNull(),
-  status: text("status").notNull().default("active"), // active, paused, error, maintenance
-  dbTables: text("db_tables").array().notNull().default([]),
-  configParams: jsonb("config_params").default({}),
-  methods: text("methods").array().notNull().default([]),
-  schedule: jsonb("schedule").default({ frequency: 'daily', time: '02:00' }),
-  lastExecution: timestamp("last_execution"),
-  nextExecution: timestamp("next_execution"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  agent_id: text("agent_id").notNull().unique(), // surge-detector, booking-curve, elasticity-monitor
+  config_name: text("config_name").notNull(),
+  config_data: jsonb("config_data").default({}),
+  is_active: boolean("is_active").default(true),
+  name: text("name"),
+  class_name: text("class_name"),
+  description: text("description"),
+  status: text("status").default("active"), // active, paused, error, maintenance
+  db_tables: text("db_tables").array().default([]),
+  config_params: jsonb("config_params").default({}),
+  methods: text("methods").array().default([]),
+  schedule_config: jsonb("schedule_config").default({}),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 // Action Agent Execution History  
 export const actionAgentExecutions = pgTable("action_agent_executions", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  agentId: text("agent_id").notNull().references(() => actionAgentConfigs.id),
-  executionStart: timestamp("execution_start").notNull(),
-  executionEnd: timestamp("execution_end"),
-  status: text("status").notNull(), // running, completed, failed, cancelled
-  alertsGenerated: integer("alerts_generated").default(0),
-  processingTimeMs: integer("processing_time_ms"),
+  agent_id: text("agent_id").notNull(),
+  execution_status: text("execution_status").notNull(), // running, completed, failed, cancelled
+  start_time: timestamp("start_time"),
+  end_time: timestamp("end_time"),
+  result_data: jsonb("result_data").default({}),
+  error_message: text("error_message"),
+  created_at: timestamp("created_at").defaultNow(),
+  execution_start: timestamp("execution_start"),
+  execution_end: timestamp("execution_end"),
+  status: text("status"),
+  alerts_generated: integer("alerts_generated").default(0),
+  processing_time_ms: integer("processing_time_ms"),
   confidence: decimal("confidence", { precision: 5, scale: 4 }),
-  revenueImpact: decimal("revenue_impact", { precision: 12, scale: 2 }),
-  errorMessage: text("error_message"),
-  executionLogs: jsonb("execution_logs").default([]),
-  createdAt: timestamp("created_at").defaultNow(),
+  revenue_impact: decimal("revenue_impact", { precision: 12, scale: 2 }),
+  execution_logs: jsonb("execution_logs").default([]),
 });
 
 // Action Agent Metrics
 export const actionAgentMetrics = pgTable("action_agent_metrics", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  agentId: text("agent_id").notNull().references(() => actionAgentConfigs.id),
-  metricDate: date("metric_date").notNull(),
-  avgProcessingTime: integer("avg_processing_time"),
-  successRate: decimal("success_rate", { precision: 5, scale: 2 }),
-  alertsGenerated: integer("alerts_generated").default(0),
-  revenueImpact: decimal("revenue_impact", { precision: 12, scale: 2 }),
-  executionCount: integer("execution_count").default(0),
-  errorCount: integer("error_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  agent_id: text("agent_id").notNull(),
+  metric_name: text("metric_name").notNull(),
+  metric_value: decimal("metric_value"),
+  metric_date: date("metric_date").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  avg_processing_time: integer("avg_processing_time"),
+  success_rate: decimal("success_rate", { precision: 5, scale: 2 }),
+  alerts_generated: integer("alerts_generated").default(0),
+  revenue_impact: decimal("revenue_impact", { precision: 12, scale: 2 }),
+  execution_count: integer("execution_count").default(0),
+  error_count: integer("error_count").default(0),
 });
 
 // Insert schemas for action agents

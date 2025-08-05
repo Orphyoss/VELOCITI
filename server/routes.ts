@@ -1359,7 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .limit(1);
 
       if (config.length > 0) {
-        res.json(config[0].config_params || {});
+        res.json(config[0].config_data || {});
       } else {
         res.json({});
       }
@@ -1379,7 +1379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db
         .update(actionAgentConfigs)
         .set({
-          config_params: configParams,
+          config_data: configParams,
           updated_at: new Date()
         })
         .where(eq(actionAgentConfigs.agent_id, agentId));
@@ -1468,7 +1468,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .insert(actionAgentExecutions)
         .values({
           agent_id: agentId,
-          execution_start: new Date(),
           execution_status: 'running',
           start_time: new Date(),
           result_data: { alerts_generated: 0, processing_time_ms: 0, execution_logs: [] }
