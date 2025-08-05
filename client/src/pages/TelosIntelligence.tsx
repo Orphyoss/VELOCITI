@@ -494,7 +494,7 @@ export default function TelosIntelligence() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-xl sm:text-2xl font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy}%</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{rmMetrics.operationalEfficiency.demandPredictionAccuracy.toFixed(1)}%</div>
             <div className="text-xs text-muted-foreground">Demand forecasting</div>
           </CardContent>
         </Card>
