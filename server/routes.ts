@@ -2062,5 +2062,97 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
     }
   });
 
+  // Emergency data population endpoint for production
+  app.post('/debug-populate', async (req, res) => {
+    try {
+      console.log('[DEBUG-POPULATE] Starting emergency data population...');
+      
+      // Check current alert count
+      const existingAlerts = await storage.getAlerts(undefined, 1000);
+      
+      if (existingAlerts && existingAlerts.length > 0) {
+        return res.json({
+          message: 'Database already has alerts',
+          currentCount: existingAlerts.length,
+          action: 'No population needed'
+        });
+      }
+      
+      // Generate sample alerts for production
+      const sampleAlerts = [
+        {
+          id: 'alert-prod-001',
+          title: 'Ryanair Price Undercut on LGW-BCN Route',
+          description: 'Ryanair has dropped prices 15% below EasyJet on the London Gatwick to Barcelona route for next week',
+          category: 'competitive',
+          priority: 'critical',
+          status: 'active',
+          agentId: 'competitive',
+          createdAt: new Date(),
+          confidence: 0.92
+        },
+        {
+          id: 'alert-prod-002', 
+          title: 'High Load Factor Alert: LGW-AMS Route',
+          description: 'Load factor on LGW-AMS route has exceeded 90% threshold, suggesting potential for yield optimization',
+          category: 'performance',
+          priority: 'high',
+          status: 'active',
+          agentId: 'performance',
+          createdAt: new Date(),
+          confidence: 0.88
+        },
+        {
+          id: 'alert-prod-003',
+          title: 'Network Disruption: Strike Impact Analysis',
+          description: 'Scheduled strike action at CDG may create demand spillover opportunities on LGW-CDG route',
+          category: 'network',
+          priority: 'high', 
+          status: 'active',
+          agentId: 'network',
+          createdAt: new Date(),
+          confidence: 0.85
+        }
+      ];
+      
+      // Insert alerts using enhanced alert generator
+      let createdCount = 0;
+      for (const alertData of sampleAlerts) {
+        try {
+          await enhancedAlertGenerator.createAlert(
+            alertData.title,
+            alertData.description,
+            alertData.category as any,
+            alertData.priority as any,
+            alertData.agentId,
+            alertData.confidence
+          );
+          createdCount++;
+        } catch (error) {
+          console.error('[DEBUG-POPULATE] Failed to create alert:', alertData.title, error);
+        }
+      }
+      
+      console.log(`[DEBUG-POPULATE] Created ${createdCount} alerts`);
+      
+      // Verify population
+      const newAlerts = await storage.getAlerts(undefined, 10);
+      
+      res.json({
+        message: 'Emergency data population completed',
+        alertsCreated: createdCount,
+        currentCount: newAlerts?.length || 0,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('[DEBUG-POPULATE] Emergency population failed:', error);
+      res.status(500).json({
+        error: 'Emergency population failed',
+        message: error.message
+      });
+    }
+  });
+
   return httpServer;
 }
