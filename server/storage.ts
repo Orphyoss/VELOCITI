@@ -6,7 +6,7 @@ import {
   type InsertSystemMetric, type InsertActivity, type InsertFeedback
 } from '@shared/schema';
 import { db, client } from './services/supabase.js';
-import { alerts, agents, users, feedback, conversations, systemMetrics, activities, routePerformance } from '@shared/schema';
+import { alerts as alertsTable, agents as agentsTable, users, feedback, conversations, systemMetrics, activities, routePerformance } from '@shared/schema';
 import { eq, desc, gte, lte, and, sql } from 'drizzle-orm';
 
 // Temporary memory storage for development resilience
@@ -149,13 +149,13 @@ export class MemoryStorage implements IStorage {
       `Fetching ${limit} alerts from database`,
       async () => {
         try {
-          const result = await client`
-            SELECT * FROM alerts 
-            ORDER BY created_at DESC 
-            LIMIT ${limit}
-          `;
+          // Use Drizzle ORM instead of direct client for better compatibility
+          const result = await db.select()
+            .from(alertsTable)
+            .orderBy(alertsTable.created_at)
+            .limit(limit);
           
-          const alerts = result.map((alert: any) => ({
+          const alertsData = result.map((alert: any) => ({
             id: alert.id,
             type: alert.type || 'alert',
             priority: alert.priority,
@@ -184,19 +184,19 @@ export class MemoryStorage implements IStorage {
           }));
           
           logger.debug('Storage', 'getAlerts', `Successfully fetched alerts from database`, {
-            alertCount: alerts.length,
-            enhancedScenarios: alerts.filter(a => a.metadata?.scenario_generated).length,
-            priorities: alerts.reduce((acc: any, alert) => {
+            alertCount: alertsData.length,
+            enhancedScenarios: alertsData.filter(a => a.metadata?.scenario_generated).length,
+            priorities: alertsData.reduce((acc: any, alert) => {
               acc[alert.priority] = (acc[alert.priority] || 0) + 1;
               return acc;
             }, {}),
-            agents: alerts.reduce((acc: any, alert) => {
+            agents: alertsData.reduce((acc: any, alert) => {
               acc[alert.agent_id] = (acc[alert.agent_id] || 0) + 1;
               return acc;
             }, {})
           });
           
-          return alerts;
+          return alertsData;
           
         } catch (error) {
           logger.error('Storage', 'getAlerts', 'Database query failed, falling back to memory store', error, { limit });
@@ -254,7 +254,7 @@ export class MemoryStorage implements IStorage {
 
   async createAlert(alertData: InsertAlert): Promise<Alert> {
     try {
-      const result = await db.insert(alerts).values([{
+      const result = await db.insert(alertsTable).values([{
         type: alertData.type || 'alert',
         priority: alertData.priority,
         title: alertData.title,
@@ -314,12 +314,12 @@ export class MemoryStorage implements IStorage {
 
   async updateAlertStatus(id: string, status: string): Promise<void> {
     try {
-      await db.update(alerts)
+      await db.update(alertsTable)
         .set({ 
           status,
           resolved_at: status === 'resolved' ? new Date() : null
         })
-        .where(eq(alerts.id, id));
+        .where(eq(alertsTable.id, id));
     } catch (error) {
       console.error('Error updating alert status:', error);
       const alert = memoryStore.alerts.get(id);
@@ -335,7 +335,7 @@ export class MemoryStorage implements IStorage {
 
   async getAgents(): Promise<Agent[]> {
     try {
-      const result = await db.select().from(agents);
+      const result = await db.select().from(agentsTable);
       console.log(`[Storage] Successfully fetched ${result.length} agents from database`);
       if (result.length > 0) {
         return result.map(agent => ({
