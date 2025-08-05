@@ -1557,6 +1557,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const metricsRoutes = await import('./api/metrics.js');
   app.use('/api/metrics', metricsRoutes.default);
 
+  // Load and register Telos Intelligence Platform routes with complete yield optimization
+  const telosRoutes = await import('./api/telos.ts');
+  app.use('/api/telos', telosRoutes.default);
+
   // ============================================================================
   // DATA GENERATION ENDPOINTS
   // ============================================================================
