@@ -17,10 +17,19 @@ export default function NetworkOverview() {
   // Calculate top and bottom performing routes from real data
   const allRoutes = (routeData as any) || [];
   
+  // Debug: Log the raw data
+  console.log('[NetworkOverview] Raw route data:', allRoutes);
+  console.log('[NetworkOverview] Timeframe:', timeframe);
+  
   // Sort by load factor for proper ranking (highest to lowest)
-  const sortedByLoadFactor = [...allRoutes].sort((a: any, b: any) => 
-    parseFloat(b.avgLoadFactor || '0') - parseFloat(a.avgLoadFactor || '0')
-  );
+  const sortedByLoadFactor = [...allRoutes].sort((a: any, b: any) => {
+    const aLoadFactor = parseFloat(a.avgLoadFactor || '0');
+    const bLoadFactor = parseFloat(b.avgLoadFactor || '0');
+    console.log(`[NetworkOverview] Comparing ${a.routeId} (${aLoadFactor}%) vs ${b.routeId} (${bLoadFactor}%)`);
+    return bLoadFactor - aLoadFactor;
+  });
+  
+  console.log('[NetworkOverview] Sorted routes:', sortedByLoadFactor.map(r => `${r.routeId}: ${r.avgLoadFactor}%`));
   
   // Top 3 routes by load factor (best performing)
   const topRoutes = sortedByLoadFactor.slice(0, 3).map((route: any) => ({
@@ -37,6 +46,9 @@ export default function NetworkOverview() {
     performance: parseFloat(route.avgLoadFactor || '0'),
     yield: parseFloat(route.avgYield || '0')
   }));
+  
+  console.log('[NetworkOverview] Top routes:', topRoutes);
+  console.log('[NetworkOverview] Bottom routes:', bottomRoutes);
 
   const timeframes = [
     { value: '1', label: '24h' },
