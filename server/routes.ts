@@ -351,6 +351,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { priority, limit } = req.query;
       
+      // Add cache-busting headers for fresh alert data
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      
       let alerts;
       if (priority) {
         alerts = await storage.getAlertsByPriority(priority as string);

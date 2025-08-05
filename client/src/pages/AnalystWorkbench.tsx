@@ -25,10 +25,11 @@ export default function AnalystWorkbench() {
   }, [setCurrentModule]);
 
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['/api/alerts', 100],
+    queryKey: ['/api/alerts', 100, Date.now()],
     queryFn: () => api.getAlerts(undefined, 100),
-    refetchInterval: 15000,
+    refetchInterval: 5000,
     staleTime: 0,
+    cacheTime: 0,
   });
 
   const { data: criticalAlerts } = useQuery({
