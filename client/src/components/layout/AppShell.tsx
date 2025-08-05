@@ -16,11 +16,19 @@ export default function AppShell({ children, title, hidePageTitle }: AppShellPro
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Initialize WebSocket connection
-    wsService.connect();
+    // Initialize WebSocket connection (non-blocking)
+    try {
+      wsService.connect();
+    } catch (error) {
+      console.warn('[AppShell] WebSocket initialization failed (non-blocking):', error);
+    }
 
     return () => {
-      wsService.disconnect();
+      try {
+        wsService.disconnect();
+      } catch (error) {
+        console.warn('[AppShell] WebSocket disconnect failed (non-blocking):', error);
+      }
     };
   }, [setConnectionStatus]);
 

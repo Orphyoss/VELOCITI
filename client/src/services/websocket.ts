@@ -7,29 +7,32 @@ class WebSocketService {
   private reconnectDelay = 1000;
 
   connect() {
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    // Robust fallback for host and port
-    let host = window.location.host;
-    
-    // Handle undefined or empty host
-    if (!host || host === 'undefined' || host.includes('undefined')) {
-      host = 'localhost:5000'; // Use port 5000 to match server
-    }
-    
-    const wsUrl = `${protocol}//${host}/ws`;
-    
-    console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
-    console.log(`[WebSocket] Debug info - protocol: ${protocol}, host: ${host}, full URL: ${wsUrl}`);
-    
+    // Graceful connection handling - don't block UI if WebSocket fails
     try {
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      // Robust fallback for host and port
+      let host = window.location.host;
+      
+      // Handle undefined or empty host
+      if (!host || host === 'undefined' || host.includes('undefined')) {
+        console.warn('[WebSocket] Invalid host detected, skipping WebSocket connection');
+        return; // Don't attempt connection with invalid host
+      }
+      
+      const wsUrl = `${protocol}//${host}/ws`;
+      
+      console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
+      
       // Add additional error checking for WebSocket construction
       if (!window.WebSocket) {
-        throw new Error('WebSocket not supported by browser');
+        console.warn('[WebSocket] WebSocket not supported by browser');
+        return;
       }
       
       // Validate URL before creating WebSocket
       if (wsUrl.includes('undefined')) {
-        throw new Error(`Invalid WebSocket URL contains undefined: ${wsUrl}`);
+        console.warn(`[WebSocket] Invalid WebSocket URL contains undefined: ${wsUrl}`);
+        return;
       }
       
       this.ws = new WebSocket(wsUrl);
@@ -61,18 +64,19 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error(`[WebSocket] Connection error to ${wsUrl}:`, error);
+        console.warn(`[WebSocket] Connection error (non-blocking):`, error);
         useVelocitiStore.getState().setConnectionStatus(false);
         
-        // Prevent unhandled promise rejection
+        // Prevent unhandled promise rejection - handle gracefully
         if (error instanceof Event && error.type === 'error') {
-          console.log('[WebSocket] Handled WebSocket error event');
+          console.log('[WebSocket] Handled WebSocket error event gracefully');
         }
       };
 
     } catch (error) {
-      console.error('Failed to connect to WebSocket:', error);
-      this.attemptReconnect();
+      console.warn('[WebSocket] Failed to connect (non-blocking):', error);
+      // Don't attempt reconnect immediately on failed construction
+      useVelocitiStore.getState().setConnectionStatus(false);
     }
   }
 
@@ -110,10 +114,10 @@ class WebSocketService {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[WebSocket] Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+      console.log(`[WebSocket] Attempting to reconnect (non-blocking)... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
-      // Exponential backoff with max delay of 10 seconds
-      const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 10000);
+      // Exponential backoff with max delay of 30 seconds
+      const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
       
       setTimeout(() => {
         try {
@@ -121,8 +125,8 @@ class WebSocketService {
             this.connect();
           }
         } catch (error) {
-          console.error('[WebSocket] Reconnection attempt failed:', error);
-          // Continue trying with next attempt if within limits
+          console.warn('[WebSocket] Reconnection attempt failed (non-blocking):', error);
+          // Continue gracefully - don't crash the app
           if (this.reconnectAttempts < this.maxReconnectAttempts) {
             this.attemptReconnect();
           }
