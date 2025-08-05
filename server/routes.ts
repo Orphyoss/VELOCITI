@@ -26,6 +26,7 @@ import { TelosIntelligenceService } from "./services/telos-intelligence.js";
 import { logger, logAPI } from "./services/logger.js";
 import { duplicatePreventionService } from "./services/duplicatePreventionService.js";
 import { db } from "./services/supabase.js";
+import { alertScheduler } from "./services/alertScheduler.js";
 import OpenAI from 'openai';
 
 // Function to calculate real dashboard metrics from actual data
@@ -1011,16 +1012,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Background agent execution (simulate overnight processing)
+  // Manual alert generation endpoint
+  app.post('/api/alerts/generate', async (req: Request, res: Response) => {
+    try {
+      logAPI('POST', '/api/alerts/generate', req.body);
+      
+      // Trigger immediate alert generation
+      await alertScheduler.triggerManualRun();
+      
+      // Get fresh alerts to show user
+      const newAlerts = await storage.getAlerts(20);
+      const recentAlerts = newAlerts.filter(alert => {
+        const alertTime = new Date(alert.createdAt);
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        return alertTime > fiveMinutesAgo;
+      });
+      
+      res.json({
+        success: true,
+        message: 'Alert generation completed',
+        newAlerts: recentAlerts.length,
+        schedulerStatus: alertScheduler.getStatus()
+      });
+      
+    } catch (error) {
+      console.error('Manual alert generation failed:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  });
+
+  // Start the alert scheduler for regular alert generation
+  console.log('[AlertScheduler] Initializing alert generation scheduler...');
+  alertScheduler.start();
+  
+  // Background agent execution (simulate overnight processing) - reduced frequency  
   setInterval(async () => {
     try {
-      await agentService.runCompetitiveAgent();
-      await agentService.runPerformanceAgent();
-      await agentService.runNetworkAgent();
+      // Only run occasionally to supplement the main scheduler
+      if (Math.random() > 0.7) { // 30% chance every 15 minutes = ~2 runs per hour
+        await agentService.runCompetitiveAgent();
+      }
     } catch (error) {
       console.error('Background agent execution error:', error);
     }
-  }, 5 * 60 * 1000); // Run every 5 minutes for demo
+  }, 15 * 60 * 1000); // Run every 15 minutes but with low probability
 
   // Configure multer for file uploads
   const upload = multer({
