@@ -195,7 +195,7 @@ export class DatabaseDataGenerator {
   }
 
   private async generateFlightPerformance(date: Date, scenario: string): Promise<number> {
-    const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'STN-BCN'];
+    const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'STN-BCN', 'STN-MAD', 'LTN-FCO', 'STN-DUB'];
     let recordsGenerated = 0;
     
     for (const route of routes) {
