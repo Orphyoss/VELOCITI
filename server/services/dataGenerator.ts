@@ -158,12 +158,15 @@ export class DatabaseDataGenerator {
         const avgPrice = Math.random() * 200 + 80;
         
         try {
-          // Use ACTUAL database schema that worked in job-001 
+          // Use actual database schema for web_search_data
           await db.execute(sql`
             INSERT INTO web_search_data (
-              search_date, route, volume
+              search_date, search_query, data_source, raw_data, processed_data, relevance_score
             ) VALUES (
-              ${date.toISOString().split('T')[0]}, ${route}, ${searchVolume}
+              ${date.toISOString().split('T')[0]}, ${'flights to ' + route.split('-')[1]}, 'google_trends', 
+              ${'{"volume":' + searchVolume + ',"bookings":' + bookingVolume + '}'}, 
+              ${'{"conversion_rate":' + conversionRate + ',"avg_price":' + avgPrice + '}'}, 
+              ${Math.round(Math.random() * 100) / 100}
             )
           `);
           recordsGenerated++;
@@ -214,13 +217,12 @@ export class DatabaseDataGenerator {
         const onTimePerfPercent = Math.round(onTimePerf * 100 * 100) / 100;
         
         try {
-          // Use minimal columns that definitely exist
-          // Use ACTUAL database schema that worked in job-001 (no insert_date field!)
+          // Use actual database schema - no insert_date column exists
           await db.execute(sql`
             INSERT INTO flight_performance (
-              flight_date, route, load_factor
+              flight_date, route_id, flight_number, load_factor, total_seats, passengers_boarded, revenue_generated
             ) VALUES (
-              ${date.toISOString().split('T')[0]}, ${route}, ${loadFactor}
+              ${date.toISOString().split('T')[0]}, ${route}, ${'EZY' + (1000 + i)}, ${loadFactor}, ${180}, ${Math.floor(180 * loadFactor / 100)}, ${Math.floor(loadFactor * 250)}
             ) ON CONFLICT DO NOTHING
           `);
           recordsGenerated++;
