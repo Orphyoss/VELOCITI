@@ -7,7 +7,7 @@ import AgentStatus from '../agents/AgentStatus';
 export default function Sidebar() {
   const [location] = useLocation();
   const { currentModule, setCurrentModule } = useVelocitiStore();
-  const [isAdminExpanded, setIsAdminExpanded] = useState(false);
+  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
 
   const mainNavigationItems = [
     {
