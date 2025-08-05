@@ -204,23 +204,6 @@ export default function AnalystWorkbench() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-4">
-            {/* Real-Time Debug Info */}
-            <div className="text-xs text-gray-400 mb-4 p-3 bg-slate-900 rounded border">
-              <div className="font-medium text-green-400 mb-1">LIVE DEBUG STATUS:</div>
-              <div>Loading: {isLoading ? '🔄 TRUE' : '✅ FALSE'} | API Error: {error ? '❌ YES' : '✅ NO'}</div>
-              <div>Total Alerts: {allAlerts?.length || 0} | After Filters: {displayAlerts?.length || 0}</div>
-              <div>Filter Status: {statusFilter} | Priority: {priorityFilter} | Category: {categoryFilter}</div>
-              {allAlerts && allAlerts.length > 0 && (
-                <div className="mt-2 p-2 bg-slate-800 rounded">
-                  <div className="text-blue-400">First Alert Sample:</div>
-                  <div>ID: {allAlerts[0].id?.slice(0,12)}...</div>
-                  <div>Status: {allAlerts[0].status} | Priority: {allAlerts[0].priority}</div>
-                  <div>Title: {allAlerts[0].title?.slice(0,40)}...</div>
-                  <div>Created: {allAlerts[0].created_at || allAlerts[0].createdAt || 'NO DATE'}</div>
-                </div>
-              )}
-            </div>
-            
             {isLoading ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {[1, 2, 3, 4].map(i => (
