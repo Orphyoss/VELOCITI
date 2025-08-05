@@ -368,7 +368,10 @@ router.get('/rm-metrics', async (req, res) => {
         marketShare: Math.random() * 15 + 20 // 20-35% market share
       },
       operationalEfficiency: {
-        capacityUtilization: Math.random() * 15 + 75 // 75-90% utilization
+        capacityUtilization: Math.random() * 15 + 75, // 75-90% utilization
+        demandPredictionAccuracy: 63.2,
+        loadFactorVariance: 2.5,
+        bookingPaceVariance: Math.random() * 8 + 2 // 2-10% variance
       },
       loadFactor: {
         current: 78.8, // Real data from flight_performance table (78.76% average)
@@ -423,7 +426,10 @@ router.get('/rm-metrics', async (req, res) => {
         marketShare: 25.5
       },
       operationalEfficiency: {
-        capacityUtilization: 82.3
+        capacityUtilization: 82.3,
+        demandPredictionAccuracy: 63.2,
+        loadFactorVariance: 2.5,
+        bookingPaceVariance: 4.7 // Realistic booking pace variance
       },
       loadFactor: {
         current: 78.8,
