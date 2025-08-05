@@ -916,15 +916,9 @@ AND route_id = ANY($1);`}
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Status indicator only */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Telos Action Agent Management</h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Enterprise-grade AI agent control panel for EasyJet revenue optimization
-            </p>
-          </div>
+        <div className="flex items-center justify-end">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
             <span className="text-sm text-gray-600 dark:text-gray-400">System Active</span>

@@ -72,7 +72,7 @@ export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProp
       case 'agents': return 'AI Agents';
       case 'genie': return 'Databricks Genie';
       case 'strategic': return 'Strategic Analysis';
-      case 'admin': return 'Admin Dashboard';
+      case 'admin': return 'AI Agent Management';
       default: return 'Dashboard';
     }
   };
