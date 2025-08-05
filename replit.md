@@ -7,15 +7,16 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **RESOLVED**: Fixed stale alert issue - alerts now show fresh timestamps instead of 8-hour-old data
+- **RESOLVED**: Fixed database query ordering to display newest alerts first (DESC order)
 - **RESOLVED**: Fixed critical Analyst Workbench infinite loop issue caused by multiple components calling alerts API simultaneously
-- Optimized React Query configurations across TodaysPriorities and AgentFeedbackTab components to prevent aggressive refetching
-- Implemented proper caching strategies with 5-minute stale time and disabled automatic refetching intervals
-- Removed "Action Agents Status" sidebar link as it was not providing meaningful functionality
-- Fixed API caching issues for alert generation system
-- Alert generation system confirmed working correctly at database level
-- Cleaned up Admin interface by removing non-functional "Action Agents Status" sidebar link and route
-- Simplified Admin page UI by removing tab buttons ("Action Agents Status" and "AI Agents") and "Admin Dashboard" title
-- Updated global header navigation from "Admin Dashboard" to "AI Agent Management" and removed "Telos Action Agent Management" page header
+- Implemented AlertScheduler service running every 45 minutes for continuous fresh alert generation
+- Added alert limit selector (50-1.5K alerts) allowing users to view more than default 100 alerts
+- Alert generation system now creating diverse realistic scenarios: competitive, performance, network, demand, and operational alerts
+- Database contains 1500+ alerts with automated generation of fresh content every 45 minutes
+- Optimized React Query configurations to prevent aggressive refetching while maintaining fresh data
+- System generates alerts like "Demand Surge - STN→AMS" and "Viral Demand Surge on LGW-Malaga Route"
+- Manual alert generation API endpoint available for immediate fresh alerts
 
 ## System Architecture
 
