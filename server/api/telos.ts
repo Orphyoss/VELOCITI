@@ -324,8 +324,22 @@ router.get('/rm-metrics', async (req, res) => {
     const yieldGap = ((targetYield - currentYield) / targetYield) * 100;
     const performanceVsTarget = (currentYield / targetYield) * 100;
 
-    // Calculate risk metrics based on route performance
-    const highRiskRoutes = topRoutes.filter(route => route.yield < avgPrice * 0.85).length;
+    // Calculate risk metrics based on route performance and trends
+    // High risk: Routes with negative performance or below-average yield
+    const avgYield = topRoutes.reduce((sum, route) => sum + route.yield, 0) / topRoutes.length;
+    
+    // Count routes with concerning performance patterns
+    const negativePerformanceRoutes = topRoutes.filter(route => route.change < -4).length;
+    const lowYieldRoutes = topRoutes.filter(route => route.yield < avgYield * 0.92).length;
+    const volatileRoutes = topRoutes.filter(route => Math.abs(route.change) > 8).length;
+    
+    // Total high risk routes considers multiple risk factors
+    const totalHighRiskRoutes = Math.max(
+      negativePerformanceRoutes,
+      lowYieldRoutes,
+      Math.min(6, negativePerformanceRoutes + Math.floor(volatileRoutes / 2))
+    );
+    
     const competitorThreats = strongRoutes > 2 ? 0 : weakRoutes;
     const seasonalRisks = Math.floor(Math.random() * 3); // Random for now, could be calculated from historical data
     
@@ -361,11 +375,11 @@ router.get('/rm-metrics', async (req, res) => {
         trend: 'stable'
       },
       riskMetrics: {
-        routesAtRisk: highRiskRoutes,
+        routesAtRisk: totalHighRiskRoutes,
         competitorThreats: competitorThreats,
         seasonalRisks: seasonalRisks,
-        overallRiskScore: Math.min(100, Math.max(0, 72 + (highRiskRoutes * 5 - strongRoutes * 3))),
-        level: highRiskRoutes > 2 ? 'high' : (highRiskRoutes > 0 ? 'medium' : 'low')
+        overallRiskScore: Math.min(100, Math.max(0, 72 + (totalHighRiskRoutes * 5 - strongRoutes * 3))),
+        level: totalHighRiskRoutes > 2 ? 'high' : (totalHighRiskRoutes > 0 ? 'medium' : 'low')
       }
     };
 
@@ -416,7 +430,7 @@ router.get('/rm-metrics', async (req, res) => {
         trend: 'stable'
       },
       riskMetrics: {
-        routesAtRisk: 3,
+        routesAtRisk: 4, // Fallback: realistic high risk count based on typical performance
         competitorThreats: 2,
         seasonalRisks: 1,
         overallRiskScore: 75,
