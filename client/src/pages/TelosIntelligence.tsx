@@ -253,19 +253,20 @@ export default function TelosIntelligence() {
     enabled: true,
   });
 
-  // Fetch route performance data with logging
+  // Fetch route performance data with timeframe support and logging
   const { data: performance, isLoading: performanceLoading } = useQuery({
-    queryKey: ['/api/routes/performance'],
+    queryKey: ['/api/routes/performance', networkTimeframe],
     queryFn: async () => {
-      console.log('[TelosIntelligence] Fetching route performance data');
+      console.log(`[TelosIntelligence] Fetching route performance data for timeframe: ${networkTimeframe}d`);
       try {
-        const response = await fetch('/api/routes/performance');
+        const response = await fetch(`/api/routes/performance?days=${networkTimeframe}`);
         console.log(`[TelosIntelligence] Route performance response status: ${response.status}`);
         const data = await response.json();
         console.log('[TelosIntelligence] Route performance data received:', {
           hasData: !!data,
           isArray: Array.isArray(data),
           count: Array.isArray(data) ? data.length : 0,
+          timeframe: `${networkTimeframe}d`,
           firstRoute: Array.isArray(data) && data.length > 0 ? data[0]?.routeId : null
         });
         return data;
@@ -564,19 +565,30 @@ export default function TelosIntelligence() {
                   Top Performing Routes
                 </h5>
                 <div className="space-y-1.5">
-                  {(performance as any)?.slice(0, 3).map((route: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-dark-50 text-sm">{route.routeId}</span>
+                  {(() => {
+                    // Sort routes by load factor (highest to lowest) for top performers
+                    const sortedRoutes = Array.isArray(performance) 
+                      ? [...performance].sort((a, b) => (b.avgLoadFactor || 0) - (a.avgLoadFactor || 0))
+                      : [];
+                    
+                    console.log('[TelosIntelligence] Top routes sorted by load factor:', 
+                      sortedRoutes.slice(0, 3).map(r => `${r.routeId}: ${r.avgLoadFactor}%`)
+                    );
+                    
+                    return sortedRoutes.slice(0, 3).map((route: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-dark-50 text-sm">{route.routeId}</span>
+                        </div>
+                        <div className="text-right ml-2 flex items-center gap-2">
+                          <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs px-1.5 py-0.5">
+                            {Math.round(route.avgLoadFactor)}%
+                          </Badge>
+                          <span className="text-xs text-dark-400">£{Math.round(route.avgYield)}</span>
+                        </div>
                       </div>
-                      <div className="text-right ml-2 flex items-center gap-2">
-                        <Badge variant="outline" className="text-green-500 border-green-500/40 bg-green-500/10 text-xs px-1.5 py-0.5">
-                          {Math.round(route.avgLoadFactor)}%
-                        </Badge>
-                        <span className="text-xs text-dark-400">£{Math.round(route.avgYield)}</span>
-                      </div>
-                    </div>
-                  )) || [1, 2, 3].map((i) => (
+                    ));
+                  })() || [1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between bg-dark-800 rounded-lg p-2">
                       <div className="flex-1 min-w-0">
                         <span className="font-medium text-dark-50 text-sm">Loading...</span>
@@ -597,19 +609,30 @@ export default function TelosIntelligence() {
                   Routes Needing Attention
                 </h5>
                 <div className="space-y-1.5">
-                  {(performance as any)?.slice(-3).reverse().map((route: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-dark-50 text-sm">{route.routeId}</span>
+                  {(() => {
+                    // Sort routes by load factor (lowest to highest) for needing attention
+                    const sortedRoutes = Array.isArray(performance) 
+                      ? [...performance].sort((a, b) => (a.avgLoadFactor || 0) - (b.avgLoadFactor || 0))
+                      : [];
+                    
+                    console.log('[TelosIntelligence] Bottom routes sorted by load factor:', 
+                      sortedRoutes.slice(0, 3).map(r => `${r.routeId}: ${r.avgLoadFactor}%`)
+                    );
+                    
+                    return sortedRoutes.slice(0, 3).map((route: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-dark-50 text-sm">{route.routeId}</span>
+                        </div>
+                        <div className="text-right ml-2 flex items-center gap-2">
+                          <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs px-1.5 py-0.5">
+                            {Math.round(route.avgLoadFactor)}%
+                          </Badge>  
+                          <span className="text-xs text-dark-400">£{Math.round(route.avgYield)}</span>
+                        </div>
                       </div>
-                      <div className="text-right ml-2 flex items-center gap-2">
-                        <Badge variant="outline" className="text-red-500 border-red-500/40 bg-red-500/10 text-xs px-1.5 py-0.5">
-                          {Math.round(route.avgLoadFactor)}%
-                        </Badge>  
-                        <span className="text-xs text-dark-400">£{Math.round(route.avgYield)}</span>
-                      </div>
-                    </div>
-                  )) || [1, 2, 3].map((i) => (
+                    ));
+                  })() || [1, 2, 3].map((i) => (
                     <div key={i} className="flex items-center justify-between bg-dark-800 rounded-lg p-2">
                       <div className="flex-1 min-w-0">
                         <span className="font-medium text-dark-50 text-sm">Loading...</span>
