@@ -12,7 +12,7 @@ export default function Sidebar() {
   const mainNavigationItems = [
     {
       id: 'dashboard',
-      label: 'Velociti Intelligence Platform',
+      label: 'Velociti Intelligence',
       icon: ChartLine,
       path: '/'
     },
