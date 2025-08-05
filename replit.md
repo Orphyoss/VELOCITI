@@ -7,6 +7,9 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **RESOLVED**: Fixed critical Analyst Workbench infinite loop issue caused by multiple components calling alerts API simultaneously
+- Optimized React Query configurations across TodaysPriorities and AgentFeedbackTab components to prevent aggressive refetching
+- Implemented proper caching strategies with 5-minute stale time and disabled automatic refetching intervals
 - Removed "Action Agents Status" sidebar link as it was not providing meaningful functionality
 - Fixed API caching issues for alert generation system
 - Alert generation system confirmed working correctly at database level
