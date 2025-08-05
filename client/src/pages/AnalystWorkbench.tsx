@@ -24,17 +24,15 @@ export default function AnalystWorkbench() {
     setCurrentModule('workbench');
   }, [setCurrentModule]);
 
-  // Temporarily disable automatic queries to stop the infinite loop
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['workbench-alerts'],
+    queryKey: ['workbench-alerts', 100],
     queryFn: () => api.getAlerts(undefined, 100),
-    staleTime: Infinity, // Never consider stale
-    gcTime: Infinity, // Never garbage collect
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-    enabled: false, // Disable automatic fetching completely
-    retry: 0,
+    refetchOnMount: true,
+    refetchInterval: false, // No automatic refetching
+    retry: 1,
   });
 
   // Temporarily disable these additional queries to reduce load
