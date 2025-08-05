@@ -184,18 +184,15 @@ export const flightPerformance = pgTable("flight_performance", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Web Search Data (existing table)
+// Web Search Data (existing table - matches actual production schema)
 export const webSearchData = pgTable("web_search_data", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
-  insertDate: timestamp("insert_date").notNull(),
   searchDate: date("search_date").notNull(),
-  routeId: varchar("route_id"),
-  dataSource: varchar("data_source"),
-  searchVolume: integer("search_volume"),
-  bookingVolume: integer("booking_volume"),
-  conversionRate: decimal("conversion_rate", { precision: 5, scale: 4 }),
-  avgSearchPrice: decimal("avg_search_price", { precision: 10, scale: 2 }),
-  priceCurrency: varchar("price_currency"),
+  searchQuery: text("search_query").notNull(),
+  dataSource: varchar("data_source", { length: 100 }).notNull(),
+  rawData: jsonb("raw_data"),
+  processedData: jsonb("processed_data"),
+  relevanceScore: decimal("relevance_score", { precision: 3, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
