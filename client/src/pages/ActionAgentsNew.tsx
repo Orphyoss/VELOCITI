@@ -334,7 +334,7 @@ export default function ActionAgentsNew({ selectedAgentId }: ActionAgentsNewProp
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {metrics?.success_rate ? `${metrics.success_rate.toFixed(1)}%` : '--'}
+                    {metrics?.success_rate ? `${parseFloat(metrics.success_rate.toString()).toFixed(1)}%` : '--'}
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
@@ -362,7 +362,7 @@ export default function ActionAgentsNew({ selectedAgentId }: ActionAgentsNewProp
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Revenue Impact</p>
                   <p className="text-xl font-bold text-green-600">
-                    {metrics?.revenue_impact ? `€${metrics.revenue_impact.toLocaleString()}` : '--'}
+                    {metrics?.revenue_impact ? `€${parseFloat(metrics.revenue_impact.toString()).toLocaleString()}` : '--'}
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-green-600" />
