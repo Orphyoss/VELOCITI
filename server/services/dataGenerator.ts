@@ -161,11 +161,9 @@ export class DatabaseDataGenerator {
           // Use ACTUAL database schema that worked in job-001 
           await db.execute(sql`
             INSERT INTO web_search_data (
-              search_date, route, search_volume, booking_volume,
-              conversion_rate, avg_search_price, price_currency
+              search_date, route, volume
             ) VALUES (
-              ${date.toISOString().split('T')[0]}, ${route}, ${searchVolume}, ${bookingVolume},
-              ${conversionRate}, ${avgPrice}, 'GBP'
+              ${date.toISOString().split('T')[0]}, ${route}, ${searchVolume}
             )
           `);
           recordsGenerated++;
@@ -220,11 +218,9 @@ export class DatabaseDataGenerator {
           // Use ACTUAL database schema that worked in job-001 (no insert_date field!)
           await db.execute(sql`
             INSERT INTO flight_performance (
-              flight_date, route, flight_number, load_factor,
-              delay_minutes, flights_operated, cancellation_rate
+              flight_date, route, load_factor
             ) VALUES (
-              ${date.toISOString().split('T')[0]}, ${route}, ${'EZY' + (1000 + i)}, ${loadFactor},
-              ${delayMinutes}, ${flightsOperated}, ${cancellationRate}
+              ${date.toISOString().split('T')[0]}, ${route}, ${loadFactor}
             ) ON CONFLICT DO NOTHING
           `);
           recordsGenerated++;
