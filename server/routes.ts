@@ -1861,73 +1861,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Execute data generation (attempt to run Python script or simulate)
+  // Execute ACTUAL data generation using TypeScript (replaces broken Python script)
   async function executeDataGeneration(date: string, scenario: string) {
     try {
-      // Try to execute the Python script first
-      const { spawn } = await import('child_process');
-      const pythonPath = process.env.PYTHON_PATH || 'python3';
+      console.log(`[DataGeneration] Executing REAL data generation for ${date} with scenario: ${scenario}`);
       
-      return new Promise((resolve, reject) => {
-        const pythonProcess = spawn(pythonPath, [
-          'daily_data_generator.py',
-          '--date', date,
-          '--scenario', scenario
-        ]);
-        
-        let output = '';
-        let errorOutput = '';
-        
-        pythonProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-        
-        pythonProcess.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-        });
-        
-        pythonProcess.on('close', (code) => {
-          if (code === 0) {
-            // Parse Python script output for record counts
-            try {
-              const lines = output.split('\n');
-              const recordLine = lines.find(line => line.includes('Records generated:'));
-              if (recordLine) {
-                const counts = JSON.parse(recordLine.split('Records generated:')[1].trim());
-                resolve(counts);
-              } else {
-                resolve(simulateDataGeneration(date, scenario));
-              }
-            } catch (error) {
-              resolve(simulateDataGeneration(date, scenario));
-            }
-          } else {
-            console.log(`[DataGeneration] Python script failed, falling back to simulation: ${errorOutput}`);
-            resolve(simulateDataGeneration(date, scenario));
-          }
-        });
-        
-        pythonProcess.on('error', (error) => {
-          console.log(`[DataGeneration] Python spawn error, falling back to simulation: ${error.message}`);
-          resolve(simulateDataGeneration(date, scenario));
-        });
-        
-        // Timeout after 30 seconds
-        setTimeout(() => {
-          pythonProcess.kill();
-          resolve(simulateDataGeneration(date, scenario));
-        }, 30000);
-      });
+      const { dataGenerator } = await import('./services/dataGenerator.js');
       
-    } catch (error) {
-      console.log(`[DataGeneration] Failed to run Python script, using simulation: ${error.message}`);
+      // Generate and insert actual data into the database
+      const recordCounts = await dataGenerator.generateData({ date, scenario });
+      
+      console.log(`[DataGeneration] Successfully generated and inserted ${Object.values(recordCounts).reduce((sum, count) => sum + count, 0)} real records`);
+      
+      return recordCounts;
+      
+    } catch (error: any) {
+      console.error(`[DataGeneration] Real data generation failed: ${error.message}`);
+      // Only fall back to simulation if there's a serious error
       return simulateDataGeneration(date, scenario);
     }
   }
 
-  // Helper function to simulate data generation
+  // Helper function to simulate data generation (fallback only)
   async function simulateDataGeneration(date: string, scenario: string) {
-    console.log(`[DataGeneration] Simulating data generation for ${date} with scenario: ${scenario}`);
+    console.log(`[DataGeneration] FALLBACK: Simulating data generation for ${date} with scenario: ${scenario}`);
+    console.log(`[DataGeneration] WARNING: This is not inserting real data into the database`);
     
     // Simulate realistic record counts based on scenario type
     const baseRecords = {
