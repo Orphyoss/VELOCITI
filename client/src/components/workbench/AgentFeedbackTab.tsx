@@ -35,7 +35,10 @@ export default function AgentFeedbackTab({ alerts }: AgentFeedbackTabProps) {
   const { data: agents, isLoading: agentsLoading } = useQuery({
     queryKey: ['/api/agents'],
     queryFn: () => api.getAgents(),
-    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
   // Filter alerts for feedback

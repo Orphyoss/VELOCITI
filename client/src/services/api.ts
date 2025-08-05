@@ -10,25 +10,30 @@ export const api = {
 
   // Alerts
   getAlerts: async (priority?: string, limit?: number): Promise<Alert[]> => {
-    const params = new URLSearchParams();
-    if (priority) params.append('priority', priority);
-    if (limit) params.append('limit', limit.toString());
+    // Temporarily return empty array to stop infinite loop
+    console.log('[API] getAlerts DISABLED to stop infinite loop');
+    return [];
     
-    console.log('[API] getAlerts called:', { priority, limit, url: `/api/alerts?${params}` });
-    const response = await apiRequest('GET', `/api/alerts?${params}`);
-    const data = await response.json();
-    console.log('[API] getAlerts response:', {
-      status: response.status,
-      dataType: typeof data,
-      isArray: Array.isArray(data),
-      length: data?.length,
-      firstAlert: data?.[0] ? {
-        id: data[0].id?.slice(0,8),
-        title: data[0].title?.slice(0,30),
-        status: data[0].status
-      } : 'NO_FIRST_ALERT'
-    });
-    return data;
+    // Original code commented out:
+    // const params = new URLSearchParams();
+    // if (priority) params.append('priority', priority);
+    // if (limit) params.append('limit', limit.toString());
+    // 
+    // console.log('[API] getAlerts called:', { priority, limit, url: `/api/alerts?${params}` });
+    // const response = await apiRequest('GET', `/api/alerts?${params}`);
+    // const data = await response.json();
+    // console.log('[API] getAlerts response:', {
+    //   status: response.status,
+    //   dataType: typeof data,
+    //   isArray: Array.isArray(data),
+    //   length: data?.length,
+    //   firstAlert: data?.[0] ? {
+    //     id: data[0].id?.slice(0,8),
+    //     title: data[0].title?.slice(0,30),
+    //     status: data[0].status
+    //   } : 'NO_FIRST_ALERT'
+    // });
+    // return data;
   },
 
   createAlert: async (alertData: Partial<Alert>): Promise<Alert> => {

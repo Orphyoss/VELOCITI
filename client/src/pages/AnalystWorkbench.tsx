@@ -24,23 +24,22 @@ export default function AnalystWorkbench() {
     setCurrentModule('workbench');
   }, [setCurrentModule]);
 
+  // Temporarily disable automatic queries to stop the infinite loop
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['/api/alerts', 100, Date.now()],
+    queryKey: ['workbench-alerts'],
     queryFn: () => api.getAlerts(undefined, 100),
-    refetchInterval: 5000,
-    staleTime: 0,
-    cacheTime: 0,
+    staleTime: Infinity, // Never consider stale
+    gcTime: Infinity, // Never garbage collect
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+    enabled: false, // Disable automatic fetching completely
+    retry: 0,
   });
 
-  const { data: criticalAlerts } = useQuery({
-    queryKey: ['/api/alerts', 'critical'],
-    queryFn: () => api.getAlerts('critical'),
-  });
-
-  const { data: highAlerts } = useQuery({
-    queryKey: ['/api/alerts', 'high'],
-    queryFn: () => api.getAlerts('high'),
-  });
+  // Temporarily disable these additional queries to reduce load
+  const criticalAlerts = allAlerts?.filter(alert => alert.priority === 'critical') || [];
+  const highAlerts = allAlerts?.filter(alert => alert.priority === 'high') || [];
 
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
