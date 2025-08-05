@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **LLM Integration**: Primarily uses Writer AI (Palmyra X5) for strategic analysis, with OpenAI GPT-4o serving as a secondary provider for data queries and as a fallback. The system supports user-configurable LLM selection and includes continuous API health monitoring with failover mechanisms.
 - **User Interface Modules**: Comprises a Dashboard for executive summaries, an Analyst Workbench for alert management, an AI Agents interface for configuration, a Databricks Genie for data interrogation, Strategic Analysis for long-form insights, and a Data Generation module for populating test data.
 - **Data Flow**: AI agents process data, generate alerts stored in PostgreSQL, and broadcast these alerts via WebSockets, ensuring real-time updates to connected clients.
+- **Network Performance Section**: Implemented directly within TelosIntelligence.tsx with proper load factor sorting and timeframe selection (24h/7d/30d). Previously unused NetworkOverview component has been archived to prevent confusion.
 
 ### System Design Choices
 - **Data Storage**: PostgreSQL with standardized database configuration using DEV_SUP_DATABASE_URL for both development and production environments.
