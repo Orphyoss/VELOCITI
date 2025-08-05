@@ -1,4 +1,6 @@
 import { db } from '../services/supabase.js';
+import * as schema from '../../shared/schema.js';
+import { sql } from 'drizzle-orm';
 import { logger } from './logger.js';
 
 export interface DataGenerationResult {
@@ -86,14 +88,16 @@ export class DatabaseDataGenerator {
           const departureDate = new Date(date.getTime() + Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
           
           try {
-            await db.execute(`
+            // Fix: Add required non-null fields that may be missing
+            await db.execute(sql`
               INSERT INTO competitive_pricing (
-                observation_date, route_id, airline_code, 
+                insert_date, observation_date, route_id, airline_code, 
                 flight_date, price_amount, price_currency, booking_class
               ) VALUES (
-                $1::date, $2, $3, $4::date, $5, $6, $7
+                ${new Date()}, ${date.toISOString().split('T')[0]}, ${route}, ${airline}, 
+                ${departureDate.toISOString().split('T')[0]}, ${finalPrice}, 'GBP', 'Y'
               )
-            `, [date.toISOString().split('T')[0], route, airline, departureDate.toISOString().split('T')[0], finalPrice, 'GBP', 'Y']);
+            `);
             recordsGenerated++;
             this.logger.info('DataGenerator', 'insert_success', `Inserted competitive pricing for ${route}-${airline}: £${finalPrice}`);
           } catch (error: any) {
@@ -118,18 +122,16 @@ export class DatabaseDataGenerator {
       const competitiveIndex = Math.round((0.7 + Math.random() * 0.6) * 100) / 100;
       
       try {
-        await db.execute(`
+        // Use direct SQL for market capacity - table structure may differ
+        await db.execute(sql`
           INSERT INTO market_capacity (
-            route_id, analysis_date, total_seats, easyjet_seats, 
-            market_share_pct, competitive_index
+            insert_date, flight_date, route_id, airline_code, 
+            num_flights, num_seats, data_source
           ) VALUES (
-            $1, $2::date, $3, $4, $5, $6
-          ) ON CONFLICT (route_id, analysis_date) DO UPDATE SET
-            total_seats = EXCLUDED.total_seats,
-            easyjet_seats = EXCLUDED.easyjet_seats,
-            market_share_pct = EXCLUDED.market_share_pct,
-            competitive_index = EXCLUDED.competitive_index
-        `, [route, date.toISOString().split('T')[0], baseCapacity, easyjetSeats, marketSharePct, competitiveIndex]);
+            ${new Date()}, ${date.toISOString().split('T')[0]}, ${route}, 'EZY',
+            ${Math.floor(baseCapacity / 180)}, ${baseCapacity}, 'data_generator'
+          ) ON CONFLICT DO NOTHING
+        `);
         recordsGenerated++;
         this.logger.info('DataGenerator', 'insert_success', `Inserted market capacity for ${route}: ${baseCapacity} seats`);
       } catch (error: any) {
@@ -156,12 +158,14 @@ export class DatabaseDataGenerator {
         const avgPrice = Math.random() * 200 + 80;
         
         try {
-          await db.execute(`
+          // Use direct SQL for web search data
+          await db.execute(sql`
             INSERT INTO web_search_data (
-              search_date, search_volume, 
-              booking_volume, conversion_rate, avg_search_price, price_currency
+              search_date, route_id, search_volume, booking_volume,
+              conversion_rate, avg_search_price, price_currency
             ) VALUES (
-              '${date.toISOString().split('T')[0]}', ${searchVolume}, ${bookingVolume}, ${conversionRate}, ${avgPrice}, 'GBP'
+              ${date.toISOString().split('T')[0]}, ${route}, ${searchVolume}, ${bookingVolume},
+              ${conversionRate}, ${avgPrice}, 'GBP'
             )
           `);
           recordsGenerated++;
@@ -182,9 +186,17 @@ export class DatabaseDataGenerator {
     
     try {
       // Try a simple insert to test if table exists and accepts data
-      await db.execute(`
-        INSERT INTO rm_pricing_actions (created_date) VALUES ($1)
-      `, [date]);
+      // Use direct SQL for RM pricing actions
+      const oldPrice = Math.random() * 200 + 50;
+      const newPrice = Math.random() * 200 + 50;
+      await db.execute(sql`
+        INSERT INTO rm_pricing_actions (
+          created_date, route_id, action_type, old_price, new_price, reason
+        ) VALUES (
+          ${date.toISOString().split('T')[0]}, 'LGW-BCN', 'price_adjustment',
+          ${oldPrice}, ${newPrice}, ${scenario === 'competitive_attack' ? 'Competitive response' : 'Yield optimization'}
+        )
+      `);
       recordsGenerated = 1;
     } catch (error) {
       this.logger.debug('DataGenerator', 'table_missing', 'rm_pricing_actions table not accessible');
@@ -213,11 +225,14 @@ export class DatabaseDataGenerator {
         
         try {
           // Use minimal columns that definitely exist
-          await db.execute(`
+          // Use direct SQL for flight performance
+          await db.execute(sql`
             INSERT INTO flight_performance (
-              flight_date, route_id, flight_number, load_factor
+              flight_date, route_id, flight_number, load_factor,
+              on_time_performance, delay_minutes, flights_operated, cancellation_rate
             ) VALUES (
-              '${date.toISOString().split('T')[0]}', '${route}', 'EZY${1000 + i}', ${loadFactor}
+              ${date.toISOString().split('T')[0]}, ${route}, ${'EZY' + (1000 + i)}, ${loadFactor},
+              ${onTimePerfPercent}, ${delayMinutes}, ${flightsOperated}, ${cancellationRate}
             ) ON CONFLICT DO NOTHING
           `);
           recordsGenerated++;
@@ -232,34 +247,68 @@ export class DatabaseDataGenerator {
   }
 
   private async generateMarketEvents(date: Date, scenario: string): Promise<number> {
+    const eventTypes = ['competitor_price_change', 'demand_spike', 'route_launch', 'capacity_increase'];
+    const eventCount = scenario === 'competitive_attack' ? Math.floor(Math.random() * 3) + 2 : Math.floor(Math.random() * 2) + 1;
+    
     let recordsGenerated = 0;
     
-    try {
-      // Try a simple insert to test if table exists
-      await db.execute(`
-        INSERT INTO market_events (created_date) VALUES ($1)
-      `, [date]);
-      recordsGenerated = 1;
-    } catch (error) {
-      this.logger.debug('DataGenerator', 'table_missing', 'market_events table not accessible');
-      recordsGenerated = 0;
+    for (let i = 0; i < eventCount; i++) {
+      const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+      const impactScore = Math.round((Math.random() * 10) * 100) / 100;
+      const affectedRoute = ['LGW-BCN', 'LGW-MAD', 'STN-BCN'][Math.floor(Math.random() * 3)];
+      
+      try {
+        // Use direct SQL for market events
+        await db.execute(sql`
+          INSERT INTO market_events (
+            event_date, event_type, affected_route, impact_score,
+            description, source
+          ) VALUES (
+            ${date.toISOString().split('T')[0]}, ${eventType}, ${affectedRoute}, ${impactScore},
+            ${`${eventType.replace('_', ' ')} detected on ${affectedRoute} - scenario: ${scenario}`}, 'automated_detection'
+          )
+        `);
+        recordsGenerated++;
+        this.logger.info('DataGenerator', 'insert_success', `Inserted market event: ${eventType} for ${affectedRoute}`);
+      } catch (error: any) {
+        this.logger.error('DataGenerator', 'insert_error', `Market events error for ${eventType}: ${error.message}`);
+      }
     }
     
     return recordsGenerated;
   }
 
   private async generateEconomicIndicators(date: Date, scenario: string): Promise<number> {
+    const indicators = [
+      { name: 'fuel_price_index', value: 85 + Math.random() * 30 },
+      { name: 'consumer_confidence', value: 70 + Math.random() * 25 },
+      { name: 'gdp_growth_rate', value: 1.5 + Math.random() * 2 },
+      { name: 'inflation_rate', value: 2 + Math.random() * 3 }
+    ];
+    
     let recordsGenerated = 0;
     
-    try {
-      // Try a simple insert to test if table exists
-      await db.execute(`
-        INSERT INTO economic_indicators (created_date) VALUES ($1)
-      `, [date]);
-      recordsGenerated = 1;
-    } catch (error) {
-      this.logger.debug('DataGenerator', 'table_missing', 'economic_indicators table not accessible');
-      recordsGenerated = 0;
+    for (const indicator of indicators) {
+      const variance = scenario === 'economic_turbulence' ? Math.random() * 0.4 - 0.2 : Math.random() * 0.1 - 0.05;
+      const adjustedValue = Math.round((indicator.value * (1 + variance)) * 100) / 100;
+      
+      try {
+        // Use direct SQL for economic indicators
+        await db.execute(sql`
+          INSERT INTO economic_indicators (
+            indicator_date, indicator_name, indicator_value, indicator_unit,
+            data_source, confidence_level
+          ) VALUES (
+            ${date.toISOString().split('T')[0]}, ${indicator.name}, ${adjustedValue}, 
+            ${indicator.name.includes('rate') ? 'percentage' : 'index'},
+            'market_analysis', ${Math.round((0.8 + Math.random() * 0.2) * 100) / 100}
+          )
+        `);
+        recordsGenerated++;
+        this.logger.info('DataGenerator', 'insert_success', `Inserted economic indicator: ${indicator.name} = ${adjustedValue}`);
+      } catch (error: any) {
+        this.logger.error('DataGenerator', 'insert_error', `Economic indicators error for ${indicator.name}: ${error.message}`);
+      }
     }
     
     return recordsGenerated;
@@ -281,11 +330,16 @@ export class DatabaseDataGenerator {
       
       try {
         // Use minimal columns that definitely exist
-        await db.execute(`
+        // Use direct SQL for intelligence insights
+        const priorityLevel = impactLevel >= 4 ? 'High' : impactLevel >= 2 ? 'Medium' : 'Low';
+        const routeId = ['LGW-BCN', 'LGW-MAD', 'STN-BCN'][Math.floor(Math.random() * 3)];
+        await db.execute(sql`
           INSERT INTO intelligence_insights (
-            insight_date, insight_type, title, description, confidence_score, impact_level, insight_text
+            insight_date, insight_type, title, description, confidence_score,
+            impact_level, priority_level, route_id
           ) VALUES (
-            '${date.toISOString().split('T')[0]}', '${insightType}', '${title}', '${description}', ${confidenceScore}, ${impactLevel}, '${description}'
+            ${date.toISOString().split('T')[0]}, ${insightType}, ${title}, ${description}, ${confidenceScore},
+            ${impactLevel}, ${priorityLevel}, ${routeId}
           )
         `);
         recordsGenerated++;
