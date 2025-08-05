@@ -48,7 +48,8 @@ class WebSocketService {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('[WebSocket] Error parsing message:', error);
+          // Don't let parsing errors crash the connection
         }
       };
 
@@ -62,6 +63,11 @@ class WebSocketService {
       this.ws.onerror = (error) => {
         console.error(`[WebSocket] Connection error to ${wsUrl}:`, error);
         useVelocitiStore.getState().setConnectionStatus(false);
+        
+        // Prevent unhandled promise rejection
+        if (error instanceof Event && error.type === 'error') {
+          console.log('[WebSocket] Handled WebSocket error event');
+        }
       };
 
     } catch (error) {
@@ -129,8 +135,14 @@ class WebSocketService {
   }
 
   sendMessage(message: any) {
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
+    try {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify(message));
+      } else {
+        console.warn('[WebSocket] Cannot send message - connection not open');
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error sending message:', error);
     }
   }
 

@@ -130,36 +130,66 @@ export default function TelosIntelligence() {
     console.log(`[TelosIntelligence] Competitive route changed to: ${competitiveRoute}`);
   }, [competitiveRoute]);
 
-  // Fetch comprehensive metrics data from the new analytics framework
-  const { data: systemMetrics } = useQuery({
+  // Fetch comprehensive metrics data from the new analytics framework with error handling
+  const { data: systemMetrics, error: systemError } = useQuery({
     queryKey: ['/api/metrics/system-performance'],
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] System metrics error:', error);
+    }
   });
 
-  const { data: aiMetrics } = useQuery({
+  const { data: aiMetrics, error: aiError } = useQuery({
     queryKey: ['/api/metrics/ai-accuracy'],
     refetchInterval: 60000, // Refresh every minute
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] AI metrics error:', error);
+    }
   });
 
-  const { data: businessMetrics } = useQuery({
+  const { data: businessMetrics, error: businessError } = useQuery({
     queryKey: ['/api/metrics/business-impact'],
     refetchInterval: 60000,
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] Business metrics error:', error);
+    }
   });
 
-  const { data: userMetrics } = useQuery({
+  const { data: userMetrics, error: userError } = useQuery({
     queryKey: ['/api/metrics/user-adoption'],
     refetchInterval: 120000, // Refresh every 2 minutes
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] User metrics error:', error);
+    }
   });
 
-  const { data: metricsAlerts } = useQuery({
+  const { data: metricsAlerts, error: alertsError } = useQuery({
     queryKey: ['/api/metrics/alerts'],
     refetchInterval: 15000, // Refresh every 15 seconds for alerts
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] Alerts metrics error:', error);
+    }
   });
 
   // Fetch intelligence insights
-  const { data: insights, isLoading: insightsLoading } = useQuery<IntelligenceAlert[]>({
+  const { data: insights, isLoading: insightsLoading, error: insightsError } = useQuery<IntelligenceAlert[]>({
     queryKey: ['/api/telos/insights'],
     refetchInterval: 300000, // Refresh every 5 minutes
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] Intelligence insights error:', error);
+    }
   });
 
   // Fetch competitive pricing with comprehensive logging and error handling
@@ -230,13 +260,18 @@ export default function TelosIntelligence() {
   }, [competitive]);
 
   // Fetch route dashboard with logging
-  const { data: routeDashboard, isLoading: dashboardLoading } = useQuery({
+  const { data: routeDashboard, isLoading: dashboardLoading, error: dashboardError } = useQuery({
     queryKey: ['/api/telos/route-dashboard'],
     queryFn: async () => {
       console.log('[TelosIntelligence] Fetching route dashboard data');
       try {
         const response = await fetch('/api/telos/route-dashboard');
         console.log(`[TelosIntelligence] Route dashboard response status: ${response.status}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         console.log('[TelosIntelligence] Route dashboard data received:', {
           hasData: !!data,
@@ -247,20 +282,30 @@ export default function TelosIntelligence() {
         return data;
       } catch (error) {
         console.error('[TelosIntelligence] Error fetching route dashboard:', error);
-        throw error;
+        throw error instanceof Error ? error : new Error('Unknown error occurred');
       }
     },
     enabled: true,
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] Route dashboard query error:', error);
+    }
   });
 
   // Fetch route performance data with timeframe support and logging
-  const { data: performance, isLoading: performanceLoading } = useQuery({
+  const { data: performance, isLoading: performanceLoading, error: performanceError } = useQuery({
     queryKey: ['/api/routes/performance', networkTimeframe],
     queryFn: async () => {
       console.log(`[TelosIntelligence] Fetching route performance data for timeframe: ${networkTimeframe}d`);
       try {
         const response = await fetch(`/api/routes/performance?days=${networkTimeframe}`);
         console.log(`[TelosIntelligence] Route performance response status: ${response.status}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         console.log('[TelosIntelligence] Route performance data received:', {
           hasData: !!data,
@@ -272,17 +317,27 @@ export default function TelosIntelligence() {
         return data;
       } catch (error) {
         console.error('[TelosIntelligence] Error fetching route performance:', error);
-        throw error;
+        throw error instanceof Error ? error : new Error('Unknown error occurred');
       }
     },
     enabled: true,
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] Route performance query error:', error);
+    }
   });
 
   // Fetch real RM metrics from the dedicated endpoint
-  const { data: realRMMetrics, isLoading: rmMetricsLoading } = useQuery({
+  const { data: realRMMetrics, isLoading: rmMetricsLoading, error: rmMetricsError } = useQuery({
     queryKey: ['/api/telos/rm-metrics'],
     enabled: true,
     refetchInterval: 60000, // Refresh every minute
+    retry: 3,
+    retryDelay: 1000,
+    onError: (error) => {
+      console.error('[TelosIntelligence] RM metrics error:', error);
+    }
   });
 
 

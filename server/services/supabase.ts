@@ -30,8 +30,18 @@ const client = postgres(databaseUrl, {
   prepare: false, // Disable prepared statements for better compatibility
 });
 
-// Create drizzle instance
-export const db = drizzle(client, { schema });
+// Create drizzle instance with enhanced logging
+export const db = drizzle(client, { 
+  schema,
+  logger: {
+    logQuery: (query: string, params: unknown[]) => {
+      if (process.env.DEBUG_SQL) {
+        console.log('[Drizzle] Query:', query);
+        console.log('[Drizzle] Params:', params);
+      }
+    }
+  }
+});
 
 // Export client for direct queries if needed
 export { client };
