@@ -88,10 +88,10 @@ export class DatabaseDataGenerator {
           const departureDate = new Date(date.getTime() + Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000);
           
           try {
-            // Fix: Add required non-null fields that may be missing
+            // Use exact column names that worked in job-001 
             await db.execute(sql`
               INSERT INTO competitive_pricing (
-                insert_date, observation_date, route_id, airline_code, 
+                insert_date, observation_date, route, airline_code, 
                 flight_date, price_amount, price_currency, booking_class
               ) VALUES (
                 ${new Date()}, ${date.toISOString().split('T')[0]}, ${route}, ${airline}, 
@@ -225,11 +225,11 @@ export class DatabaseDataGenerator {
         
         try {
           // Use minimal columns that definitely exist
-          // Use direct SQL for flight performance
+          // Use exact column names that worked in job-001 
           await db.execute(sql`
             INSERT INTO flight_performance (
               flight_date, route_id, flight_number, load_factor,
-              on_time_performance, delay_minutes, flights_operated, cancellation_rate
+              ontime_performance, delay_minutes, flights_operated, cancellation_rate
             ) VALUES (
               ${date.toISOString().split('T')[0]}, ${route}, ${'EZY' + (1000 + i)}, ${loadFactor},
               ${onTimePerfPercent}, ${delayMinutes}, ${flightsOperated}, ${cancellationRate}
@@ -258,7 +258,7 @@ export class DatabaseDataGenerator {
       const affectedRoute = ['LGW-BCN', 'LGW-MAD', 'STN-BCN'][Math.floor(Math.random() * 3)];
       
       try {
-        // Use direct SQL for market events
+        // Use exact column names that worked in job-001 
         await db.execute(sql`
           INSERT INTO market_events (
             event_date, event_type, affected_route, impact_score,
@@ -293,7 +293,7 @@ export class DatabaseDataGenerator {
       const adjustedValue = Math.round((indicator.value * (1 + variance)) * 100) / 100;
       
       try {
-        // Use direct SQL for economic indicators
+        // Use exact column names that worked in job-001 
         await db.execute(sql`
           INSERT INTO economic_indicators (
             indicator_date, indicator_name, indicator_value, indicator_unit,
@@ -330,16 +330,16 @@ export class DatabaseDataGenerator {
       
       try {
         // Use minimal columns that definitely exist
-        // Use direct SQL for intelligence insights
+        // Fix intelligence insights with required insight_text field
         const priorityLevel = impactLevel >= 4 ? 'High' : impactLevel >= 2 ? 'Medium' : 'Low';
         const routeId = ['LGW-BCN', 'LGW-MAD', 'STN-BCN'][Math.floor(Math.random() * 3)];
         await db.execute(sql`
           INSERT INTO intelligence_insights (
             insight_date, insight_type, title, description, confidence_score,
-            impact_level, priority_level, route_id
+            impact_level, priority_level, route_id, insight_text
           ) VALUES (
             ${date.toISOString().split('T')[0]}, ${insightType}, ${title}, ${description}, ${confidenceScore},
-            ${impactLevel}, ${priorityLevel}, ${routeId}
+            ${impactLevel}, ${priorityLevel}, ${routeId}, ${description}
           )
         `);
         recordsGenerated++;
