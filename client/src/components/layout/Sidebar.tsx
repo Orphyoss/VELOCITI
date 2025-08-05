@@ -75,7 +75,7 @@ export default function Sidebar() {
   );
 
   return (
-    <div className="w-64 sidebar flex flex-col">
+    <div className="w-72 sidebar flex flex-col">
       {/* Logo */}
       <div className="p-6 sidebar-header">
         <div className="flex items-center space-x-3">
