@@ -30,8 +30,8 @@ export default function NetworkOverview() {
     yield: parseFloat(route.avgYield || '0')
   }));
 
-  // Bottom 3 routes by load factor (needing attention)
-  const bottomRoutes = sortedByLoadFactor.slice(-3).map((route: any) => ({
+  // Bottom 3 routes by load factor (needing attention) - reverse to get lowest first
+  const bottomRoutes = sortedByLoadFactor.slice(-3).reverse().map((route: any) => ({
     code: route.routeId,
     name: route.routeId,
     performance: parseFloat(route.avgLoadFactor || '0'),
