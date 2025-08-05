@@ -16,18 +16,22 @@ export default function NetworkOverview() {
 
   // Calculate top and bottom performing routes from real data
   const allRoutes = (routeData as any) || [];
-  const sortedByPerformance = [...allRoutes].sort((a: any, b: any) => 
+  
+  // Sort by load factor for proper ranking (highest to lowest)
+  const sortedByLoadFactor = [...allRoutes].sort((a: any, b: any) => 
     parseFloat(b.avgLoadFactor || '0') - parseFloat(a.avgLoadFactor || '0')
   );
   
-  const topRoutes = sortedByPerformance.slice(0, 3).map((route: any) => ({
+  // Top 3 routes by load factor (best performing)
+  const topRoutes = sortedByLoadFactor.slice(0, 3).map((route: any) => ({
     code: route.routeId,
     name: route.routeId,
     performance: parseFloat(route.avgLoadFactor || '0'),
     yield: parseFloat(route.avgYield || '0')
   }));
 
-  const bottomRoutes = sortedByPerformance.slice(-3).reverse().map((route: any) => ({
+  // Bottom 3 routes by load factor (needing attention)
+  const bottomRoutes = sortedByLoadFactor.slice(-3).map((route: any) => ({
     code: route.routeId,
     name: route.routeId,
     performance: parseFloat(route.avgLoadFactor || '0'),
