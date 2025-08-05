@@ -1995,5 +1995,72 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
     }
   });
 
+  // DEBUG ENDPOINT - Temporary for production troubleshooting
+  app.get('/debug-env', (req, res) => {
+    try {
+      const envInfo = {
+        NODE_ENV: process.env.NODE_ENV,
+        DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'MISSING',
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'MISSING',
+        PINECONE_API_KEY: process.env.PINECONE_API_KEY ? 'SET' : 'MISSING',
+        WRITER_API_KEY: process.env.WRITER_API_KEY ? 'SET' : 'MISSING',
+        hostname: req.hostname,
+        host: req.get('host'),
+        protocol: req.protocol,
+        url: req.url,
+        headers: {
+          userAgent: req.get('user-agent'),
+          host: req.get('host')
+        },
+        timestamp: new Date().toISOString(),
+        environment: req.hostname?.includes('replit.dev') ? 'PRODUCTION' : 'DEVELOPMENT'
+      };
+      
+      console.log('[DEBUG-ENV] Environment check:', envInfo);
+      res.json(envInfo);
+    } catch (error) {
+      console.error('[DEBUG-ENV] Error:', error);
+      res.status(500).json({ error: 'Debug endpoint failed', message: error.message });
+    }
+  });
+
+  // Database connection debug endpoint
+  app.get('/debug-db', async (req, res) => {
+    try {
+      console.log('[DEBUG-DB] Testing database connection...');
+      
+      // Test basic database connectivity
+      const alerts = await storage.getAlerts(undefined, 5);
+      const agents = await storage.getAgents();
+      
+      const dbInfo = {
+        alerts: {
+          count: alerts?.length || 0,
+          sample: alerts?.[0] ? {
+            id: alerts[0].id?.slice(0, 8),
+            status: alerts[0].status,
+            category: alerts[0].category,
+            priority: alerts[0].priority
+          } : null
+        },
+        agents: {
+          count: agents?.length || 0
+        },
+        connectionTest: 'SUCCESS',
+        timestamp: new Date().toISOString()
+      };
+      
+      console.log('[DEBUG-DB] Database connection test:', dbInfo);
+      res.json(dbInfo);
+    } catch (error) {
+      console.error('[DEBUG-DB] Database connection failed:', error);
+      res.status(500).json({ 
+        error: 'Database connection failed', 
+        message: error.message,
+        connectionTest: 'FAILED'
+      });
+    }
+  });
+
   return httpServer;
 }
