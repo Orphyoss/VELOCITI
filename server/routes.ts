@@ -1298,12 +1298,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { agentId } = req.params;
       
-      // Query real metrics from action_agent_metrics table
+      // Query real metrics from action_agent_metrics table using correct column names
       const metrics = await db
         .select()
         .from(actionAgentMetrics)
-        .where(eq(actionAgentMetrics.agentId, agentId))
-        .orderBy(desc(actionAgentMetrics.metricDate))
+        .where(eq(actionAgentMetrics.agent_id, agentId))
+        .orderBy(desc(actionAgentMetrics.metric_date))
         .limit(1);
 
       if (metrics.length > 0) {
@@ -1351,15 +1351,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { agentId } = req.params;
       
-      // Query real config from action_agent_configs table
+      // Query real config from action_agent_configs table using correct column names
       const config = await db
         .select()
         .from(actionAgentConfigs)
-        .where(eq(actionAgentConfigs.id, agentId))
+        .where(eq(actionAgentConfigs.agent_id, agentId))
         .limit(1);
 
       if (config.length > 0) {
-        res.json(config[0].configParams || {});
+        res.json(config[0].config_params || {});
       } else {
         res.json({});
       }
@@ -1375,14 +1375,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { agentId } = req.params;
       const configParams = req.body;
       
-      // Update real config in action_agent_configs table
+      // Update real config in action_agent_configs table using correct column names
       await db
         .update(actionAgentConfigs)
         .set({
-          configParams,
-          updatedAt: new Date()
+          config_params: configParams,
+          updated_at: new Date()
         })
-        .where(eq(actionAgentConfigs.id, agentId));
+        .where(eq(actionAgentConfigs.agent_id, agentId));
 
       logger.info('ActionAgent', 'updateConfig', `Updated configuration for ${agentId}`, { configParams });
       
@@ -1401,11 +1401,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const config = await db
         .select()
         .from(actionAgentConfigs)
-        .where(eq(actionAgentConfigs.id, agentId))
+        .where(eq(actionAgentConfigs.agent_id, agentId))
         .limit(1);
 
       if (config.length > 0) {
-        res.json(config[0].schedule || { frequency: 'daily', time: '02:00' });
+        res.json(config[0].schedule_config || { frequency: 'daily', time: '02:00' });
       } else {
         res.json({ frequency: 'daily', time: '02:00' });
       }
@@ -1424,10 +1424,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await db
         .update(actionAgentConfigs)
         .set({
-          schedule,
-          updatedAt: new Date()
+          schedule_config: schedule,
+          updated_at: new Date()
         })
-        .where(eq(actionAgentConfigs.id, agentId));
+        .where(eq(actionAgentConfigs.agent_id, agentId));
 
       logger.info('ActionAgent', 'updateSchedule', `Updated schedule for ${agentId}`, { schedule });
       
@@ -1447,8 +1447,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const executions = await db
         .select()
         .from(actionAgentExecutions)
-        .where(eq(actionAgentExecutions.agentId, agentId))
-        .orderBy(desc(actionAgentExecutions.executionStart))
+        .where(eq(actionAgentExecutions.agent_id, agentId))
+        .orderBy(desc(actionAgentExecutions.start_time))
         .limit(limit);
 
       res.json(executions);
@@ -1463,16 +1463,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { agentId } = req.params;
       
-      // Create execution record
+      // Create execution record using actual database column names
       const execution = await db
         .insert(actionAgentExecutions)
         .values({
-          agentId,
-          executionStart: new Date(),
-          status: 'running',
-          alertsGenerated: 0,
-          processingTimeMs: 0,
-          executionLogs: []
+          agent_id: agentId,
+          execution_start: new Date(),
+          execution_status: 'running',
+          start_time: new Date(),
+          result_data: { alerts_generated: 0, processing_time_ms: 0, execution_logs: [] }
         })
         .returning();
 
@@ -1501,22 +1500,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const processingTime = Date.now() - startTime + Math.random() * 2000 + 500; // Realistic processing time
       
-      // Update execution record
+      // Update execution record using actual database column names
       await db
         .update(actionAgentExecutions)
         .set({
-          executionEnd: new Date(),
-          status: 'completed',
-          alertsGenerated,
-          processingTimeMs: Math.floor(processingTime),
-          confidence: confidence.toFixed(4),
-          revenueImpact: revenueImpact.toString(),
-          executionLogs: [
-            { timestamp: new Date().toISOString(), level: 'INFO', message: `${agentId} execution started` },
-            { timestamp: new Date().toISOString(), level: 'INFO', message: `Database queries completed` },
-            { timestamp: new Date().toISOString(), level: 'INFO', message: `Generated ${alertsGenerated} alerts` },
-            { timestamp: new Date().toISOString(), level: 'INFO', message: `Execution completed successfully` }
-          ]
+          end_time: new Date(),
+          execution_status: 'completed',
+          result_data: {
+            alerts_generated: alertsGenerated,
+            processing_time_ms: Math.floor(processingTime),
+            confidence: confidence.toFixed(4),
+            revenue_impact: revenueImpact,
+            execution_logs: [
+              { timestamp: new Date().toISOString(), level: 'INFO', message: `${agentId} execution started` },
+              { timestamp: new Date().toISOString(), level: 'INFO', message: `Database queries completed` },
+              { timestamp: new Date().toISOString(), level: 'INFO', message: `Generated ${alertsGenerated} alerts` },
+              { timestamp: new Date().toISOString(), level: 'INFO', message: `Execution completed successfully` }
+            ]
+          }
         })
         .where(eq(actionAgentExecutions.id, executionId));
 
