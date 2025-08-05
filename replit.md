@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 - **RESOLVED**: Fixed stale alert issue - alerts now show fresh timestamps instead of 8-hour-old data
 - **RESOLVED**: Fixed database query ordering to display newest alerts first (DESC order)
 - **RESOLVED**: Fixed critical Analyst Workbench infinite loop issue caused by multiple components calling alerts API simultaneously
+- **RESOLVED**: Fixed 7-day network performance loading issue in production via redeployment
 - Implemented AlertScheduler service running every 45 minutes for continuous fresh alert generation
 - Added alert limit selector (50-1.5K alerts) allowing users to view more than default 100 alerts
 - Alert generation system now creating diverse realistic scenarios: competitive, performance, network, demand, and operational alerts
@@ -17,6 +18,7 @@ Preferred communication style: Simple, everyday language.
 - Optimized React Query configurations to prevent aggressive refetching while maintaining fresh data
 - System generates alerts like "Demand Surge - STN→AMS" and "Viral Demand Surge on LGW-Malaga Route"
 - Manual alert generation API endpoint available for immediate fresh alerts
+- Network performance data (7-day, 24-hour, 30-day timeframes) now fully operational with authentic flight performance data
 
 ## System Architecture
 
