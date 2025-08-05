@@ -157,7 +157,7 @@ export class MemoryStorage implements IStorage {
           
           const alertsData = result.map((alert: any) => ({
             id: alert.id,
-            type: alert.type || 'alert',
+            type: alert.category || 'alert', // Use category as type since 'type' column doesn't exist
             priority: alert.priority,
             message: alert.title || alert.description || 'Alert notification', // Map title/description to message
             title: alert.title,
@@ -167,7 +167,7 @@ export class MemoryStorage implements IStorage {
             route_name: alert.route_name || null,
             metric_value: alert.metric_value || null,  
             threshold_value: alert.threshold_value || null,
-            impact_score: alert.impact_score || null,
+            impact_score: alert.impact || null, // Use 'impact' instead of 'impact_score'
             confidence: alert.confidence || null,
             agentId: alert.agent_id, // Map agent_id to agentId
             agent_id: alert.agent_id,
@@ -180,7 +180,7 @@ export class MemoryStorage implements IStorage {
             created_at: alert.created_at,
             acknowledged_at: alert.acknowledged_at || null,
             resolved_at: alert.resolved_at || null,
-            category: alert.category || alert.type || 'general' // Fix missing category issue
+            category: alert.category || 'general' // Use category field directly
           }));
           
           logger.debug('Storage', 'getAlerts', `Successfully fetched alerts from database`, {

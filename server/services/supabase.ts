@@ -2,9 +2,10 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from '@shared/schema';
 
-// Get database URL from environment with fallback logic
-// Ensure both dev and production use the database with data
-const databaseUrl = process.env.DATABASE_URL || process.env.DEV_DATABASE_URL;
+// Get database URL from environment with proper development/production separation
+const databaseUrl = process.env.NODE_ENV === 'development' 
+  ? (process.env.DEV_SUP_DATABASE_URL || process.env.DATABASE_URL)
+  : process.env.DATABASE_URL;
 
 if (!databaseUrl) {
   throw new Error('DATABASE_URL or DEV_DATABASE_URL environment variable is required');
@@ -13,11 +14,15 @@ if (!databaseUrl) {
 // Log which database we're connecting to (safely)
 console.log(`[Database] Connecting to: ${databaseUrl.substring(0, 30)}... (${process.env.NODE_ENV || 'development'})`);
 
-// Verify this is the database with data
-if (!databaseUrl.includes('otqxixdcopnnrcnwnzmg')) {
-  console.warn('⚠️  Warning: DATABASE_URL may not point to the database with 182 alerts');
-  console.warn('   Expected: postgresql://postgres.otqxixdcopnnrcnwnzmg...');
-  console.warn(`   Actual: ${databaseUrl.substring(0, 50)}...`);
+// Log database environment info
+if (process.env.NODE_ENV === 'development') {
+  if (databaseUrl?.includes('wvahrxurnszidzwtyrzp')) {
+    console.log('[Database] ✅ Using development database (wvahrxurnszidzwtyrzp)');
+  } else {
+    console.log('[Database] ⚠️  Using fallback database for development');
+  }
+} else {
+  console.log('[Database] Using production database');
 }
 
 // Create postgres client with production-friendly configuration
