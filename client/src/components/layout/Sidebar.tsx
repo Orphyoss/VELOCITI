@@ -44,12 +44,6 @@ export default function Sidebar() {
 
   const adminNavigationItems = [
     {
-      id: 'action-agents',
-      label: 'Action Agents Status',
-      icon: Zap,
-      path: '/action-agents'
-    },
-    {
       id: 'admin',
       label: 'AI Agents',
       icon: Users,

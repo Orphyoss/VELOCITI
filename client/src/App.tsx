@@ -9,8 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import AnalystWorkbench from "@/pages/AnalystWorkbench";
 import Agents from "@/pages/Agents";
-import ActionAgents from "@/pages/ActionAgents";
-import ActionAgentsNew from "@/pages/ActionAgentsNew";
+
 import DatabricsGenie from "@/pages/DatabricsGenie";
 import StrategicAnalysis from "@/pages/StrategicAnalysis";
 import TelosIntelligence from "@/pages/TelosIntelligence";
@@ -30,8 +29,6 @@ function Router() {
 
       <Route path="/workbench" component={AnalystWorkbench} />
       <Route path="/agents" component={Agents} />
-      <Route path="/action-agents" component={ActionAgents} />
-      <Route path="/action-agents-new">{() => <ActionAgentsNew />}</Route>
       <Route path="/genie" component={DatabricsGenie} />
       <Route path="/strategic" component={StrategicAnalysis} />
       <Route path="/briefing" component={MorningBriefing} />

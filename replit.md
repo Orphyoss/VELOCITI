@@ -6,6 +6,11 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+- Removed "Action Agents Status" sidebar link as it was not providing meaningful functionality
+- Fixed API caching issues for alert generation system
+- Alert generation system confirmed working correctly at database level
+
 ## System Architecture
 
 ### UI/UX Decisions
