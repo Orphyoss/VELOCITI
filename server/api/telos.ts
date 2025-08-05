@@ -334,11 +334,13 @@ router.get('/rm-metrics', async (req, res) => {
     const volatileRoutes = topRoutes.filter(route => Math.abs(route.change) > 8).length;
     
     // Total high risk routes considers multiple risk factors
-    const totalHighRiskRoutes = Math.max(
-      negativePerformanceRoutes,
-      lowYieldRoutes,
-      Math.min(6, negativePerformanceRoutes + Math.floor(volatileRoutes / 2))
-    );
+    // Ensure we show realistic risk numbers when routes are underperforming
+    const baseRiskCount = Math.max(negativePerformanceRoutes, lowYieldRoutes);
+    const additionalVolatilityRisk = Math.floor(volatileRoutes / 2);
+    const totalHighRiskRoutes = Math.min(6, Math.max(baseRiskCount, baseRiskCount + additionalVolatilityRisk));
+    
+    // Add debug logging to understand the calculation
+    console.log(`[API] Risk calculation: negative=${negativePerformanceRoutes}, lowYield=${lowYieldRoutes}, volatile=${volatileRoutes}, total=${totalHighRiskRoutes}`);
     
     const competitorThreats = strongRoutes > 2 ? 0 : weakRoutes;
     const seasonalRisks = Math.floor(Math.random() * 3); // Random for now, could be calculated from historical data

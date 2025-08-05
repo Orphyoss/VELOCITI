@@ -319,14 +319,16 @@ export default function TelosIntelligence() {
       capacityUtilization: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.avgLoadFactor || '0'), 0) / performanceData.length : 0
     },
     riskMetrics: {
-      routesAtRisk: insightsData.filter((insight: any) => insight.priorityLevel === 'Critical').length,
+      // Use backend calculation for routes at risk instead of frontend override
+      routesAtRisk: (realRMMetrics as any)?.riskMetrics?.routesAtRisk || 0,
       volatilityIndex: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => {
         const routeYield = parseFloat(route.avgYield || '0');
         const avgYield = 100; // Average yield baseline
         return acc + Math.abs(routeYield - avgYield);
       }, 0) / performanceData.length : 0,
-      competitorThreats: insightsData.filter((insight: any) => insight.insightType === 'Alert' && insight.agentSource === 'Competitive Agent').length,
-      seasonalRisks: insightsData.filter((insight: any) => insight.description?.toLowerCase().includes('seasonal') || insight.description?.toLowerCase().includes('demand')).length
+      // Use backend calculation for threats and seasonal risks too
+      competitorThreats: (realRMMetrics as any)?.riskMetrics?.competitorThreats || 0,
+      seasonalRisks: (realRMMetrics as any)?.riskMetrics?.seasonalRisks || 0
     }
   };
 
