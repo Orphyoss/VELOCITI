@@ -366,13 +366,10 @@ export default function TelosIntelligence() {
       marketShare: 25.3 // EasyJet's typical market share percentage
     },
     operationalEfficiency: {
-      loadFactorVariance: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => {
-        const lf = parseFloat(route.avgLoadFactor || '0');
-        return acc + Math.abs(lf - 80); // Variance from 80% target load factor
-      }, 0) / performanceData.length : 0,
-      demandPredictionAccuracy: (aiMetrics as any)?.data?.insightAccuracyRate?.overallAccuracy || 80,
-      bookingPaceVariance: (routeDashboard as any)?.demandVariance || 0,
-      capacityUtilization: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => acc + parseFloat(route.avgLoadFactor || '0'), 0) / performanceData.length : 0
+      loadFactorVariance: (realRMMetrics as any)?.operationalEfficiency?.loadFactorVariance || 0,
+      demandPredictionAccuracy: (realRMMetrics as any)?.operationalEfficiency?.demandPredictionAccuracy || 0,
+      bookingPaceVariance: (realRMMetrics as any)?.operationalEfficiency?.bookingPaceVariance || 0,
+      capacityUtilization: (realRMMetrics as any)?.operationalEfficiency?.capacityUtilization || 0
     },
     riskMetrics: {
       // Use backend calculation for routes at risk instead of frontend override
