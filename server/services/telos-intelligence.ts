@@ -103,7 +103,7 @@ export class TelosIntelligenceService {
         .select({
           totalSeats: sql<string>`SUM(${flightPerformance.totalSeats}::numeric)`,
           totalFlights: count(),
-          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric) * 100`
+          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric)`
         })
         .from(flightPerformance)
         .where(
