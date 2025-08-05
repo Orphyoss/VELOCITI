@@ -1012,6 +1012,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Alert database statistics endpoint  
+  app.get('/api/alerts/stats', async (req: Request, res: Response) => {
+    try {
+      const allAlerts = await storage.getAlerts(10000); // Get large number to count
+      const totalCount = allAlerts.length;
+      const activeCount = allAlerts.filter(a => a.status === 'active').length;
+      const criticalCount = allAlerts.filter(a => a.priority === 'critical').length;
+      const recentCount = allAlerts.filter(a => {
+        const alertTime = new Date(a.createdAt);
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+        return alertTime > oneHourAgo;
+      }).length;
+      
+      res.json({
+        success: true,
+        stats: {
+          total: totalCount,
+          active: activeCount,
+          critical: criticalCount,
+          recent_hour: recentCount,
+          database_limit: 10000,
+          note: `Database contains ${totalCount} alerts. UI shows ${Math.min(totalCount, 100)} by default for performance.`
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Manual alert generation endpoint
   app.post('/api/alerts/generate', async (req: Request, res: Response) => {
     try {

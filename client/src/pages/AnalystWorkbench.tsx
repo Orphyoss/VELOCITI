@@ -19,14 +19,15 @@ export default function AnalystWorkbench() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [alertLimit, setAlertLimit] = useState<number>(100);
 
   useEffect(() => {
     setCurrentModule('workbench');
   }, [setCurrentModule]);
 
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['workbench-alerts', 100],
-    queryFn: () => api.getAlerts(undefined, 100),
+    queryKey: ['workbench-alerts', alertLimit],
+    queryFn: () => api.getAlerts(undefined, alertLimit),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
@@ -160,6 +161,20 @@ export default function AnalystWorkbench() {
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="dismissed">Dismissed</SelectItem>
                   <SelectItem value="escalated">Escalated</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={alertLimit.toString()} onValueChange={(value) => setAlertLimit(parseInt(value))}>
+                <SelectTrigger className="bg-dark-800 border-dark-700 text-dark-50">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="50">50 alerts</SelectItem>
+                  <SelectItem value="100">100 alerts</SelectItem>
+                  <SelectItem value="200">200 alerts</SelectItem>
+                  <SelectItem value="500">500 alerts</SelectItem>
+                  <SelectItem value="1000">1K alerts</SelectItem>
+                  <SelectItem value="1500">1.5K alerts</SelectItem>
                 </SelectContent>
               </Select>
 
