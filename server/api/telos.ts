@@ -279,8 +279,14 @@ router.get('/analytics/performance-summary', async (req, res) => {
  */
 router.get('/rm-metrics', async (req, res) => {
   const startTime = Date.now();
+  
+  // Disable caching for this endpoint
+  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  
   try {
-    console.log(`[API] GET /api/telos/rm-metrics - NODE_ENV: ${process.env.NODE_ENV}, DATABASE_URL: ${process.env.DATABASE_URL ? 'present' : 'missing'}`);
+    console.log(`[API] GET /api/telos/rm-metrics - FRESH REQUEST - NODE_ENV: ${process.env.NODE_ENV}, DATABASE_URL: ${process.env.DATABASE_URL ? 'present' : 'missing'}`);
     
     // Get your real competitive pricing data from PostgreSQL
     const { db } = await import('../db/index');
@@ -345,9 +351,9 @@ router.get('/rm-metrics', async (req, res) => {
       yieldOptimization: {
         currentYield: currentYield,
         targetYield: targetYield,
-        optimizationPotential: optimizationPotential,
-        yieldGap: yieldGap,
-        performanceVsTarget: performanceVsTarget,
+        optimizationPotential: Number(optimizationPotential.toFixed(2)),
+        yieldGap: Number(yieldGap.toFixed(1)),
+        performanceVsTarget: Number(performanceVsTarget.toFixed(1)),
         improvement: 12.3,
         topRoutes: topRoutes
       },
@@ -366,6 +372,8 @@ router.get('/rm-metrics', async (req, res) => {
 
     const duration = Date.now() - startTime;
     console.log(`[API] RM metrics completed in ${duration}ms - Daily revenue: £${Math.round(dailyRevenue).toLocaleString()}`);
+    console.log('[API] DEBUGGING - About to return metrics with optimizationPotential:', optimizationPotential);
+    console.log('[API] DEBUGGING - Complete rmMetrics object:', JSON.stringify(rmMetrics.yieldOptimization, null, 2));
     
     res.json(rmMetrics);
   } catch (error) {
