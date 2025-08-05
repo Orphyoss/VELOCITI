@@ -31,10 +31,11 @@ Preferred communication style: Simple, everyday language.
 - **Data Flow**: AI agents process data, generate alerts stored in PostgreSQL, and broadcast these alerts via WebSockets, ensuring real-time updates to connected clients.
 
 ### System Design Choices
-- **Data Storage**: PostgreSQL, leveraged with Neon serverless hosting for scalability and availability.
-- **Schema Management**: Drizzle Kit is used for database migrations and schema evolution.
+- **Data Storage**: PostgreSQL with standardized database configuration using DEV_DATABASE_URL for both development and production environments.
+- **Schema Management**: Drizzle Kit is used for database migrations and schema evolution, with comprehensive schema synchronization between databases.
 - **Data Structure**: A relational design is employed for managing key entities such as users, alerts, agents, feedback, route performance, conversations, system metrics, and activities.
 - **High Availability**: The system is designed for high availability, featuring automatic failover capabilities and a scalable architecture to ensure continuous operation.
+- **Database Configuration**: Simplified to use single database URL (DEV_DATABASE_URL) eliminating schema conflicts and ensuring consistent data structures across environments.
 
 ### Deployment Configuration
 - **Production Deployment**: Achieved via Replit Deployments, utilizing custom build and run scripts defined in the `.replit` file.
