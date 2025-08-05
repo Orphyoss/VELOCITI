@@ -26,10 +26,10 @@ export default function AnalystWorkbench() {
   }, [setCurrentModule]);
 
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['workbench-alerts', alertLimit],
+    queryKey: ['workbench-alerts', alertLimit, Date.now()], // Force cache refresh with timestamp
     queryFn: () => api.getAlerts(undefined, alertLimit),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute - shorter cache for fresh alerts
+    gcTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchInterval: false, // No automatic refetching

@@ -152,7 +152,7 @@ export class MemoryStorage implements IStorage {
           // Use Drizzle ORM with enhanced error handling
           const result = await db.select()
             .from(alertsTable)
-            .orderBy(alertsTable.created_at)
+            .orderBy(desc(alertsTable.created_at))
             .limit(limit)
             .catch((error) => {
               logger.error('Storage', 'getAlerts', 'Drizzle ORM query failed', error);
