@@ -153,7 +153,7 @@ export class MemoryStorage implements IStorage {
           const result = await client`
             SELECT DISTINCT ON (title, description) 
               id, priority, title, description, route, route_name, 
-              metric_value, threshold_value, impact, confidence, 
+              metric_value, threshold_value, impact_score, confidence, 
               agent_id, metadata, status, created_at, 
               acknowledged_at, resolved_at, category
             FROM alerts 
@@ -176,7 +176,7 @@ export class MemoryStorage implements IStorage {
             route_name: alert.route_name || null,
             metric_value: alert.metric_value || null,  
             threshold_value: alert.threshold_value || null,
-            impact_score: alert.impact || null, // Use 'impact' instead of 'impact_score'
+            impact_score: alert.impact_score || null, // Use correct column name
             confidence: alert.confidence || null,
             agentId: alert.agent_id, // Map agent_id to agentId
             agent_id: alert.agent_id,
