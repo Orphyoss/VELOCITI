@@ -1148,64 +1148,15 @@ export default function TelosIntelligence() {
             </Card>
           </div>
 
-          {/* DEBUG: Deep logging for optimization rendering */}
-          {(() => {
-            console.log('[TelosIntelligence] RENDER ANALYSIS:', {
-              hasOptimizationData: !!optimizationData,
-              hasOpportunities: !!optimizationData?.opportunities,
-              isOpportunitiesArray: Array.isArray(optimizationData?.opportunities),
-              opportunitiesCount: optimizationData?.opportunities?.length,
-              optimizationLoading,
-              optimizationError,
-              dataStructure: optimizationData ? JSON.stringify(optimizationData, null, 2) : 'null'
-            });
-            
-            // Force return true to see if this section renders at all
-            return null;
-          })()}
 
-          {/* FORCE VISIBLE OPTIMIZATION SECTION */}
-          <Card className="border-4 border-red-500 bg-red-50">
-            <CardHeader>
-              <CardTitle className="text-red-600">OPTIMIZATION OPPORTUNITIES - FORCE DISPLAY</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Force display the 4 cards */}
-                <div className="bg-green-200 border-2 border-green-600 p-4 rounded">
-                  <h3 className="font-bold text-green-800">Dynamic Pricing</h3>
-                  <p>+£12.8M (94% confidence, 2-4 weeks)</p>
-                  <p>Routes: LGW-BCN, LGW-AMS, LGW-CDG</p>
-                </div>
-                
-                <div className="bg-blue-200 border-2 border-blue-600 p-4 rounded">
-                  <h3 className="font-bold text-blue-800">Capacity Optimization</h3>
-                  <p>+£9.4M (89% confidence, 4-8 weeks)</p>
-                  <p>Routes: LGW-MAD, LGW-FCO, LGW-MXP</p>
-                </div>
-                
-                <div className="bg-yellow-200 border-2 border-yellow-600 p-4 rounded">
-                  <h3 className="font-bold text-yellow-800">Competitive Response</h3>
-                  <p>+£7.2M (87% confidence, 1-2 weeks)</p>
-                  <p>Routes: LGW-AMS, LGW-MAD</p>
-                </div>
-                
-                <div className="bg-purple-200 border-2 border-purple-600 p-4 rounded">
-                  <h3 className="font-bold text-purple-800">Seasonal Adjustments</h3>
-                  <p>+£6.8M (92% confidence, Seasonal)</p>
-                  <p>Routes: LGW-BCN, LGW-CDG, LGW-FCO</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Optimization Opportunities - Force display if we have data */}
+          {/* Optimization Opportunities */}
           {optimizationData && optimizationData.opportunities ? (
-            <Card className="border-4 border-green-500">
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
-                  Optimization Opportunities (SHOULD BE VISIBLE)
+                  Optimization Opportunities
                 </CardTitle>
                 <CardDescription>
                   AI-identified revenue optimization opportunities across the network
@@ -1225,10 +1176,8 @@ export default function TelosIntelligence() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {optimizationData.opportunities && optimizationData.opportunities.map((opp: any, index: number) => {
-                    console.log(`[TelosIntelligence] CARD RENDER ${index}:`, opp);
-                    return (
-                    <div key={index} className="border-4 border-red-500 rounded-lg p-6 space-y-3 bg-yellow-100 dark:bg-yellow-800 text-black dark:text-white">
+                  {optimizationData.opportunities && optimizationData.opportunities.map((opp: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 space-y-3 bg-card">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-semibold">{opp.category}</div>
@@ -1255,8 +1204,7 @@ export default function TelosIntelligence() {
                         Routes: {opp.routes?.join(', ') || 'N/A'}
                       </div>
                     </div>
-                    );
-                  })}
+                  ))}
                   
                   {(!optimizationData.opportunities || optimizationData.opportunities.length === 0) && (
                     <div className="col-span-2 text-center py-8 text-muted-foreground">
