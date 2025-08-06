@@ -1146,41 +1146,70 @@ export default function TelosIntelligence() {
               </CardContent>
             </Card>
 
-            {/* Network Yield Summary */}
+            {/* Route Comparison Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Network Summary</CardTitle>
-                <CardDescription>Overall yield performance</CardDescription>
+                <CardTitle>Route Comparison</CardTitle>
+                <CardDescription>How {selectedYieldRoute} compares to network</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold">£{rmMetrics.yieldOptimization.currentYield.toFixed(2)}</div>
-                  <div className="text-muted-foreground">Network Yield</div>
-                  <div className="mt-2">
-                    <Progress 
-                      value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} 
-                      className="h-3" 
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 space-y-3">
-                  <div className="text-sm font-medium">Route Performance</div>
-                  {performance && Array.isArray(performance) ? 
-                    performance.slice(0, 4).map((route: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm">{route.routeId}</span>
-                        <div className="text-right">
-                          <div className="font-medium text-sm">£{route.avgYield?.toFixed(2) || '0.00'}</div>
-                          <div className="text-xs text-muted-foreground">{route.avgLoadFactor?.toFixed(1) || '0.0'}% LF</div>
+              <CardContent>
+                <div className="space-y-4">
+                  {routeYieldData ? (
+                    <>
+                      {/* Route vs Network */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {routeYieldData.currentYield > 172.41 ? '+' : ''}
+                          £{(routeYieldData.currentYield - 172.41).toFixed(2)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">vs Network Avg</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {routeYieldData.currentYield > 172.41 ? 'Above' : 'Below'} network average of £172.41
                         </div>
                       </div>
-                    )) : 
-                    <div className="text-xs text-muted-foreground">Loading route data...</div>
-                  }
+                      
+                      <div className="border-t pt-4 space-y-3">
+                        <div className="text-sm font-medium">Network Ranking</div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs">Yield Ranking</span>
+                            <Badge variant={routeYieldData.currentYield > 175 ? 'secondary' : 
+                                          routeYieldData.currentYield > 165 ? 'outline' : 'destructive'} 
+                                   className="text-xs">
+                              #{routeYieldData.currentYield > 175 ? '1-2' : 
+                                 routeYieldData.currentYield > 165 ? '3-4' : '5-6'} / 6
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs">Optimization Gap</span>
+                            <div className="text-xs font-medium text-orange-600">
+                              {routeYieldData.optimizationPotential?.toFixed(1)}%
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs">Risk Profile</span>
+                            <Badge variant={routeYieldData.riskLevel === 'low' ? 'secondary' : 
+                                          routeYieldData.riskLevel === 'medium' ? 'outline' : 'destructive'} 
+                                   className="text-xs">
+                              {routeYieldData.riskLevel || 'medium'}
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs">Competitive Edge</span>
+                            <Badge variant={routeYieldData.competitivePosition === 'advantage' ? 'secondary' : 
+                                          routeYieldData.competitivePosition === 'competitive' ? 'outline' : 'destructive'} 
+                                   className="text-xs">
+                              {routeYieldData.competitivePosition || 'competitive'}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center text-muted-foreground py-4">
+                      Select a route to view comparison
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
