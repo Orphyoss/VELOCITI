@@ -7,6 +7,9 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **RESOLVED**: Fixed competitive threats display issue in Morning Briefing - updated OpenAI prompt to generate structured objects instead of strings, competitive threats now show competitor names, severity levels, threat descriptions, and recommendations
+- **RESOLVED**: Added strategic opportunities section to Morning Briefing - displays AI-generated business opportunities with title, description, timeframe, and impact estimates
+- **RESOLVED**: Implemented cache-busting functionality - force refresh parameter bypasses stale cache data when prompt structure changes
 - **RESOLVED**: Improved Route Yield Analysis UX design - replaced static Network Summary with dynamic Route Comparison card that shows selected route vs network average (yield differential, ranking #1-6/6, optimization gap, risk profile, competitive edge) with real-time updates based on route selection
 - **RESOLVED**: Fixed empty Route Yield Optimization section - now displays all 4 optimization opportunities (Dynamic Pricing +£12.8M, Capacity Optimization +£9.4M, Competitive Response +£7.2M, Seasonal Adjustments +£6.8M) totaling +£36.2M potential revenue with proper confidence levels, timeframes, and implementation costs
 - **RESOLVED**: Fixed React Query v5 compatibility issues by removing deprecated onSuccess/onError callbacks and implementing proper useEffect-based logging

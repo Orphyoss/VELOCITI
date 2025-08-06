@@ -1199,7 +1199,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/admin/documents", async (req, res) => {
     try {
+      console.log('[API] Fetching documents from Pinecone...');
       const documents = await pineconeService.listDocuments();
+      console.log(`[API] Retrieved ${documents.length} documents from Pinecone`);
       
       res.json({
         documents,
@@ -1210,8 +1212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('List documents error:', error);
-      // Return empty result instead of error
-      res.json({
+      // Return detailed error information for debugging
+      res.status(500).json({
+        error: 'Failed to list documents',
+        details: error.message,
         documents: [],
         stats: {
           totalVectors: 0,
