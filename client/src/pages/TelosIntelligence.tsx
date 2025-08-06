@@ -173,9 +173,7 @@ export default function TelosIntelligence() {
     queryKey: ['/api/metrics/alerts'],
     refetchInterval: 15000, // Refresh every 15 seconds for alerts
     staleTime: 10000,
-    onError: (error) => {
-      console.error('[TelosIntelligence] Alerts metrics error:', error);
-    }
+
   });
 
   // Fetch intelligence insights
@@ -183,9 +181,7 @@ export default function TelosIntelligence() {
     queryKey: ['/api/telos/insights'],
     refetchInterval: 300000, // Refresh every 5 minutes
     staleTime: 120000, // 2 minutes
-    onError: (error) => {
-      console.error('[TelosIntelligence] Intelligence insights error:', error);
-    }
+
   });
 
   // Fetch competitive pricing with comprehensive logging and error handling
@@ -399,11 +395,53 @@ export default function TelosIntelligence() {
   });
 
   // Fetch route yield analysis
-  const { data: routeYieldData, isLoading: yieldLoading } = useQuery({
+  const { data: routeYieldData, isLoading: yieldLoading, error: yieldError } = useQuery({
     queryKey: ['/api/yield/route-analysis', selectedYieldRoute],
-    queryFn: () => fetch(`/api/yield/route-analysis?route=${selectedYieldRoute}`).then(res => res.json()),
+    queryFn: async () => {
+      console.log(`[TelosIntelligence] Fetching route yield analysis for route: ${selectedYieldRoute}`);
+      try {
+        const response = await fetch(`/api/yield/route-analysis?route=${selectedYieldRoute}`);
+        console.log(`[TelosIntelligence] Route yield response status: ${response.status}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[TelosIntelligence] Route yield data received:', {
+          hasData: !!data,
+          route: selectedYieldRoute,
+          currentYield: data?.currentYield,
+          targetYield: data?.targetYield,
+          hasRecommendations: !!data?.recommendations?.length
+        });
+        return data;
+      } catch (error) {
+        console.error('[TelosIntelligence] Error fetching route yield data:', error);
+        throw error;
+      }
+    },
     enabled: !!selectedYieldRoute,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Log route yield data changes
+  useEffect(() => {
+    console.log('[TelosIntelligence] Route yield state:', {
+      selectedRoute: selectedYieldRoute,
+      loading: yieldLoading,
+      hasData: !!routeYieldData,
+      hasError: !!yieldError,
+      dataKeys: routeYieldData ? Object.keys(routeYieldData) : []
+    });
+    if (routeYieldData) {
+      console.log('[TelosIntelligence] Route yield data details:', routeYieldData);
+    }
+    if (yieldError) {
+      console.error('[TelosIntelligence] Route yield error:', yieldError);
+    }
+  }, [selectedYieldRoute, routeYieldData, yieldLoading, yieldError]);
 
   // Fetch yield optimization opportunities  
   const { data: optimizationData, isLoading: optimizationLoading, error: optimizationError } = useQuery({
