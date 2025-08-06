@@ -9,6 +9,7 @@ import { debugRoutes } from "./debug";
 import { dashboardRoutes } from "./dashboard";
 import { telosRoutes } from "./telos";
 import { performanceRoutes } from "./performance";
+import { yieldRoutes } from "./yield";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -36,6 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await dashboardRoutes(app);
   await telosRoutes(app);
   await performanceRoutes(app);
+  await yieldRoutes(app);
   await debugRoutes(app);
 
   console.log("✅ All routes registered successfully");

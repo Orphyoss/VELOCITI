@@ -112,6 +112,7 @@ export default function TelosIntelligence() {
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('24h');
   const [networkTimeframe, setNetworkTimeframe] = useState('7');
   const [competitiveRoute, setCompetitiveRoute] = useState<string>('LGW-BCN');
+  const [selectedYieldRoute, setSelectedYieldRoute] = useState<string>('LGW-BCN');
   
   const queryClient = useQueryClient();
   const { setCurrentModule } = useVelocitiStore();
@@ -394,6 +395,19 @@ export default function TelosIntelligence() {
   // Fetch available routes
   const { data: routes } = useQuery<string[]>({
     queryKey: ['/api/telos/routes'],
+  });
+
+  // Fetch route yield analysis
+  const { data: routeYieldData, isLoading: yieldLoading } = useQuery({
+    queryKey: ['/api/yield/route-analysis', selectedYieldRoute],
+    queryFn: () => fetch(`/api/yield/route-analysis?route=${selectedYieldRoute}`).then(res => res.json()),
+    enabled: !!selectedYieldRoute,
+  });
+
+  // Fetch yield optimization opportunities  
+  const { data: optimizationData } = useQuery({
+    queryKey: ['/api/yield/optimization-opportunities'],
+    queryFn: () => fetch('/api/yield/optimization-opportunities').then(res => res.json()),
   });
 
   // Run intelligence analysis
@@ -929,79 +943,240 @@ export default function TelosIntelligence() {
 
         {/* Yield Optimization Tab */}
         <TabsContent value="yield" className="space-y-4">
+          {/* Route Selection Header */}
+          <Card>
+            <CardHeader>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Route Yield Analysis
+                  </CardTitle>
+                  <CardDescription>Comprehensive yield optimization and revenue management</CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-muted-foreground">Route:</span>
+                  <Select value={selectedYieldRoute} onValueChange={setSelectedYieldRoute}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select route" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
+                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
+                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
+                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
+                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
+                      <SelectItem value="LGW-MXP">LGW-MXP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* Current Route Yield Performance */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Route Yield Performance</CardTitle>
-                <CardDescription>Yield optimization across top-performing routes</CardDescription>
+                <CardTitle>Route Yield Performance - {selectedYieldRoute}</CardTitle>
+                <CardDescription>Real-time yield metrics and optimization analysis</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {rmMetrics.yieldOptimization.topRoutes.map((route, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="font-semibold">{route.route}</div>
-                        <div className="text-sm text-muted-foreground">Current yield performance</div>
+                {yieldLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    <div className="h-8 bg-gray-200 rounded"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ) : routeYieldData ? (
+                  <div className="space-y-6">
+                    {/* Key Metrics Row */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">£{routeYieldData.currentYield.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground">Current Yield</div>
                       </div>
-                      <div className="text-right space-y-1">
-                        <div className="text-xl font-bold">£{route.yield.toFixed(2)}</div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={route.change > 10 ? 'secondary' : route.change > 5 ? 'secondary' : 'outline'} 
-                                 className={route.change > 5 ? 'bg-green-600 dark:bg-green-700 text-white dark:text-green-100 font-medium' : ''}>
-                            {formatPercentage(route.change)}
-                          </Badge>
-                          {route.change > 5 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">£{routeYieldData.targetYield.toFixed(2)}</div>
+                        <div className="text-xs text-muted-foreground">Target Yield</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">{routeYieldData.optimizationPotential.toFixed(1)}%</div>
+                        <div className="text-xs text-muted-foreground">Optimization</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{formatPercentage(routeYieldData.historicalTrend)}</div>
+                        <div className="text-xs text-muted-foreground">30D Trend</div>
+                      </div>
+                    </div>
+
+                    {/* Performance Indicators */}
+                    <div className="border-t pt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Competitive Position</span>
+                            <Badge variant={routeYieldData.competitivePosition === 'advantage' ? 'secondary' : 
+                                          routeYieldData.competitivePosition === 'competitive' ? 'outline' : 'destructive'}>
+                              {routeYieldData.competitivePosition}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Price Elasticity</span>
+                            <span className="font-medium">{routeYieldData.priceElasticity}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Demand Forecast</span>
+                            <Badge variant={routeYieldData.demandForecast === 'strong' ? 'secondary' : 
+                                          routeYieldData.demandForecast === 'moderate' ? 'outline' : 'destructive'}>
+                              {routeYieldData.demandForecast}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Seasonal Factor</span>
+                            <span className="font-medium">{routeYieldData.seasonalFactor}x</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm">Risk Level</span>
+                            <Badge variant={routeYieldData.riskLevel === 'low' ? 'secondary' : 
+                                          routeYieldData.riskLevel === 'medium' ? 'outline' : 'destructive'}>
+                              {routeYieldData.riskLevel}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
+
+                    {/* AI Recommendations */}
+                    <div className="border-t pt-4">
+                      <div className="text-sm font-medium mb-3 flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        AI-Powered Recommendations
+                      </div>
+                      <div className="space-y-3">
+                        {routeYieldData.recommendations?.map((rec: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{rec.action}</div>
+                              <div className="text-xs text-muted-foreground">Confidence: {rec.confidence}%</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-green-600 text-sm">{rec.impact}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-4">
+                    Select a route to view yield analysis
+                  </div>
+                )}
               </CardContent>
             </Card>
 
+            {/* Network Yield Summary */}
             <Card>
               <CardHeader>
-                <CardTitle>Yield Targets</CardTitle>
-                <CardDescription>Progress toward revenue targets</CardDescription>
+                <CardTitle>Network Summary</CardTitle>
+                <CardDescription>Overall yield performance</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold">£{rmMetrics.yieldOptimization.currentYield.toFixed(2)}</div>
-                  <div className="text-muted-foreground">Current Network Yield</div>
+                  <div className="text-muted-foreground">Network Yield</div>
                   <div className="mt-2">
                     <Progress 
                       value={(rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100} 
                       className="h-3" 
                     />
                     <div className="text-xs text-muted-foreground mt-1">
-                      {rmMetrics.yieldOptimization.currentYield && rmMetrics.yieldOptimization.targetYield 
-                        ? `${((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of £${rmMetrics.yieldOptimization.targetYield.toFixed(2)} target`
-                        : 'Target data unavailable'
-                      }
+                      {((rmMetrics.yieldOptimization.currentYield / rmMetrics.yieldOptimization.targetYield) * 100).toFixed(1)}% of target
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t pt-4">
-                  <div className="text-sm font-medium mb-3">Optimization Opportunities</div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Price optimization</span>
-                      <span className="text-green-600">+£2.3M</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Capacity reallocation</span>
-                      <span className="text-green-600">+£1.8M</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Dynamic pricing</span>
-                      <span className="text-green-600">+£1.2M</span>
-                    </div>
-                  </div>
+                <div className="border-t pt-4 space-y-3">
+                  <div className="text-sm font-medium">Route Performance</div>
+                  {performance && Array.isArray(performance) ? 
+                    performance.slice(0, 4).map((route: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="text-sm">{route.routeId}</span>
+                        <div className="text-right">
+                          <div className="font-medium text-sm">£{route.avgYield?.toFixed(2) || '0.00'}</div>
+                          <div className="text-xs text-muted-foreground">{route.avgLoadFactor?.toFixed(1) || '0.0'}% LF</div>
+                        </div>
+                      </div>
+                    )) : 
+                    <div className="text-xs text-muted-foreground">Loading route data...</div>
+                  }
                 </div>
               </CardContent>
             </Card>
           </div>
+
+          {/* Optimization Opportunities */}
+          {optimizationData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Optimization Opportunities
+                </CardTitle>
+                <CardDescription>
+                  AI-identified revenue optimization opportunities across the network
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">Total Potential Revenue</div>
+                      <div className="text-sm text-muted-foreground">{optimizationData.totalOpportunities} opportunities identified</div>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">
+                      +£{optimizationData.totalPotentialRevenue?.toFixed(1)}M
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {optimizationData.opportunities?.map((opp: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-semibold">{opp.category}</div>
+                          <div className="text-sm text-muted-foreground">{opp.timeframe}</div>
+                        </div>
+                        <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                          {opp.confidence}% confidence
+                        </Badge>
+                      </div>
+                      
+                      <div className="text-sm">{opp.description}</div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Potential Revenue:</span>
+                        <span className="font-bold text-green-600">+£{opp.potentialRevenue}M</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span>Implementation Cost:</span>
+                        <span className="text-orange-600">£{opp.implementationCost}M</span>
+                      </div>
+                      
+                      <div className="text-xs text-muted-foreground">
+                        Routes: {opp.routes.join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Competitive Intelligence Tab */}
