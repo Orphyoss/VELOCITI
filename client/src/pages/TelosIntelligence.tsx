@@ -1201,35 +1201,55 @@ export default function TelosIntelligence() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {optimizationData.opportunities?.map((opp: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-semibold">{opp.category}</div>
-                          <div className="text-sm text-muted-foreground">{opp.timeframe}</div>
+                  {(() => {
+                    const opportunities = optimizationData.opportunities;
+                    console.log('[TelosIntelligence] Rendering opportunities:', {
+                      hasOpportunities: !!opportunities,
+                      isArray: Array.isArray(opportunities),
+                      length: opportunities?.length,
+                      firstItem: opportunities?.[0]
+                    });
+                    
+                    const oppsToRender = opportunities && Array.isArray(opportunities) ? opportunities : [];
+                    
+                    if (oppsToRender.length === 0) {
+                      return (
+                        <div className="col-span-2 text-center py-8 text-muted-foreground">
+                          No optimization opportunities available
                         </div>
-                        <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                          {opp.confidence}% confidence
-                        </Badge>
+                      );
+                    }
+                    
+                    return oppsToRender.map((opp: any, index: number) => (
+                      <div key={index} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-semibold">{opp.category}</div>
+                            <div className="text-sm text-muted-foreground">{opp.timeframe}</div>
+                          </div>
+                          <Badge variant="secondary" className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                            {opp.confidence}% confidence
+                          </Badge>
+                        </div>
+                        
+                        <div className="text-sm">{opp.description}</div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Potential Revenue:</span>
+                          <span className="font-bold text-green-600">+£{opp.potentialRevenue}M</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Implementation Cost:</span>
+                          <span className="text-orange-600">£{opp.implementationCost}M</span>
+                        </div>
+                        
+                        <div className="text-xs text-muted-foreground">
+                          Routes: {opp.routes?.join(', ') || 'N/A'}
+                        </div>
                       </div>
-                      
-                      <div className="text-sm">{opp.description}</div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Potential Revenue:</span>
-                        <span className="font-bold text-green-600">+£{opp.potentialRevenue}M</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Implementation Cost:</span>
-                        <span className="text-orange-600">£{opp.implementationCost}M</span>
-                      </div>
-                      
-                      <div className="text-xs text-muted-foreground">
-                        Routes: {opp.routes.join(', ')}
-                      </div>
-                    </div>
-                  ))}
+                    ));
+                  })()}
                 </div>
               </CardContent>
             </Card>
