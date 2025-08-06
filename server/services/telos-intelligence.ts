@@ -105,7 +105,7 @@ export class TelosIntelligenceService {
           totalFlights: count(),
           avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor})`
         })
-        .from(flightPerformance)
+        .from(flight_performance)
         .where(
           and(
             eq(flight_performance.route_id, routeId),

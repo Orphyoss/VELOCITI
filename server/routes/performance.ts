@@ -11,11 +11,10 @@ export async function performanceRoutes(app: Express): Promise<void> {
       
       console.log(`[API] GET /routes/performance - route: ${route}, days: ${days}, limit: ${limit}`);
       
-      // Get flight performance data from database
-      const performanceData = await storage.getFlightPerformance(
+      // Get route performance data from database
+      const performanceData = await storage.getRoutePerformance(
         route as string | undefined,
-        parseInt(days as string) || 7,
-        parseInt(limit as string) || 50
+        parseInt(days as string) || 7
       );
       
       const duration = Date.now() - startTime;
