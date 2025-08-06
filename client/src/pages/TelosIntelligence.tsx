@@ -131,51 +131,46 @@ export default function TelosIntelligence() {
   }, [competitiveRoute]);
 
   // Fetch comprehensive metrics data from the new analytics framework with error handling
-  const { data: systemMetrics, error: systemError } = useQuery({
+  const { data: systemMetrics, error: systemError, isLoading: systemLoading } = useQuery({
     queryKey: ['/api/metrics/system-performance'],
     refetchInterval: 30000, // Refresh every 30 seconds
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 15000, // Consider data fresh for 15 seconds
     onError: (error) => {
       console.error('[TelosIntelligence] System metrics error:', error);
     }
   });
 
-  const { data: aiMetrics, error: aiError } = useQuery({
+  const { data: aiMetrics, error: aiError, isLoading: aiLoading } = useQuery({
     queryKey: ['/api/metrics/ai-accuracy'],
     refetchInterval: 60000, // Refresh every minute
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 30000,
     onError: (error) => {
       console.error('[TelosIntelligence] AI metrics error:', error);
     }
   });
 
-  const { data: businessMetrics, error: businessError } = useQuery({
+  const { data: businessMetrics, error: businessError, isLoading: businessLoading } = useQuery({
     queryKey: ['/api/metrics/business-impact'],
     refetchInterval: 60000,
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 30000,
     onError: (error) => {
       console.error('[TelosIntelligence] Business metrics error:', error);
     }
   });
 
-  const { data: userMetrics, error: userError } = useQuery({
+  const { data: userMetrics, error: userError, isLoading: userLoading } = useQuery({
     queryKey: ['/api/metrics/user-adoption'],
     refetchInterval: 120000, // Refresh every 2 minutes
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 60000,
     onError: (error) => {
       console.error('[TelosIntelligence] User metrics error:', error);
     }
   });
 
-  const { data: metricsAlerts, error: alertsError } = useQuery({
+  const { data: metricsAlerts, error: alertsError, isLoading: alertsLoading } = useQuery({
     queryKey: ['/api/metrics/alerts'],
     refetchInterval: 15000, // Refresh every 15 seconds for alerts
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 10000,
     onError: (error) => {
       console.error('[TelosIntelligence] Alerts metrics error:', error);
     }
@@ -185,8 +180,7 @@ export default function TelosIntelligence() {
   const { data: insights, isLoading: insightsLoading, error: insightsError } = useQuery<IntelligenceAlert[]>({
     queryKey: ['/api/telos/insights'],
     refetchInterval: 300000, // Refresh every 5 minutes
-    retry: 3,
-    retryDelay: 1000,
+    staleTime: 120000, // 2 minutes
     onError: (error) => {
       console.error('[TelosIntelligence] Intelligence insights error:', error);
     }
@@ -199,7 +193,7 @@ export default function TelosIntelligence() {
       console.log(`[TelosIntelligence] Fetching competitive data for route: ${competitiveRoute}`);
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
         
         const response = await fetch(`/api/telos/competitive-position?routeId=${competitiveRoute}`, {
           signal: controller.signal,
