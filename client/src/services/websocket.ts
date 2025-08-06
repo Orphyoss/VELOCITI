@@ -71,6 +71,11 @@ class WebSocketService {
         if (error instanceof Event && error.type === 'error') {
           console.log('[WebSocket] Handled WebSocket error event gracefully');
         }
+        
+        // Close the connection to trigger proper reconnection
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.close();
+        }
       };
 
     } catch (error) {
@@ -112,30 +117,26 @@ class WebSocketService {
   }
 
   private attemptReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(`[WebSocket] Attempting to reconnect (non-blocking)... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-      
-      // Exponential backoff with max delay of 30 seconds
-      const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
-      
-      setTimeout(() => {
-        try {
-          if (this.reconnectAttempts <= this.maxReconnectAttempts) {
-            this.connect();
-          }
-        } catch (error) {
-          console.warn('[WebSocket] Reconnection attempt failed (non-blocking):', error);
-          // Continue gracefully - don't crash the app
-          if (this.reconnectAttempts < this.maxReconnectAttempts) {
-            this.attemptReconnect();
-          }
-        }
-      }, delay);
-    } else {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       console.log('[WebSocket] Max reconnection attempts reached. Disabling automatic reconnection.');
       useVelocitiStore.getState().setConnectionStatus(false);
+      return;
     }
+
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000); // Reduced max delay to 10s
+    console.log(`[WebSocket] Attempting to reconnect (non-blocking)... (${this.reconnectAttempts + 1}/${this.maxReconnectAttempts})`);
+    
+    this.reconnectTimeout = setTimeout(() => {
+      this.reconnectAttempts++;
+      // Only reconnect if we're not already connected
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.connect();
+      }
+    }, delay);
   }
 
   sendMessage(message: any) {
