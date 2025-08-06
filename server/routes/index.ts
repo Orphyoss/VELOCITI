@@ -7,6 +7,8 @@ import { agentRoutes } from "./agents";
 import { metricsRoutes } from "./metrics";
 import { debugRoutes } from "./debug";
 import { dashboardRoutes } from "./dashboard";
+import { telosRoutes } from "./telos";
+import { performanceRoutes } from "./performance";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -32,6 +34,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await agentRoutes(app);
   await metricsRoutes(app);
   await dashboardRoutes(app);
+  await telosRoutes(app);
+  await performanceRoutes(app);
   await debugRoutes(app);
 
   console.log("✅ All routes registered successfully");

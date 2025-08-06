@@ -119,6 +119,31 @@ router.get('/intelligence-alerts', async (req, res) => {
 });
 
 /**
+ * GET /api/telos/route-dashboard
+ * Get route dashboard data
+ */
+router.get('/route-dashboard', async (req, res) => {
+  const startTime = Date.now();
+  try {
+    console.log('[API] GET /route-dashboard - generating route dashboard data');
+    
+    const dashboard = await telosIntelligenceService.getRouteDashboard('LGW-BCN');
+    
+    const duration = Date.now() - startTime;
+    console.log(`[API] Route dashboard request completed in ${duration}ms`);
+    
+    res.json(dashboard);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error(`[API] Failed to get route dashboard (${duration}ms):`, error);
+    res.status(500).json({ 
+      error: 'Failed to retrieve route dashboard data',
+      details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    });
+  }
+});
+
+/**
  * GET /api/telos/daily-summary
  * Get comprehensive daily intelligence dashboard
  */
