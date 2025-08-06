@@ -183,13 +183,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize agents
   await agentService.initializeAgents();
 
-  // Initialize metrics monitoring
-  metricsMonitoring.setWebSocketService(wsService);
-  metricsMonitoring.startMonitoring();
+  // DISABLED: Metrics monitoring was generating repetitive low-quality alerts
+  // Focus on AI agent generated alerts for airline intelligence instead
+  // metricsMonitoring.setWebSocketService(wsService);
+  // metricsMonitoring.startMonitoring();
 
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Cleanup metrics-generated junk alerts
+  app.delete("/api/alerts/cleanup-metrics", async (req, res) => {
+    try {
+      const storage = await getStorage();
+      
+      // Delete alerts with repetitive system monitoring titles
+      const junkTitles = [
+        'Insight Accuracy Rate Alert',
+        'Analyst Time Savings Alert', 
+        'AI insight accuracy has fallen below acceptable levels',
+        'Analyst time savings are below expectations',
+        'Competitive alert precision is declining',
+        'AI confidence scores are dropping'
+      ];
+      
+      let deletedCount = 0;
+      for (const title of junkTitles) {
+        const { client } = await import('./db.js');
+        const result = await client`
+          DELETE FROM alerts 
+          WHERE title LIKE ${`%${title}%`} OR description LIKE ${`%${title}%`}
+        `;
+        deletedCount += result.count || 0;
+      }
+      
+      res.json({ 
+        success: true, 
+        deletedCount, 
+        message: `Cleaned up ${deletedCount} repetitive system monitoring alerts` 
+      });
+    } catch (error) {
+      console.error('Error cleaning up metrics alerts:', error);
+      res.status(500).json({ error: 'Failed to clean up alerts' });
+    }
   });
 
   // PRODUCTION DEBUG ENDPOINTS - Added to diagnose deployment issues
