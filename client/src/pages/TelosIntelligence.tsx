@@ -617,9 +617,7 @@ export default function TelosIntelligence() {
                       ? [...performance].sort((a, b) => (b.avgLoadFactor || 0) - (a.avgLoadFactor || 0))
                       : [];
                     
-                    console.log('[TelosIntelligence] Top routes sorted by load factor:', 
-                      sortedRoutes.slice(0, 3).map(r => `${r.routeId}: ${r.avgLoadFactor}%`)
-                    );
+                    // Debug: Top routes sorted by load factor (removed console spam)
                     
                     return sortedRoutes.slice(0, 3).map((route: any, index: number) => (
                       <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">
@@ -661,9 +659,7 @@ export default function TelosIntelligence() {
                       ? [...performance].sort((a, b) => (a.avgLoadFactor || 0) - (b.avgLoadFactor || 0))
                       : [];
                     
-                    console.log('[TelosIntelligence] Bottom routes sorted by load factor:', 
-                      sortedRoutes.slice(0, 3).map(r => `${r.routeId}: ${r.avgLoadFactor}%`)
-                    );
+                    // Debug: Bottom routes sorted by load factor (removed console spam)
                     
                     return sortedRoutes.slice(0, 3).map((route: any, index: number) => (
                       <div key={index} className="flex items-center justify-between bg-dark-800 rounded-lg p-2 hover:bg-dark-700 transition-colors">

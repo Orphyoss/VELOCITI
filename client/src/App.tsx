@@ -26,6 +26,7 @@ function Router() {
     <Switch>
       <Route path="/" component={TelosIntelligence} />
       <Route path="/telos" component={TelosIntelligence} />
+      <Route path="/intelligence" component={TelosIntelligence} />
 
       <Route path="/workbench" component={AnalystWorkbench} />
       <Route path="/agents" component={Agents} />
