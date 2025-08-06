@@ -34,6 +34,13 @@ export default function AnalystWorkbench() {
     refetchOnMount: true,
     refetchInterval: false, // No automatic refetching
     retry: 1,
+    select: (data: Alert[]) => {
+      // Ensure no duplicates at query level
+      if (!Array.isArray(data)) return [];
+      return data.filter((alert: Alert, index: number, self: Alert[]) => 
+        self.findIndex(a => a.id === alert.id) === index
+      );
+    }
   });
 
   // Temporarily disable these additional queries to reduce load
@@ -43,35 +50,49 @@ export default function AnalystWorkbench() {
   // Priority order for sorting
   const priorityOrder = { 'critical': 1, 'high': 2, 'medium': 3, 'low': 4 };
 
-  // Clean alert display - no debugging clutter
-  const displayAlerts = allAlerts && Array.isArray(allAlerts) ? allAlerts.filter((alert: Alert) => {
-    if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
-    if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
-    if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
-    if (searchQuery) {
-      const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
-      const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
-      const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
-      if (!titleMatch && !descriptionMatch && !messageMatch) return false;
-    }
-    return true;
-  }).sort((a: Alert, b: Alert) => {
-    const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
-                        (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
-    if (priorityDiff !== 0) return priorityDiff;
-    return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
-  }) : [];
-
-
-
-  // Apply same sorting to other alert lists
-  const sortAlerts = (alerts: Alert[]) => {
-    return alerts.sort((a: Alert, b: Alert) => {
+  // Clean alert display with deduplication by ID
+  const displayAlerts = allAlerts && Array.isArray(allAlerts) ? 
+    // First deduplicate by alert ID
+    allAlerts.filter((alert: Alert, index: number, self: Alert[]) => 
+      self.findIndex(a => a.id === alert.id) === index
+    )
+    // Then apply filters
+    .filter((alert: Alert) => {
+      if (priorityFilter !== 'all' && alert.priority !== priorityFilter) return false;
+      if (categoryFilter !== 'all' && alert.category !== categoryFilter) return false;
+      if (statusFilter !== 'all' && alert.status !== statusFilter) return false;
+      if (searchQuery) {
+        const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
+        const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
+        if (!titleMatch && !descriptionMatch && !messageMatch) return false;
+      }
+      return true;
+    })
+    // Finally sort
+    .sort((a: Alert, b: Alert) => {
       const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
                           (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
       if (priorityDiff !== 0) return priorityDiff;
       return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
-    });
+    }) : [];
+
+
+
+  // Apply deduplication and sorting to all alert lists
+  const sortAlerts = (alerts: Alert[]) => {
+    return alerts
+      // Deduplicate by ID first
+      .filter((alert: Alert, index: number, self: Alert[]) => 
+        self.findIndex(a => a.id === alert.id) === index
+      )
+      // Then sort
+      .sort((a: Alert, b: Alert) => {
+        const priorityDiff = (priorityOrder[a.priority as keyof typeof priorityOrder] || 5) - 
+                            (priorityOrder[b.priority as keyof typeof priorityOrder] || 5);
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime();
+      });
   };
 
   const activeAlerts = sortAlerts(allAlerts?.filter((alert: Alert) => alert.status === 'active') || []);
