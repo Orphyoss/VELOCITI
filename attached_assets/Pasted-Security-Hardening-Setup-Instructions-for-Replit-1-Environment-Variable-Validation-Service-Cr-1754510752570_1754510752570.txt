@@ -1,0 +1,242 @@
+Security Hardening Setup Instructions for Replit
+
+  1. Environment Variable Validation Service
+
+  Create server/services/configValidator.ts:
+
+  import { z } from 'zod';
+
+  const envSchema = z.object({
+    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+    OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
+    WRITER_API_KEY: z.string().optional(),
+    PINECONE_API_KEY: z.string().optional(),
+    PORT: z.string().default('5000'),
+  });
+
+  export type Env = z.infer<typeof envSchema>;
+
+  export function validateEnv(): Env {
+    const result = envSchema.safeParse(process.env);
+
+    if (!result.success) {
+      console.error('❌ Invalid environment configuration:');
+      result.error.issues.forEach(issue => {
+        console.error(`  - ${issue.path.join('.')}: ${issue.message}`);
+      });
+      process.exit(1);
+    }
+
+    return result.data;
+  }
+
+  export const config = validateEnv();
+
+  2. Remove Hardcoded API Keys
+
+  In server/services/llm.ts - Replace line 100:
+  // BEFORE:
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "sk-default-key"
+  });
+
+  // AFTER:
+  import { config } from './configValidator';
+  const openai = new OpenAI({
+    apiKey: config.OPENAI_API_KEY
+  });
+
+  In server/services/writerService.ts - Replace line 9:
+  // BEFORE:
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "sk-default-key"
+
+  // AFTER:
+  import { config } from './configValidator';
+  apiKey: config.OPENAI_API_KEY
+
+  In server/services/enhancedLlmService.ts - Replace line 9:
+  // BEFORE:
+  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "sk-default-key"
+
+  // AFTER:
+  import { config } from './configValidator';
+  apiKey: config.OPENAI_API_KEY
+
+  3. Request Validation Middleware
+
+  Create server/middleware/validation.ts:
+
+  import { Request, Response, NextFunction } from 'express';
+  import { z, ZodSchema } from 'zod';
+
+  export const validateRequest = (schema: {
+    body?: ZodSchema;
+    query?: ZodSchema;
+    params?: ZodSchema;
+  }) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      try {
+        if (schema.body) {
+          req.body = schema.body.parse(req.body);
+        }
+        if (schema.query) {
+          req.query = schema.query.parse(req.query);
+        }
+        if (schema.params) {
+          req.params = schema.params.parse(req.params);
+        }
+        next();
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({
+            error: 'Validation failed',
+            details: error.errors
+          });
+        }
+        next(error);
+      }
+    };
+  };
+
+  4. Security Middleware
+
+  Create server/middleware/security.ts:
+
+  import rateLimit from 'express-rate-limit';
+  import helmet from 'helmet';
+  import cors from 'cors';
+
+  // Rate limiting
+  export const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  export const strictLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10, // stricter limit for sensitive endpoints
+    message: 'Rate limit exceeded for this endpoint',
+  });
+
+  // CORS configuration
+  export const corsOptions = {
+    origin: process.env.NODE_ENV === 'production'
+      ? ['https://your-domain.com'] // Replace with actual domain
+      : ['http://localhost:3000', 'http://localhost:5000'],
+    credentials: true,
+    optionsSuccessStatus: 200
+  };
+
+  // Security headers
+  export const securityHeaders = helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+  });
+
+  5. Sanitization Middleware
+
+  Create server/middleware/sanitization.ts:
+
+  import { Request, Response, NextFunction } from 'express';
+  import DOMPurify from 'isomorphic-dompurify';
+
+  export const sanitizeInput = (req: Request, res: Response, next: NextFunction) => {
+    const sanitizeValue = (value: any): any => {
+      if (typeof value === 'string') {
+        return DOMPurify.sanitize(value);
+      }
+      if (Array.isArray(value)) {
+        return value.map(sanitizeValue);
+      }
+      if (value && typeof value === 'object') {
+        const sanitized: any = {};
+        for (const [key, val] of Object.entries(value)) {
+          sanitized[key] = sanitizeValue(val);
+        }
+        return sanitized;
+      }
+      return value;
+    };
+
+    if (req.body) {
+      req.body = sanitizeValue(req.body);
+    }
+    if (req.query) {
+      req.query = sanitizeValue(req.query);
+    }
+
+    next();
+  };
+
+  6. Remove Debug Route Security Exposure
+
+  In server/routes.ts, find the debug endpoint around line 2228 and replace:
+
+  // BEFORE:
+  NODE_ENV: process.env.NODE_ENV,
+  DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'MISSING',
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'MISSING',
+  PINECONE_API_KEY: process.env.PINECONE_API_KEY ? 'SET' : 'MISSING',
+  WRITER_API_KEY: process.env.WRITER_API_KEY ? 'SET' : 'MISSING',
+
+  // AFTER:
+  NODE_ENV: config.NODE_ENV,
+  DATABASE_URL: 'CONFIGURED',
+  OPENAI_API_KEY: 'CONFIGURED',
+  PINECONE_API_KEY: config.PINECONE_API_KEY ? 'CONFIGURED' : 'NOT_SET',
+  WRITER_API_KEY: config.WRITER_API_KEY ? 'CONFIGURED' : 'NOT_SET',
+
+  7. Apply Security Middleware to Server
+
+  In server/index.ts, add after line 10:
+
+  import { apiLimiter, corsOptions, securityHeaders } from './middleware/security';
+  import { sanitizeInput } from './middleware/sanitization';
+  import cors from 'cors';
+
+  // Apply security middleware
+  app.use(securityHeaders);
+  app.use(cors(corsOptions));
+  app.use(apiLimiter);
+  app.use(sanitizeInput);
+
+  8. Required Dependencies
+
+  Add to package.json dependencies:
+  {
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "cors": "^2.8.5",
+    "isomorphic-dompurify": "^2.8.0"
+  }
+
+  9. Replit Secrets Setup
+
+  In Replit, go to Tools → Secrets and ensure these are set:
+  - DATABASE_URL: Your Supabase connection string
+  - OPENAI_API_KEY: Your OpenAI API key (starts with sk-)
+  - WRITER_API_KEY: Your Writer API key (optional)
+  - PINECONE_API_KEY: Your Pinecone API key (optional)
+
+  Implementation Order:
+
+  1. Create configValidator.ts first
+  2. Update all service files to use the validator
+  3. Add security dependencies
+  4. Create middleware files
+  5. Apply middleware to server
+  6. Remove debug route exposure
+  7. Test with Replit's environment
+
+  This approach ensures no breaking changes and maintains your existing functionality while
+  securing the application.
