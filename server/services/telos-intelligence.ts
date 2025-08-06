@@ -1,7 +1,7 @@
 // Telos Intelligence Platform - Data Service
 // Provides analytics and insights for airline revenue management
 
-import { db } from './supabase.js';
+import { db } from './supabase';
 import { desc, eq, gte, lte, and, count, avg, sum, sql } from "drizzle-orm";
 import {
   competitive_pricing,
@@ -11,7 +11,7 @@ import {
   intelligence_insights,
   routes,
   airlines
-} from "../../shared/schema.js";
+} from "../../shared/schema";
 
 export class TelosIntelligenceService {
   // Get competitive pricing analysis for a route
@@ -23,20 +23,20 @@ export class TelosIntelligenceService {
       const results = await db
         .select({
           airlineCode: competitive_pricing.airline_code,
-          avgPrice: sql<string>`AVG(${competitive_pricing.priceAmount}::numeric)`,
-          minPrice: sql<string>`MIN(${competitive_pricing.priceAmount}::numeric)`,
-          maxPrice: sql<string>`MAX(${competitive_pricing.priceAmount}::numeric)`,
+          avgPrice: sql<string>`AVG(${competitive_pricing.price_amount})`,
+          minPrice: sql<string>`MIN(${competitive_pricing.price_amount})`,
+          maxPrice: sql<string>`MAX(${competitive_pricing.price_amount})`,
           observationCount: count()
         })
         .from(competitive_pricing)
         .where(
           and(
             eq(competitive_pricing.route_id, routeId),
-            gte(competitive_pricing.observationDate, cutoffDate.toISOString().slice(0, 10))
+            gte(competitive_pricing.observation_date, cutoffDate.toISOString().slice(0, 10))
           )
         )
         .groupBy(competitive_pricing.airline_code)
-        .orderBy(desc(sql`AVG(${competitive_pricing.priceAmount}::numeric)`));
+        .orderBy(desc(sql`AVG(${competitive_pricing.price_amount})`));
 
       return results;
     } catch (error) {
@@ -54,19 +54,19 @@ export class TelosIntelligenceService {
       const results = await db
         .select({
           airlineCode: market_capacity.airline_code,
-          totalFlights: sum(market_capacity.numFlights),
-          totalSeats: sum(market_capacity.numSeats),
-          avgFlightsPerDay: sql<number>`${sum(market_capacity.numFlights)} / ${days}`
+          totalFlights: sum(market_capacity.num_flights),
+          total_seats: sum(market_capacity.num_seats),
+          avgFlightsPerDay: sql<number>`${sum(market_capacity.num_flights)} / ${days}`
         })
-        .from(marketCapacity)
+        .from(market_capacity)
         .where(
           and(
             eq(market_capacity.route_id, routeId),
-            gte(market_capacity.flightDate, cutoffDate.toISOString().slice(0, 10))
+            gte(market_capacity.flight_date, cutoffDate.toISOString().slice(0, 10))
           )
         )
         .groupBy(market_capacity.airline_code)
-        .orderBy(desc(sql`SUM(${market_capacity.numSeats})`));
+        .orderBy(desc(sql`SUM(${market_capacity.num_seats})`));
 
       return results;
     } catch (error) {
@@ -84,9 +84,9 @@ export class TelosIntelligenceService {
       // Get EasyJet's pricing performance
       const ezyPricing = await db
         .select({
-          avgPrice: sql<string>`AVG(${competitive_pricing.priceAmount}::numeric)`,
-          minPrice: sql<string>`MIN(${competitive_pricing.priceAmount}::numeric)`,
-          maxPrice: sql<string>`MAX(${competitive_pricing.priceAmount}::numeric)`,
+          avgPrice: sql<string>`AVG(${competitive_pricing.price_amount})`,
+          minPrice: sql<string>`MIN(${competitive_pricing.price_amount})`,
+          maxPrice: sql<string>`MAX(${competitive_pricing.price_amount})`,
           observationCount: count()
         })
         .from(competitive_pricing)
@@ -94,22 +94,22 @@ export class TelosIntelligenceService {
           and(
             eq(competitive_pricing.route_id, routeId),
             eq(competitive_pricing.airline_code, 'EZY'),
-            gte(competitive_pricing.observationDate, cutoffDate.toISOString().slice(0, 10))
+            gte(competitive_pricing.observation_date, cutoffDate.toISOString().slice(0, 10))
           )
         );
 
       // Get EasyJet's authentic flight performance data
       const ezyCapacity = await db
         .select({
-          totalSeats: sql<string>`SUM(${flight_performance.totalSeats}::numeric)`,
+          total_seats: sql<string>`SUM(${flight_performance.total_seats})`,
           totalFlights: count(),
-          avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor}::numeric)`
+          avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor})`
         })
         .from(flightPerformance)
         .where(
           and(
             eq(flight_performance.route_id, routeId),
-            gte(flight_performance.flightDate, cutoffDate.toISOString().slice(0, 10))
+            gte(flight_performance.flight_date, cutoffDate.toISOString().slice(0, 10))
           )
         );
 
@@ -122,11 +122,11 @@ export class TelosIntelligenceService {
 
       // Calculate performance metrics from available data
       const avgPrice = parseFloat(pricing.avgPrice || '0');
-      const totalSeats = parseInt(capacity.totalSeats || '0');
+      const total_seats = parseInt(capacity.total_seats || '0');
       const loadFactor = parseFloat(capacity.avgLoadFactor || '0');
       
       // Estimate revenue and yield
-      const estimatedPax = Math.round(totalSeats * (loadFactor / 100));
+      const estimatedPax = Math.round(total_seats * (loadFactor / 100));
       const estimatedRevenue = estimatedPax * avgPrice;
       const yieldPerPax = avgPrice; // Price per passenger is yield approximation
 
@@ -317,7 +317,7 @@ export class TelosIntelligenceService {
       const easyjetCapacity = capacity.find(c => c.airline_code === 'EZY');
       
       const totalMarketSeats = capacity.reduce((sum: number, carrier: any) => 
-        sum + (Number(carrier.totalSeats) || 0), 0);
+        sum + (Number(carrier.total_seats) || 0), 0);
       
       const competitorPrices = pricing.filter(p => p.airline_code !== 'EZY');
       const avgCompetitorPrice = competitorPrices.length > 0 ? 
@@ -332,10 +332,10 @@ export class TelosIntelligenceService {
           priceRank: pricing.findIndex(p => p.airline_code === 'EZY') + 1
         },
         marketShare: {
-          easyjetSeats: Number(easyjetCapacity?.totalSeats || 0),
+          easyjetSeats: Number(easyjetCapacity?.total_seats || 0),
           totalMarketSeats,
           marketSharePct: totalMarketSeats > 0 ? 
-            (Number(easyjetCapacity?.totalSeats || 0) / totalMarketSeats * 100) : 0,
+            (Number(easyjetCapacity?.total_seats || 0) / totalMarketSeats * 100) : 0,
           capacityRank: capacity.findIndex(c => c.airline_code === 'EZY') + 1
         },
         competitorCount: pricing.length

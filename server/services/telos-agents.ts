@@ -97,7 +97,7 @@ export class CompetitiveIntelligenceAgent {
           priceGapPercent: position.priceGapPercent,
           easyjetPrice: position.easyjetAvgPrice,
           ryanairPrice: position.ryanairAvgPrice,
-          observationDate: position.observationDate,
+          observation_date: position.observation_date,
           competitorCount: position.competitorCount
         },
         insertDate: new Date().toISOString()
@@ -251,7 +251,7 @@ export class PerformanceIntelligenceAgent {
           revenueTotal: performance.revenueTotal,
           yieldPerPax: performance.yieldPerPax,
           performanceVsForecast: performance.performanceVsForecast,
-          flightDate: performance.flightDate
+          flight_date: performance.flight_date
         },
         insertDate: new Date().toISOString()
       };

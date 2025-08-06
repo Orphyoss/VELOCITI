@@ -12,6 +12,7 @@ Preferred communication style: Simple, everyday language.
 - **RESOLVED**: Fixed critical Analyst Workbench infinite loop issue caused by multiple components calling alerts API simultaneously
 - **RESOLVED**: Fixed 7-day network performance loading issue in production via redeployment
 - **RESOLVED**: Completed comprehensive database schema standardization to snake_case, eliminating mixed camelCase/snake_case naming conventions across all tables and resolving critical import/export errors and SQL syntax issues
+- **RESOLVED**: Fixed critical TypeScript configuration issues including problematic "allowImportingTsExtensions" setting that was causing build/runtime mismatches and standardized import patterns across server files
 - Implemented AlertScheduler service running every 45 minutes for continuous fresh alert generation
 - Added alert limit selector (50-1.5K alerts) allowing users to view more than default 100 alerts
 - Alert generation system now creating diverse realistic scenarios: competitive, performance, network, demand, and operational alerts

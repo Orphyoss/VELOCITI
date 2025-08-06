@@ -21,12 +21,12 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { eq, desc } from "drizzle-orm";
-import { metricsMonitoring } from "./services/metricsMonitoring.js";
-import { TelosIntelligenceService } from "./services/telos-intelligence.js";
-import { logger, logAPI } from "./services/logger.js";
-import { duplicatePreventionService } from "./services/duplicatePreventionService.js";
-import { db } from "./services/supabase.js";
-import { alertScheduler } from "./services/alertScheduler.js";
+import { metricsMonitoring } from "./services/metricsMonitoring";
+import { TelosIntelligenceService } from "./services/telos-intelligence";
+import { logger, logAPI } from "./services/logger";
+import { duplicatePreventionService } from "./services/duplicatePreventionService";
+import { db } from "./services/supabase";
+import { alertScheduler } from "./services/alertScheduler";
 import OpenAI from 'openai';
 
 // Function to calculate real dashboard metrics from actual data
