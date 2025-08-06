@@ -13,6 +13,7 @@ import { yieldRoutes } from "./yield";
 import { briefingRoutes } from "./briefing";
 import { documentsRoutes } from "./documents";
 import { adminRoutes } from "./admin";
+import { dataGenerationRoutes } from "./dataGeneration";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
@@ -44,6 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await briefingRoutes(app);
   await documentsRoutes(app);
   await adminRoutes(app);
+  await dataGenerationRoutes(app);
   await debugRoutes(app);
 
   console.log("✅ All routes registered successfully");
