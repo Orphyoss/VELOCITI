@@ -120,7 +120,7 @@ class WriterService {
 Route Performance:
 - Route: ${routeData.route || 'Unknown'}
 - Current Yield: ${routeData.yield || 'N/A'}
-- Load Factor: ${routeData.loadFactor || 'N/A'}
+- Load Factor: ${routeData.load_factor || 'N/A'}
 - Revenue vs Forecast: ${routeData.revenueVsForecast || 'N/A'}
 
 Competitor Analysis:

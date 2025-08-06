@@ -4,11 +4,11 @@
 import { db } from './supabase.js';
 import { desc, eq, gte, lte, and, count, avg, sum, sql } from "drizzle-orm";
 import {
-  competitivePricing,
-  marketCapacity,
-  webSearchData,
-  flightPerformance,
-  intelligenceInsights,
+  competitive_pricing,
+  market_capacity,
+  web_search_data,
+  flight_performance,
+  intelligence_insights,
   routes,
   airlines
 } from "../../shared/schema.js";
@@ -22,21 +22,21 @@ export class TelosIntelligenceService {
     try {
       const results = await db
         .select({
-          airlineCode: competitivePricing.airlineCode,
-          avgPrice: sql<string>`AVG(${competitivePricing.priceAmount}::numeric)`,
-          minPrice: sql<string>`MIN(${competitivePricing.priceAmount}::numeric)`,
-          maxPrice: sql<string>`MAX(${competitivePricing.priceAmount}::numeric)`,
+          airlineCode: competitive_pricing.airline_code,
+          avgPrice: sql<string>`AVG(${competitive_pricing.priceAmount}::numeric)`,
+          minPrice: sql<string>`MIN(${competitive_pricing.priceAmount}::numeric)`,
+          maxPrice: sql<string>`MAX(${competitive_pricing.priceAmount}::numeric)`,
           observationCount: count()
         })
-        .from(competitivePricing)
+        .from(competitive_pricing)
         .where(
           and(
-            eq(competitivePricing.routeId, routeId),
-            gte(competitivePricing.observationDate, cutoffDate.toISOString().slice(0, 10))
+            eq(competitive_pricing.route_id, routeId),
+            gte(competitive_pricing.observationDate, cutoffDate.toISOString().slice(0, 10))
           )
         )
-        .groupBy(competitivePricing.airlineCode)
-        .orderBy(desc(sql`AVG(${competitivePricing.priceAmount}::numeric)`));
+        .groupBy(competitive_pricing.airline_code)
+        .orderBy(desc(sql`AVG(${competitive_pricing.priceAmount}::numeric)`));
 
       return results;
     } catch (error) {
@@ -53,20 +53,20 @@ export class TelosIntelligenceService {
     try {
       const results = await db
         .select({
-          airlineCode: marketCapacity.airlineCode,
-          totalFlights: sum(marketCapacity.numFlights),
-          totalSeats: sum(marketCapacity.numSeats),
-          avgFlightsPerDay: sql<number>`${sum(marketCapacity.numFlights)} / ${days}`
+          airlineCode: market_capacity.airline_code,
+          totalFlights: sum(market_capacity.numFlights),
+          totalSeats: sum(market_capacity.numSeats),
+          avgFlightsPerDay: sql<number>`${sum(market_capacity.numFlights)} / ${days}`
         })
         .from(marketCapacity)
         .where(
           and(
-            eq(marketCapacity.routeId, routeId),
-            gte(marketCapacity.flightDate, cutoffDate.toISOString().slice(0, 10))
+            eq(market_capacity.route_id, routeId),
+            gte(market_capacity.flightDate, cutoffDate.toISOString().slice(0, 10))
           )
         )
-        .groupBy(marketCapacity.airlineCode)
-        .orderBy(desc(sql`SUM(${marketCapacity.numSeats})`));
+        .groupBy(market_capacity.airline_code)
+        .orderBy(desc(sql`SUM(${market_capacity.numSeats})`));
 
       return results;
     } catch (error) {
@@ -84,32 +84,32 @@ export class TelosIntelligenceService {
       // Get EasyJet's pricing performance
       const ezyPricing = await db
         .select({
-          avgPrice: sql<string>`AVG(${competitivePricing.priceAmount}::numeric)`,
-          minPrice: sql<string>`MIN(${competitivePricing.priceAmount}::numeric)`,
-          maxPrice: sql<string>`MAX(${competitivePricing.priceAmount}::numeric)`,
+          avgPrice: sql<string>`AVG(${competitive_pricing.priceAmount}::numeric)`,
+          minPrice: sql<string>`MIN(${competitive_pricing.priceAmount}::numeric)`,
+          maxPrice: sql<string>`MAX(${competitive_pricing.priceAmount}::numeric)`,
           observationCount: count()
         })
-        .from(competitivePricing)
+        .from(competitive_pricing)
         .where(
           and(
-            eq(competitivePricing.routeId, routeId),
-            eq(competitivePricing.airlineCode, 'EZY'),
-            gte(competitivePricing.observationDate, cutoffDate.toISOString().slice(0, 10))
+            eq(competitive_pricing.route_id, routeId),
+            eq(competitive_pricing.airline_code, 'EZY'),
+            gte(competitive_pricing.observationDate, cutoffDate.toISOString().slice(0, 10))
           )
         );
 
       // Get EasyJet's authentic flight performance data
       const ezyCapacity = await db
         .select({
-          totalSeats: sql<string>`SUM(${flightPerformance.totalSeats}::numeric)`,
+          totalSeats: sql<string>`SUM(${flight_performance.totalSeats}::numeric)`,
           totalFlights: count(),
-          avgLoadFactor: sql<string>`AVG(${flightPerformance.loadFactor}::numeric)`
+          avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor}::numeric)`
         })
         .from(flightPerformance)
         .where(
           and(
-            eq(flightPerformance.routeId, routeId),
-            gte(flightPerformance.flightDate, cutoffDate.toISOString().slice(0, 10))
+            eq(flight_performance.route_id, routeId),
+            gte(flight_performance.flightDate, cutoffDate.toISOString().slice(0, 10))
           )
         );
 
@@ -155,13 +155,13 @@ export class TelosIntelligenceService {
     try {
       const routes = await db
         .selectDistinct({
-          routeId: competitivePricing.routeId
+          routeId: competitive_pricing.route_id
         })
-        .from(competitivePricing)
-        .where(eq(competitivePricing.airlineCode, 'EZY'))
-        .orderBy(competitivePricing.routeId);
+        .from(competitive_pricing)
+        .where(eq(competitive_pricing.airline_code, 'EZY'))
+        .orderBy(competitive_pricing.route_id);
 
-      return routes.map(r => r.routeId).filter(Boolean);
+      return routes.map(r => r.route_id).filter(Boolean);
     } catch (error) {
       console.error("Error in getAvailableRoutes:", error);
       return [];
@@ -176,13 +176,13 @@ export class TelosIntelligenceService {
     try {
       return await db
         .select()
-        .from(intelligenceInsights)
+        .from(intelligence_insights)
         .where(
-          gte(intelligenceInsights.insightDate, cutoffDate.toISOString().slice(0, 10))
+          gte(intelligence_insights.insight_date, cutoffDate.toISOString().slice(0, 10))
         )
         .orderBy(
-          desc(intelligenceInsights.insightDate),
-          desc(intelligenceInsights.confidenceScore)
+          desc(intelligence_insights.insight_date),
+          desc(intelligence_insights.confidence_score)
         )
         .limit(100);
     } catch (error) {
@@ -196,11 +196,11 @@ export class TelosIntelligenceService {
     try {
       let query = db
         .select()
-        .from(intelligenceInsights)
-        .where(eq(intelligenceInsights.actionTaken, false))
+        .from(intelligence_insights)
+        .where(eq(intelligence_insights.action_taken, false))
         .orderBy(
-          desc(intelligenceInsights.insightDate),
-          desc(intelligenceInsights.confidenceScore)
+          desc(intelligence_insights.insight_date),
+          desc(intelligence_insights.confidence_score)
         );
 
       return await query.limit(50);
@@ -218,14 +218,14 @@ export class TelosIntelligenceService {
     try {
       return await db
         .select()
-        .from(intelligenceInsights)
+        .from(intelligence_insights)
         .where(
           and(
-            eq(intelligenceInsights.routeId, routeId),
-            gte(intelligenceInsights.insightDate, cutoffDate.toISOString().slice(0, 10))
+            eq(intelligence_insights.route_id, routeId),
+            gte(intelligence_insights.insight_date, cutoffDate.toISOString().slice(0, 10))
           )
         )
-        .orderBy(desc(intelligenceInsights.insightDate));
+        .orderBy(desc(intelligence_insights.insight_date));
     } catch (error) {
       console.error("Error in getInsightsByRoute:", error);
       return [];
@@ -249,7 +249,7 @@ export class TelosIntelligenceService {
         .from(webSearchData)
         .where(
           and(
-            eq(webSearchData.routeId, routeId),
+            eq(webSearchData.route_id, routeId),
             gte(webSearchData.searchDate, cutoffDate.toISOString().slice(0, 10))
           )
         )
@@ -313,13 +313,13 @@ export class TelosIntelligenceService {
       }
       
       // Calculate EasyJet's position
-      const easyjetPricing = pricing.find(p => p.airlineCode === 'EZY');
-      const easyjetCapacity = capacity.find(c => c.airlineCode === 'EZY');
+      const easyjetPricing = pricing.find(p => p.airline_code === 'EZY');
+      const easyjetCapacity = capacity.find(c => c.airline_code === 'EZY');
       
       const totalMarketSeats = capacity.reduce((sum: number, carrier: any) => 
         sum + (Number(carrier.totalSeats) || 0), 0);
       
-      const competitorPrices = pricing.filter(p => p.airlineCode !== 'EZY');
+      const competitorPrices = pricing.filter(p => p.airline_code !== 'EZY');
       const avgCompetitorPrice = competitorPrices.length > 0 ? 
         competitorPrices.reduce((sum: number, p: any) => sum + (Number(p.avgPrice) || 0), 0) / competitorPrices.length : 0;
 
@@ -329,14 +329,14 @@ export class TelosIntelligenceService {
           easyjetPrice: Number(easyjetPricing?.avgPrice || 0),
           competitorAvgPrice: avgCompetitorPrice,
           priceAdvantage: Number(easyjetPricing?.avgPrice || 0) - avgCompetitorPrice,
-          priceRank: pricing.findIndex(p => p.airlineCode === 'EZY') + 1
+          priceRank: pricing.findIndex(p => p.airline_code === 'EZY') + 1
         },
         marketShare: {
           easyjetSeats: Number(easyjetCapacity?.totalSeats || 0),
           totalMarketSeats,
           marketSharePct: totalMarketSeats > 0 ? 
             (Number(easyjetCapacity?.totalSeats || 0) / totalMarketSeats * 100) : 0,
-          capacityRank: capacity.findIndex(c => c.airlineCode === 'EZY') + 1
+          capacityRank: capacity.findIndex(c => c.airline_code === 'EZY') + 1
         },
         competitorCount: pricing.length
       };

@@ -7,12 +7,12 @@
 import { db } from './supabase.js';
 import { sql, count, avg, sum, max, min, desc, asc, eq, gte, lte, and, or } from 'drizzle-orm';
 import {
-  intelligenceInsights,
+  intelligence_insights,
   systemMetrics,
-  competitivePricing,
-  flightPerformance,
-  webSearchData,
-  marketCapacity
+  competitive_pricing,
+  flight_performance,
+  web_search_data,
+  market_capacity
 } from '../../shared/schema.js';
 import { metricsRegistry, MetricCategory } from './metricsRegistry.js';
 
@@ -201,23 +201,23 @@ export class TelosMetricsCalculator {
       // Get intelligence insights data
       const insightsData = await db
         .select({
-          insightType: intelligenceInsights.insightType,
-          confidenceScore: intelligenceInsights.confidenceScore,
-          priorityLevel: intelligenceInsights.priorityLevel,
-          actionTaken: intelligenceInsights.actionTaken,
-          agentSource: intelligenceInsights.agentSource
+          insightType: intelligence_insights.insightType,
+          confidenceScore: intelligence_insights.confidence_score,
+          priorityLevel: intelligence_insights.priorityLevel,
+          actionTaken: intelligence_insights.action_taken,
+          agentSource: intelligence_insights.agentSource
         })
-        .from(intelligenceInsights)
+        .from(intelligence_insights)
         .where(
           and(
-            gte(intelligenceInsights.insightDate, dateRange.startDate),
-            lte(intelligenceInsights.insightDate, dateRange.endDate)
+            gte(intelligence_insights.insight_date, dateRange.startDate),
+            lte(intelligence_insights.insight_date, dateRange.endDate)
           )
         );
 
       // Calculate overall accuracy based on confidence scores and action rates
       const highConfidenceInsights = insightsData.filter(insight => 
-        parseFloat(insight.confidenceScore || '0') >= 0.8
+        parseFloat(insight.confidence_score || '0') >= 0.8
       );
       const overallAccuracy = insightsData.length > 0 
         ? (highConfidenceInsights.length / insightsData.length) * 100 
@@ -228,7 +228,7 @@ export class TelosMetricsCalculator {
         const type = insight.insightType || 'unknown';
         if (!acc[type]) acc[type] = { high: 0, total: 0 };
         acc[type].total++;
-        if (parseFloat(insight.confidenceScore || '0') >= 0.8) {
+        if (parseFloat(insight.confidence_score || '0') >= 0.8) {
           acc[type].high++;
         }
         return acc;
@@ -243,14 +243,14 @@ export class TelosMetricsCalculator {
       const competitiveAlerts = insightsData.filter(insight => 
         insight.agentSource === 'Competitive_Intelligence_Agent'
       );
-      const actionableCompetitiveAlerts = competitiveAlerts.filter(alert => alert.actionTaken);
+      const actionableCompetitiveAlerts = competitiveAlerts.filter(alert => alert.action_taken);
       const precisionRate = competitiveAlerts.length > 0 
         ? (actionableCompetitiveAlerts.length / competitiveAlerts.length) * 100 
         : 73.2;
 
       // Confidence distribution
       const confidenceDistribution = insightsData.reduce((acc, insight) => {
-        const score = parseFloat(insight.confidenceScore || '0');
+        const score = parseFloat(insight.confidence_score || '0');
         const bucket = score >= 0.9 ? 'Very High' :
                       score >= 0.85 ? 'High' :
                       score >= 0.8 ? 'Medium' : 'Low';
@@ -260,17 +260,17 @@ export class TelosMetricsCalculator {
 
       const totalInsights = insightsData.length;
       const highConfidenceCount = insightsData.filter(insight => 
-        parseFloat(insight.confidenceScore || '0') >= 0.8
+        parseFloat(insight.confidence_score || '0') >= 0.8
       ).length;
       const highConfidenceRate = totalInsights > 0 ? (highConfidenceCount / totalInsights) * 100 : 85;
 
       const avgConfidence = totalInsights > 0 
-        ? insightsData.reduce((sum, insight) => sum + parseFloat(insight.confidenceScore || '0'), 0) / totalInsights 
+        ? insightsData.reduce((sum, insight) => sum + parseFloat(insight.confidence_score || '0'), 0) / totalInsights 
         : 0.84;
 
       // Calculate average satisfaction from feedback
       const avgSatisfaction = insightsData.length > 0 ? 
-        insightsData.reduce((sum, insight) => sum + parseFloat(insight.confidenceScore || '4.2'), 0) / insightsData.length : 4.2;
+        insightsData.reduce((sum, insight) => sum + parseFloat(insight.confidence_score || '4.2'), 0) / insightsData.length : 4.2;
 
       return {
         insightAccuracyRate: {
@@ -285,7 +285,7 @@ export class TelosMetricsCalculator {
             const priority = alert.priorityLevel || 'Medium';
             if (!acc[priority]) acc[priority] = { actionable: 0, total: 0 };
             acc[priority].total++;
-            if (alert.actionTaken) acc[priority].actionable++;
+            if (alert.action_taken) acc[priority].actionable++;
             return acc;
           }, {} as Record<string, { actionable: number; total: number }>)).reduce((acc, [priority, data]) => {
             acc[priority] = data.total > 0 ? (data.actionable / data.total) * 100 : 0;
@@ -317,7 +317,7 @@ export class TelosMetricsCalculator {
       // Use database directly as fallback
       try {
         const { db } = await import('../db/index');
-        const { intelligenceInsights } = await import('../../shared/schema');
+        const { intelligence_insights } = await import('../../shared/schema');
         const { and, gte, lte } = await import('drizzle-orm');
         
         // Check if table exists first
@@ -335,11 +335,11 @@ export class TelosMetricsCalculator {
         }
         
         const insightsData = await db.select()
-          .from(intelligenceInsights)
+          .from(intelligence_insights)
           .where(
             and(
-              gte(intelligenceInsights.insightDate, dateRange.startDate),
-              lte(intelligenceInsights.insightDate, dateRange.endDate)
+              gte(intelligence_insights.insight_date, dateRange.startDate),
+              lte(intelligence_insights.insight_date, dateRange.endDate)
             )
           );
         console.log(`[MetricsCalculator] Found ${insightsData.length} intelligence insights from direct database query`);
@@ -370,7 +370,7 @@ export class TelosMetricsCalculator {
         // Use database directly as fallback
         try {
           const { db } = await import('../db/index');
-          const { intelligenceInsights } = await import('../../shared/schema');
+          const { intelligence_insights } = await import('../../shared/schema');
           const { and, gte, lte } = await import('drizzle-orm');
           
           // Check if table exists first
@@ -387,11 +387,11 @@ export class TelosMetricsCalculator {
             insightsData = [];
           } else {
             insightsData = await db.select()
-              .from(intelligenceInsights)
+              .from(intelligence_insights)
               .where(
                 and(
-                  gte(intelligenceInsights.insightDate, dateRange.startDate),
-                  lte(intelligenceInsights.insightDate, dateRange.endDate)
+                  gte(intelligence_insights.insight_date, dateRange.startDate),
+                  lte(intelligence_insights.insight_date, dateRange.endDate)
                 )
               );
           }
@@ -430,7 +430,7 @@ export class TelosMetricsCalculator {
         : 0;
 
       // Calculate real revenue impact based on actionable insights
-      const actionableInsights = insightsData.filter((insight: any) => insight.actionTaken);
+      const actionableInsights = insightsData.filter((insight: any) => insight.action_taken);
       const avgRevenuePerActionableInsight = (competitiveAgent?.configuration as any)?.avgRevenuePerInsight || 15000;
       const totalAIDrivenRevenue = actionableInsights.length * avgRevenuePerActionableInsight;
       const revenuePerInsight = totalInsights > 0 ? totalAIDrivenRevenue / totalInsights : 0;
@@ -458,7 +458,7 @@ export class TelosMetricsCalculator {
 
       if (competitiveAlerts.length > 0) {
         const responseTimes = competitiveAlerts.map(alert => {
-          const createdTime = new Date(alert.createdAt).getTime();
+          const createdTime = new Date(alert.created_at).getTime();
           const currentTime = new Date().getTime();
           const responseTimeHours = (currentTime - createdTime) / (1000 * 60 * 60);
           return Math.min(responseTimeHours, 24); // Cap at 24 hours
@@ -501,21 +501,21 @@ export class TelosMetricsCalculator {
       // Get intelligence insights to calculate action rates
       const insightsData = await db
         .select({
-          insightType: intelligenceInsights.insightType,
-          priorityLevel: intelligenceInsights.priorityLevel,
-          actionTaken: intelligenceInsights.actionTaken
+          insightType: intelligence_insights.insightType,
+          priorityLevel: intelligence_insights.priorityLevel,
+          actionTaken: intelligence_insights.action_taken
         })
-        .from(intelligenceInsights)
+        .from(intelligence_insights)
         .where(
           and(
-            gte(intelligenceInsights.insightDate, dateRange.startDate),
-            lte(intelligenceInsights.insightDate, dateRange.endDate)
+            gte(intelligence_insights.insight_date, dateRange.startDate),
+            lte(intelligence_insights.insight_date, dateRange.endDate)
           )
         );
 
       // Calculate action rates
       const totalInsights = insightsData.length;
-      const totalActedUpon = insightsData.filter(insight => insight.actionTaken).length;
+      const totalActedUpon = insightsData.filter(insight => insight.action_taken).length;
       const overallActionRate = totalInsights > 0 ? (totalActedUpon / totalInsights) * 100 : 64.2;
 
       // Calculate by insight type
@@ -523,7 +523,7 @@ export class TelosMetricsCalculator {
         const type = insight.insightType || 'unknown';
         if (!acc[type]) acc[type] = { acted: 0, total: 0 };
         acc[type].total++;
-        if (insight.actionTaken) acc[type].acted++;
+        if (insight.action_taken) acc[type].acted++;
         return acc;
       }, {} as Record<string, { acted: number; total: number }>);
 
@@ -537,7 +537,7 @@ export class TelosMetricsCalculator {
         const priority = insight.priorityLevel || 'Medium';
         if (!acc[priority]) acc[priority] = { acted: 0, total: 0 };
         acc[priority].total++;
-        if (insight.actionTaken) acc[priority].acted++;
+        if (insight.action_taken) acc[priority].acted++;
         return acc;
       }, {} as Record<string, { acted: number; total: number }>);
 
@@ -551,7 +551,7 @@ export class TelosMetricsCalculator {
 
       // Calculate unique daily active users from activities
       const dailyUserActivity = activitiesData.reduce((acc, activity) => {
-        const date = new Date(activity.createdAt || new Date()).toISOString().split('T')[0];
+        const date = new Date(activity.created_at || new Date()).toISOString().split('T')[0];
         if (!acc[date]) acc[date] = new Set();
         if (activity.userId) acc[date].add(activity.userId);
         return acc;

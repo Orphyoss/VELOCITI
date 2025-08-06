@@ -67,12 +67,12 @@ export class CompetitiveIntelligenceAgent {
                       Math.abs(position.priceGapPercent) > 20 ? 'High' : 'Medium';
 
       const title = position.priceGapPercent > 0 
-        ? `Price Disadvantage Alert - ${position.routeId}`
-        : `Competitive Price Advantage - ${position.routeId}`;
+        ? `Price Disadvantage Alert - ${position.route_id}`
+        : `Competitive Price Advantage - ${position.route_id}`;
 
       const description = `EasyJet is ${Math.abs(position.priceGapPercent).toFixed(1)}% ${
         position.priceGapPercent > 0 ? 'above' : 'below'
-      } Ryanair pricing on ${position.routeId}. ${
+      } Ryanair pricing on ${position.route_id}. ${
         position.easyjetAvgPrice ? `EasyJet: €${position.easyjetAvgPrice.toFixed(0)}` : ''
       }, ${
         position.ryanairAvgPrice ? `Ryanair: €${position.ryanairAvgPrice.toFixed(0)}` : ''
@@ -89,7 +89,7 @@ export class CompetitiveIntelligenceAgent {
         title,
         description,
         recommendation,
-        routeId: position.routeId,
+        routeId: position.route_id,
         airlineCode: 'RYR',
         confidenceScore: 0.85 + (Math.abs(position.priceGapPercent) * 0.005),
         agentSource: this.agentName,
@@ -122,7 +122,7 @@ Competitive Positions:
 ${JSON.stringify(positions.slice(0, 10), null, 2)}
 
 Current Insights:
-${JSON.stringify(insights.map(i => ({ title: i.title, priority: i.priority, routeId: i.routeId })), null, 2)}
+${JSON.stringify(insights.map(i => ({ title: i.title, priority: i.priority, routeId: i.route_id })), null, 2)}
 
 Provide strategic analysis in JSON format:
 {
@@ -172,7 +172,7 @@ Provide strategic analysis in JSON format:
 
   private calculateOverallConfidence(insights: IntelligenceAlert[]): number {
     if (insights.length === 0) return 0;
-    return insights.reduce((acc, insight) => acc + insight.confidenceScore, 0) / insights.length;
+    return insights.reduce((acc, insight) => acc + insight.confidence_score, 0) / insights.length;
   }
 }
 
@@ -223,13 +223,13 @@ export class PerformanceIntelligenceAgent {
       const priority = Math.abs(performance.performanceVsForecast) > 20 ? 'High' : 'Medium';
 
       const title = isUnderperforming 
-        ? `Underperformance Alert - ${performance.routeId}`
-        : `Strong Performance - ${performance.routeId}`;
+        ? `Underperformance Alert - ${performance.route_id}`
+        : `Strong Performance - ${performance.route_id}`;
 
-      const description = `Route ${performance.routeId} is performing ${
+      const description = `Route ${performance.route_id} is performing ${
         Math.abs(performance.performanceVsForecast).toFixed(1)
       }% ${isUnderperforming ? 'below' : 'above'} forecast. Load factor: ${
-        (performance.loadFactor * 100).toFixed(1)
+        (performance.load_factor * 100).toFixed(1)
       }%, Revenue: €${performance.revenueTotal.toFixed(0)}`;
 
       const recommendation = isUnderperforming 
@@ -243,11 +243,11 @@ export class PerformanceIntelligenceAgent {
         title,
         description,
         recommendation,
-        routeId: performance.routeId,
+        routeId: performance.route_id,
         confidenceScore: 0.80 + (Math.abs(performance.performanceVsForecast) * 0.01),
         agentSource: this.agentName,
         supportingData: {
-          loadFactor: performance.loadFactor,
+          loadFactor: performance.load_factor,
           revenueTotal: performance.revenueTotal,
           yieldPerPax: performance.yieldPerPax,
           performanceVsForecast: performance.performanceVsForecast,
@@ -264,7 +264,7 @@ export class PerformanceIntelligenceAgent {
 
   private calculateOverallConfidence(insights: IntelligenceAlert[]): number {
     if (insights.length === 0) return 0;
-    return insights.reduce((acc, insight) => acc + insight.confidenceScore, 0) / insights.length;
+    return insights.reduce((acc, insight) => acc + insight.confidence_score, 0) / insights.length;
   }
 }
 
@@ -314,9 +314,9 @@ export class DemandIntelligenceAgent {
       const isIncreasing = trend.demandTrend === 'Increasing';
       const priority = trend.trendStrength > 0.4 ? 'High' : 'Medium';
 
-      const title = `Demand ${trend.demandTrend} - ${trend.routeId}`;
+      const title = `Demand ${trend.demandTrend} - ${trend.route_id}`;
 
-      const description = `Search volume is ${trend.demandTrend.toLowerCase()} on ${trend.routeId}. ` +
+      const description = `Search volume is ${trend.demandTrend.toLowerCase()} on ${trend.route_id}. ` +
         `Current volume: ${trend.searchVolume}, Conversion rate: ${(trend.conversionRate * 100).toFixed(1)}%`;
 
       const recommendation = isIncreasing 
@@ -330,7 +330,7 @@ export class DemandIntelligenceAgent {
         title,
         description,
         recommendation,
-        routeId: trend.routeId,
+        routeId: trend.route_id,
         confidenceScore: 0.75 + (trend.trendStrength * 0.2),
         agentSource: this.agentName,
         supportingData: {
@@ -352,7 +352,7 @@ export class DemandIntelligenceAgent {
 
   private calculateOverallConfidence(insights: IntelligenceAlert[]): number {
     if (insights.length === 0) return 0;
-    return insights.reduce((acc, insight) => acc + insight.confidenceScore, 0) / insights.length;
+    return insights.reduce((acc, insight) => acc + insight.confidence_score, 0) / insights.length;
   }
 }
 
@@ -396,7 +396,7 @@ export class TelosAgentOrchestrator {
 
       const totalInsights = allInsights.length;
       const overallConfidence = totalInsights > 0 
-        ? allInsights.reduce((acc, insight) => acc + insight.confidenceScore, 0) / totalInsights
+        ? allInsights.reduce((acc, insight) => acc + insight.confidence_score, 0) / totalInsights
         : 0;
 
       console.log(`Telos analysis complete: ${totalInsights} insights generated with ${(overallConfidence * 100).toFixed(1)}% average confidence`);

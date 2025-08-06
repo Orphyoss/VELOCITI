@@ -297,7 +297,7 @@ router.get('/rm-metrics', async (req, res) => {
     console.log(`[API] Available routes:`, availableRoutes?.length || 0);
     
     // Extract real pricing data
-    const easyjetPricing = competitiveData?.find((p: any) => p.airlineCode === 'EZY');
+    const easyjetPricing = competitiveData?.find((p: any) => p.airline_code === 'EZY');
     const avgPrice = easyjetPricing?.avgPrice ? parseFloat(easyjetPricing.avgPrice) : (routePerformance?.avgYield || 172.41);
     const totalFlights = availableRoutes?.length * 45 || 180; // Estimate based on routes
     const estimatedDailyFlights = Math.floor(totalFlights / 30);

@@ -103,7 +103,7 @@ export class MemoryService {
       industries: this.extractIndustryPreferences(userActivities),
       routes: this.extractRoutePreferences(userActivities),
       alertTypes: this.extractAlertPreferences(userActivities),
-      lastActivity: userActivities[0]?.createdAt || new Date()
+      lastActivity: userActivities[0]?.created_at || new Date()
     };
 
     return preferences;
@@ -134,7 +134,7 @@ export class MemoryService {
           const current = documentAccess.get(source) || { count: 0, lastAccess: new Date(0) };
           documentAccess.set(source, {
             count: current.count + 1,
-            lastAccess: new Date(activity.createdAt)
+            lastAccess: new Date(activity.created_at)
           });
         });
       }
@@ -304,7 +304,7 @@ Please provide a response that takes into account the user's history, preference
       successRate: 0.7, // Will be calculated properly
       feedback: f.feedback,
       context: f.query?.slice(0, 100) || 'context',
-      timestamp: new Date(f.createdAt)
+      timestamp: new Date(f.created_at)
     }));
   }
 

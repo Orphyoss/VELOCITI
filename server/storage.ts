@@ -350,8 +350,8 @@ export class MemoryStorage implements IStorage {
           totalAnalyses: agent.totalAnalyses || 0,
           successfulPredictions: agent.successfulPredictions || 0,
           configuration: agent.configuration || {},
-          lastActive: agent.lastActive || new Date(),
-          updatedAt: agent.updatedAt || new Date()
+          lastActive: agent.last_active || new Date(),
+          updatedAt: agent.updated_at || new Date()
         }));
       } else {
         console.log('[Storage] agents table empty, populating with default agents and using memory store');
@@ -391,8 +391,8 @@ export class MemoryStorage implements IStorage {
           totalAnalyses: agent.totalAnalyses || 0,
           successfulPredictions: agent.successfulPredictions || 0,
           configuration: agent.configuration || {},
-          lastActive: agent.lastActive || new Date(),
-          updatedAt: agent.updatedAt || new Date()
+          lastActive: agent.last_active || new Date(),
+          updatedAt: agent.updated_at || new Date()
         };
       }
     } catch (error) {
@@ -438,7 +438,7 @@ export class MemoryStorage implements IStorage {
       console.error('Error fetching feedback:', error);
       return Array.from(memoryStore.feedback.values())
         .filter(fb => fb.agentId === agentId)
-        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
     }
   }
 
@@ -472,7 +472,7 @@ export class MemoryStorage implements IStorage {
   async getConversations(userId: string): Promise<Conversation[]> {
     return Array.from(memoryStore.conversations.values())
       .filter(conv => conv.userId === userId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
   }
 
   async createConversation(conversation: InsertConversation): Promise<Conversation> {
@@ -524,7 +524,7 @@ export class MemoryStorage implements IStorage {
 
   async getRecentActivities(limit = 20): Promise<Activity[]> {
     return Array.from(memoryStore.activities.values())
-      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+      .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())
       .slice(0, limit);
   }
 
