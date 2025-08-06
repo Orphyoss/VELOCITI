@@ -1012,18 +1012,18 @@ export default function TelosIntelligence() {
         {/* Yield Optimization Tab */}
         <TabsContent value="yield" className="space-y-4">
           {/* Route Selection */}
-          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm">
+          <div className="bg-gradient-to-r from-orange-100 to-amber-100 dark:from-orange-950/50 dark:to-amber-950/50 border-2 border-orange-300 dark:border-orange-600 rounded-lg p-5 shadow-md mb-2">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
               <div>
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-orange-800 dark:text-orange-200">
+                  <DollarSign className="h-5 w-5 text-orange-600" />
                   Route Yield Analysis
                 </h3>
               </div>
               <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Route:</span>
+                <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Route:</span>
                 <Select value={selectedYieldRoute} onValueChange={setSelectedYieldRoute}>
-                  <SelectTrigger className="w-40 border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 shadow-sm">
+                  <SelectTrigger className="w-40 border-2 border-orange-400 dark:border-orange-500 bg-white dark:bg-gray-900 shadow-lg font-medium">
                     <SelectValue placeholder="Select route" />
                   </SelectTrigger>
                   <SelectContent>
