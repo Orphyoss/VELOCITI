@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import { storage } from '../storage';
+import { logger } from './logger';
 
 export class WebSocketService {
   private wss: WebSocketServer;
@@ -13,7 +14,7 @@ export class WebSocketService {
 
   private setupWebSocket() {
     this.wss.on('connection', (ws: WebSocket) => {
-      console.log('New WebSocket connection established');
+      logger.info('WebSocket', 'setupWebSocket', 'New connection established', { clientCount: this.clients.size + 1 });
       this.clients.add(ws);
 
       ws.on('message', async (message: string) => {
@@ -21,18 +22,18 @@ export class WebSocketService {
           const data = JSON.parse(message);
           await this.handleMessage(ws, data);
         } catch (error) {
-          console.error('WebSocket message error:', error);
+          logger.error('WebSocket', 'handleMessage', 'Message parsing failed', error, { rawMessage: message });
           ws.send(JSON.stringify({ error: 'Invalid message format' }));
         }
       });
 
       ws.on('close', () => {
-        console.log('WebSocket connection closed');
+        logger.info('WebSocket', 'onClose', 'Connection closed', { remainingClients: this.clients.size - 1 });
         this.clients.delete(ws);
       });
 
       ws.on('error', (error) => {
-        console.error('WebSocket error:', error);
+        logger.error('WebSocket', 'onError', 'Connection error occurred', error);
         this.clients.delete(ws);
       });
 
@@ -56,7 +57,7 @@ export class WebSocketService {
         break;
       
       default:
-        console.log('Unknown message type:', data.type);
+        logger.warn('WebSocket', 'handleMessage', 'Unknown message type received', { messageType: data.type, data });
     }
   }
 
@@ -71,7 +72,7 @@ export class WebSocketService {
       }));
 
     } catch (error) {
-      console.error('Error sending initial data:', error);
+      logger.error('WebSocket', 'sendInitialData', 'Failed to send initial data', error);
     }
   }
 

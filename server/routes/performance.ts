@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { storage } from "../storage";
+import { logger } from "../services/logger";
 
 export async function performanceRoutes(app: Express): Promise<void> {
   // GET /api/routes/performance
@@ -9,7 +10,7 @@ export async function performanceRoutes(app: Express): Promise<void> {
     try {
       const { route, days = 7, limit = 50 } = req.query;
       
-      console.log(`[API] GET /routes/performance - route: ${route}, days: ${days}, limit: ${limit}`);
+      logger.info('API', 'performance', 'Route performance request', { route, days, limit });
       
       // Temporary: Use authentic route performance data structure based on existing system data
       // These values are calculated from real flight performance metrics in the database
@@ -76,13 +77,19 @@ export async function performanceRoutes(app: Express): Promise<void> {
       }
       
       const duration = Date.now() - startTime;
-      console.log(`[API] Route performance completed in ${duration}ms, returned ${performanceData?.length || 0} records using authentic route data`);
+      logger.info('API', 'performance', 'Route performance request completed', { 
+        duration, 
+        recordCount: performanceData?.length || 0,
+        route,
+        days,
+        limit
+      });
       
       return res.json(performanceData);
 
     } catch (error: any) {
       const duration = Date.now() - startTime;
-      console.error(`[API] Failed to get route performance (${duration}ms):`, error);
+      logger.error('API', 'performance', 'Route performance request failed', error, { duration, route, days, limit });
       res.status(500).json({ 
         error: 'Failed to retrieve route performance data',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
@@ -90,5 +97,5 @@ export async function performanceRoutes(app: Express): Promise<void> {
     }
   });
 
-  console.log("✅ Performance routes registered");
+  // Performance routes registered successfully
 }

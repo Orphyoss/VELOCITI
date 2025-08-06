@@ -11,5 +11,5 @@ export async function telosRoutes(app: Express): Promise<void> {
   // Register the telos routes under /api/telos
   app.use('/api/telos', telosRouter);
   
-  console.log("✅ Telos routes registered");
+  // Telos routes registered successfully
 }

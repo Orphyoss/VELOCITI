@@ -1,4 +1,5 @@
 import { useVelocitiStore } from '../stores/useVelocitiStore';
+import { logger } from './logger';
 
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -15,30 +16,30 @@ class WebSocketService {
       
       // Handle undefined or empty host - try fallback to localhost:5000
       if (!host || host === 'undefined' || host.includes('undefined')) {
-        console.warn('[WebSocket] Invalid host detected, using localhost:5000 fallback');
+        logger.warn('WebSocket', 'connect', 'Invalid host detected, using fallback', { originalHost: host, fallbackHost: 'localhost:5000' });
         host = 'localhost:5000';
       }
       
       const wsUrl = `${protocol}//${host}/ws`;
       
-      console.log(`[WebSocket] Attempting to connect to: ${wsUrl}`);
+      logger.info('WebSocket', 'connect', 'Attempting connection', { wsUrl });
       
       // Add additional error checking for WebSocket construction
       if (!window.WebSocket) {
-        console.warn('[WebSocket] WebSocket not supported by browser');
+        logger.warn('WebSocket', 'connect', 'WebSocket not supported by browser');
         return;
       }
       
       // Validate URL before creating WebSocket
       if (wsUrl.includes('undefined')) {
-        console.warn(`[WebSocket] Invalid WebSocket URL contains undefined: ${wsUrl}`);
+        logger.warn('WebSocket', 'connect', 'Invalid WebSocket URL contains undefined', { wsUrl });
         return;
       }
       
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log('WebSocket connected');
+        logger.info('WebSocket', 'onopen', 'Connection established', { reconnectAttempts: this.reconnectAttempts });
         this.reconnectAttempts = 0;
         useVelocitiStore.getState().setConnectionStatus(true);
         
@@ -51,25 +52,25 @@ class WebSocketService {
           const data = JSON.parse(event.data);
           this.handleMessage(data);
         } catch (error) {
-          console.error('[WebSocket] Error parsing message:', error);
+          logger.error('WebSocket', 'onmessage', 'Failed to parse message', error, { rawData: event.data });
           // Don't let parsing errors crash the connection
         }
       };
 
       this.ws.onclose = () => {
-        console.log('WebSocket disconnected');
+        logger.info('WebSocket', 'onclose', 'Connection closed', { reconnectAttempts: this.reconnectAttempts });
         useVelocitiStore.getState().setConnectionStatus(false);
         this.ws = null;
         this.attemptReconnect();
       };
 
       this.ws.onerror = (error) => {
-        console.warn(`[WebSocket] Connection error for ${wsUrl}:`, error);
+        logger.warn('WebSocket', 'onerror', 'Connection error occurred', { wsUrl, errorType: error.type });
         useVelocitiStore.getState().setConnectionStatus(false);
         
         // Prevent unhandled promise rejection - handle gracefully
         if (error instanceof Event && error.type === 'error') {
-          console.log('[WebSocket] Handled WebSocket error event gracefully');
+          logger.debug('WebSocket', 'onerror', 'Handled WebSocket error event gracefully');
         }
         
         // Close the connection to trigger proper reconnection

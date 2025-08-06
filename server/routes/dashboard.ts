@@ -6,5 +6,5 @@ export async function dashboardRoutes(app: Express) {
   // Dashboard routes are currently handled in metrics routes
   // This file is prepared for future dashboard-specific endpoints
   
-  console.log("✅ Dashboard routes registered");
+  // Dashboard routes registered successfully
 }

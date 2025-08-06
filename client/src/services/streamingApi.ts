@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 interface StreamChunk {
   type: 'start' | 'chunk' | 'end' | 'error';
   data?: any;
@@ -91,7 +93,7 @@ class StreamingApiService {
                   throw new Error(data.error || 'Streaming error');
               }
             } catch (e) {
-              console.warn('Failed to parse SSE data:', line);
+              logger.warn('StreamingAPI', 'fetchStream', 'Failed to parse SSE data', { line, error: e });
             }
           }
         }

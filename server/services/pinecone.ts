@@ -1,5 +1,6 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
+import { logger } from './logger';
 
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY!,
@@ -51,9 +52,9 @@ export class PineconeService {
         
         if (existingIndexes && existingIndexes.length > 0) {
           this.indexName = existingIndexes[0].name!;
-          console.log(`[Pinecone] Using existing index: ${this.indexName}`);
+          logger.info('Pinecone', 'initializeIndex', 'Using existing index', { indexName: this.indexName });
         } else {
-          console.log(`[Pinecone] Creating index: ${this.indexName}`);
+          logger.info('Pinecone', 'initializeIndex', 'Creating new index', { indexName: this.indexName });
           await pinecone.createIndex({
             name: this.indexName,
             dimension: 1024, // Match existing index dimension
@@ -72,9 +73,9 @@ export class PineconeService {
       }
 
       this.index = pinecone.index(this.indexName);
-      console.log(`[Pinecone] Connected to index: ${this.indexName}`);
+      logger.info('Pinecone', 'initializeIndex', 'Successfully connected to index', { indexName: this.indexName });
     } catch (error) {
-      console.error('[Pinecone] Initialization error:', error);
+      logger.error('Pinecone', 'initializeIndex', 'Initialization failed', error);
       throw error;
     }
   }
@@ -90,11 +91,11 @@ export class PineconeService {
         isReady = indexStats.status?.ready === true;
         
         if (!isReady) {
-          console.log(`[Pinecone] Index not ready, waiting... (${attempts + 1}/${maxAttempts})`);
+          logger.debug('Pinecone', 'waitForIndexReady', 'Index not ready, waiting...', { attempt: attempts + 1, maxAttempts });
           await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
         }
       } catch (error) {
-        console.log(`[Pinecone] Waiting for index creation... (${attempts + 1}/${maxAttempts})`);
+        logger.debug('Pinecone', 'waitForIndexReady', 'Waiting for index creation...', { attempt: attempts + 1, maxAttempts });
         await new Promise(resolve => setTimeout(resolve, 10000));
       }
       attempts++;
@@ -116,15 +117,17 @@ export class PineconeService {
 
       return response.data[0].embedding;
     } catch (error) {
-      console.error('[Pinecone] Embedding generation error:', error);
+      logger.warn('Pinecone', 'generateEmbedding', 'Embedding generation failed, trying fallback', error);
       // Fallback to ada-002 and truncate
       try {
         const fallbackResponse = await openai.embeddings.create({
           model: 'text-embedding-ada-002',
           input: text,
         });
+        logger.debug('Pinecone', 'generateEmbedding', 'Using fallback embedding model (ada-002)');
         return fallbackResponse.data[0].embedding.slice(0, 1024);
       } catch (fallbackError) {
+        logger.error('Pinecone', 'generateEmbedding', 'Both primary and fallback embedding models failed', fallbackError);
         throw error;
       }
     }
@@ -147,9 +150,15 @@ export class PineconeService {
       }
 
       await this.index.upsert(vectors);
-      console.log(`[Pinecone] Upserted ${vectors.length} vectors for ${chunks[0]?.metadata.filename}`);
+      logger.info('Pinecone', 'upsertDocument', 'Successfully upserted vectors', { 
+        vectorCount: vectors.length, 
+        filename: chunks[0]?.metadata.filename 
+      });
     } catch (error) {
-      console.error('[Pinecone] Upsert error:', error);
+      logger.error('Pinecone', 'upsertDocument', 'Failed to upsert vectors', error, { 
+        chunkCount: chunks.length, 
+        filename: chunks[0]?.metadata.filename 
+      });
       throw error;
     }
   }
@@ -179,14 +188,14 @@ export class PineconeService {
         }
       })) || [];
     } catch (error) {
-      console.error('[Pinecone] Search error:', error);
+      logger.error('Pinecone', 'searchSimilar', 'Vector search failed', error, { query, topK });
       throw error;
     }
   }
 
   async deleteDocument(filename: string): Promise<void> {
     try {
-      console.log(`[Pinecone] Starting delete for: ${filename}`);
+      logger.info('Pinecone', 'deleteDocument', 'Starting document deletion', { filename });
       
       // First, find all vectors by querying without filters
       const dummyVector = new Array(1024).fill(0);
@@ -197,7 +206,9 @@ export class PineconeService {
         includeValues: false
       });
 
-      console.log(`[Pinecone] Found ${queryResponse.matches?.length} total vectors`);
+      logger.debug('Pinecone', 'deleteDocument', 'Retrieved vectors for deletion scan', { 
+        totalVectors: queryResponse.matches?.length 
+      });
 
       // Filter vectors that match the filename on client side
       const matchingVectorIds: string[] = [];
@@ -207,19 +218,25 @@ export class PineconeService {
         }
       });
       
-      console.log(`[Pinecone] Found ${matchingVectorIds.length} vectors matching filename: ${filename}`);
+      logger.info('Pinecone', 'deleteDocument', 'Found matching vectors for deletion', { 
+        filename, 
+        matchingVectorCount: matchingVectorIds.length 
+      });
       
       if (matchingVectorIds.length > 0) {
         // Delete vectors by their IDs - use the deleteMany with array of IDs
         for (const id of matchingVectorIds) {
           await this.index.deleteOne(id);
         }
-        console.log(`[Pinecone] Successfully deleted ${matchingVectorIds.length} vectors for ${filename}`);
+        logger.info('Pinecone', 'deleteDocument', 'Successfully deleted vectors', { 
+          filename, 
+          deletedCount: matchingVectorIds.length 
+        });
       } else {
-        console.log(`[Pinecone] No vectors found for filename: ${filename}`);
+        logger.info('Pinecone', 'deleteDocument', 'No vectors found for deletion', { filename });
       }
     } catch (error) {
-      console.error('[Pinecone] Delete error:', error);
+      logger.error('Pinecone', 'deleteDocument', 'Document deletion failed', error, { filename });
       throw new Error(`Failed to delete document: ${error.message}`);
     }
   }
@@ -229,7 +246,7 @@ export class PineconeService {
       const stats = await this.index.describeIndexStats();
       return stats;
     } catch (error) {
-      console.error('[Pinecone] Stats error:', error);
+      logger.error('Pinecone', 'getIndexStats', 'Failed to get index statistics', error);
       throw error;
     }
   }
@@ -262,7 +279,7 @@ export class PineconeService {
 
       return Array.from(documentMap.values());
     } catch (error) {
-      console.error('[Pinecone] List documents error:', error);
+      logger.error('Pinecone', 'listDocuments', 'Failed to list documents', error);
       return [];
     }
   }

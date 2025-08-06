@@ -17,5 +17,5 @@ export async function alertRoutes(app: Express) {
   // Cleanup metrics-generated junk alerts
   app.delete("/api/alerts/cleanup-metrics", AlertController.cleanupMetricsAlerts);
 
-  console.log("✅ Alert routes registered");
+  // Alert routes registered successfully
 }

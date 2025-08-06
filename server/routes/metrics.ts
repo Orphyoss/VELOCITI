@@ -8,5 +8,5 @@ export async function metricsRoutes(app: Express) {
   // Alerts metrics
   app.get("/api/metrics/alerts", MetricsController.getAlertsMetrics);
 
-  console.log("✅ Metrics routes registered");
+  // Metrics routes registered successfully
 }

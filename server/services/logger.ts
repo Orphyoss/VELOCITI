@@ -72,12 +72,13 @@ class VelocitiLogger {
     try {
       const config = this.configModule?.getConfig();
       const configLevel = config?.logging?.level || 'INFO';
-      const minLevel = {
+      const levelMapping: Record<string, LogLevel> = {
         'DEBUG': LogLevel.DEBUG,
         'INFO': LogLevel.INFO,
         'WARN': LogLevel.WARN,
         'ERROR': LogLevel.ERROR
-      }[configLevel] || LogLevel.INFO;
+      };
+      const minLevel = levelMapping[configLevel] || LogLevel.INFO;
       
       return level >= minLevel;
     } catch (error) {

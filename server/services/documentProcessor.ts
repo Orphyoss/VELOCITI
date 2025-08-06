@@ -1,5 +1,6 @@
 import mammoth from 'mammoth';
 import { DocumentChunk } from './pinecone';
+import { logger } from './logger';
 
 export interface ProcessedDocument {
   filename: string;
@@ -14,7 +15,7 @@ export class DocumentProcessor {
   private readonly chunkOverlap = 200; // Overlap between chunks
 
   async processDocument(buffer: Buffer, filename: string, mimetype: string): Promise<ProcessedDocument> {
-    console.log(`[DocumentProcessor] Processing ${filename} (${mimetype})`);
+    logger.info('DocumentProcessor', 'processDocument', 'Starting document processing', { filename, mimetype, bufferSize: buffer.length });
     
     let content: string;
     let fileType: string;
@@ -42,7 +43,12 @@ export class DocumentProcessor {
 
       const chunks = this.createChunks(content, filename, fileType, buffer.length);
       
-      console.log(`[DocumentProcessor] Created ${chunks.length} chunks for ${filename}`);
+      logger.info('DocumentProcessor', 'processDocument', 'Document processed successfully', { 
+        filename, 
+        fileType, 
+        contentLength: content.length, 
+        chunksCreated: chunks.length 
+      });
       
       return {
         filename,
@@ -52,7 +58,7 @@ export class DocumentProcessor {
         chunks
       };
     } catch (error) {
-      console.error(`[DocumentProcessor] Error processing ${filename}:`, error);
+      logger.error('DocumentProcessor', 'processDocument', 'Document processing failed', error, { filename, mimetype });
       throw error;
     }
   }
@@ -66,7 +72,7 @@ export class DocumentProcessor {
       const data = await pdfParse(buffer);
       return data.text || '';
     } catch (error) {
-      console.error('[DocumentProcessor] PDF processing error:', error);
+      logger.warn('DocumentProcessor', 'processPDF', 'PDF processing fallback - using placeholder text', error, { bufferSize: buffer.length });
       
       // For now, return a placeholder message for PDFs until we can fix the parsing
       return `[PDF Document: ${buffer.length} bytes] - PDF text extraction temporarily unavailable. Please upload DOCX or TXT files for full text processing.`;

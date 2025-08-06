@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { enhancedAlertGenerator } from "../services/enhancedAlertGenerator";
+import { logger } from "../services/logger";
 
 export async function debugRoutes(app: Express) {
   // PRODUCTION DEBUG ENDPOINTS - Added to diagnose deployment issues
   app.get('/api/debug', async (req, res) => {
-    console.log('🔍 Debug endpoint called');
+    logger.info('API', 'debug', 'Debug endpoint called', { userAgent: req.headers['user-agent'] });
     
     const debug = {
       timestamp: new Date().toISOString(),
@@ -98,7 +99,7 @@ export async function debugRoutes(app: Express) {
       
       res.json(debugInfo);
     } catch (error) {
-      console.error('Debug alerts error:', error);
+      logger.error('API', 'debug', 'Debug alerts test failed', error);
       res.status(500).json({
         error: 'Debug endpoint failed',
         message: error.message,
@@ -107,5 +108,5 @@ export async function debugRoutes(app: Express) {
     }
   });
 
-  console.log("✅ Debug routes registered");
+  // Debug routes registered successfully
 }
