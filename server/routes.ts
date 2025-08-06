@@ -1911,7 +1911,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (cachedBriefing) {
         const duration = Date.now() - startTime;
-        console.log(`[API] Returning cached morning briefing (${duration}ms)`);
+        console.log(`[API] Returning cached morning briefing (${duration}ms) - Structure:`, Object.keys(cachedBriefing));
         return res.json(cachedBriefing);
       }
       
@@ -1923,6 +1923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: 'OpenAI API key not configured'
         });
       }
+      console.log('[API] OpenAI API key found, proceeding with briefing generation...');
       
       // Gather real system data with error handling
       let alerts = [];
@@ -2143,7 +2144,7 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
           temperature: 0.2, // Lower temperature for more consistent analysis
           max_tokens: 3000 // Increased token limit for detailed analysis
         });
-        console.log('[API] OpenAI analysis completed successfully');
+        console.log('[API] OpenAI analysis completed successfully - Response length:', briefingResponse.choices[0].message.content?.length || 0);
       } catch (openaiError) {
         console.error('[API] OpenAI API error:', openaiError);
         throw new Error(`OpenAI API failed: ${openaiError.message}`);
@@ -2203,10 +2204,19 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
       };
 
       // Cache the generated briefing for 3 hours
-      cacheService.setMorningBriefing(cacheKey, briefingData);
+      try {
+        cacheService.setMorningBriefing(cacheKey, briefingData);
+        console.log(`[API] Briefing cached successfully with key: ${cacheKey}`);
+      } catch (cacheError) {
+        console.error('[API] Failed to cache briefing:', cacheError);
+        // Continue without caching
+      }
       
       const duration = Date.now() - startTime;
-      console.log(`[API] AI morning briefing generated and cached successfully in ${duration}ms`);
+      console.log(`[API] AI morning briefing generated successfully in ${duration}ms`);
+      console.log(`[API] Final briefing structure:`, Object.keys(briefingData));
+      console.log(`[API] ExecutiveSummary status:`, briefingData.executiveSummary.status);
+      console.log(`[API] Priority actions count:`, briefingData.priorityActions.length);
       
       res.json(briefingData);
     } catch (error) {
