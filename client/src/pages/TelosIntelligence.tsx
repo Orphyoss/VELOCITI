@@ -1218,7 +1218,7 @@ export default function TelosIntelligence() {
                 <div className="text-center py-8 text-red-600">
                   Error loading competitive data
                 </div>
-              ) : competitive && competitive.competitorCount > 0 ? (
+              ) : competitive ? (
                 <div className="space-y-6">
                   {/* Route Overview */}
                   <div className="p-4 bg-muted/30 rounded-lg">
