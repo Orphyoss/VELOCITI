@@ -408,7 +408,16 @@ export default function TelosIntelligence() {
   // Fetch yield optimization opportunities  
   const { data: optimizationData, isLoading: optimizationLoading, error: optimizationError } = useQuery({
     queryKey: ['/api/yield/optimization-opportunities'],
-    queryFn: () => fetch('/api/yield/optimization-opportunities').then(res => res.json()),
+    queryFn: async () => {
+      console.log('[TelosIntelligence] Fetching optimization opportunities...');
+      const response = await fetch('/api/yield/optimization-opportunities');
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const data = await response.json();
+      console.log('[TelosIntelligence] Optimization data received:', data);
+      return data;
+    },
     refetchInterval: 60000, // Refresh every minute
     staleTime: 30000,
   });
@@ -1139,44 +1148,8 @@ export default function TelosIntelligence() {
             </Card>
           </div>
 
-          {/* Optimization Opportunities */}
-          {optimizationLoading ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Optimization Opportunities
-                </CardTitle>
-                <CardDescription>
-                  Loading optimization opportunities...
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3, 4].map(i => (
-                    <div key={i} className="animate-pulse bg-muted h-20 rounded" />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : optimizationError ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  Optimization Opportunities
-                </CardTitle>
-                <CardDescription>
-                  Error loading optimization data
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-red-600">
-                  Failed to load optimization opportunities
-                </div>
-              </CardContent>
-            </Card>
-          ) : optimizationData ? (
+          {/* Optimization Opportunities - Force display if we have data */}
+          {optimizationData && optimizationData.opportunities ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1236,6 +1209,42 @@ export default function TelosIntelligence() {
                       No optimization opportunities available
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          ) : optimizationLoading ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Optimization Opportunities
+                </CardTitle>
+                <CardDescription>
+                  Loading optimization opportunities...
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="animate-pulse bg-muted h-20 rounded" />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ) : optimizationError ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-5 w-5" />
+                  Optimization Opportunities
+                </CardTitle>
+                <CardDescription>
+                  Error loading optimization data
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-red-600">
+                  Failed to load optimization opportunities
                 </div>
               </CardContent>
             </Card>
