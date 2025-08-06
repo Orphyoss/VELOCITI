@@ -13,10 +13,10 @@ class WebSocketService {
       // Robust fallback for host and port
       let host = window.location.host;
       
-      // Handle undefined or empty host
+      // Handle undefined or empty host - try fallback to localhost:5000
       if (!host || host === 'undefined' || host.includes('undefined')) {
-        console.warn('[WebSocket] Invalid host detected, skipping WebSocket connection');
-        return; // Don't attempt connection with invalid host
+        console.warn('[WebSocket] Invalid host detected, using localhost:5000 fallback');
+        host = 'localhost:5000';
       }
       
       const wsUrl = `${protocol}//${host}/ws`;
@@ -64,7 +64,7 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.warn(`[WebSocket] Connection error (non-blocking):`, error);
+        console.warn(`[WebSocket] Connection error for ${wsUrl}:`, error);
         useVelocitiStore.getState().setConnectionStatus(false);
         
         // Prevent unhandled promise rejection - handle gracefully

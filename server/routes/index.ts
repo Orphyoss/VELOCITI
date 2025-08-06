@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketService } from "../services/websocket";
 import { agentService } from "../services/agents";
 import { alertRoutes } from "./alerts";
-import { agentRoutes } from "./agents";
+import { agentRoutes } from "./agents"; 
 import { metricsRoutes } from "./metrics";
 import { debugRoutes } from "./debug";
 import { dashboardRoutes } from "./dashboard";
