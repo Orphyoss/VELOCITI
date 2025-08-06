@@ -411,13 +411,25 @@ export default function TelosIntelligence() {
     queryFn: () => fetch('/api/yield/optimization-opportunities').then(res => res.json()),
     refetchInterval: 60000, // Refresh every minute
     staleTime: 30000,
-    onSuccess: (data) => {
-      console.log('[TelosIntelligence] Optimization data received:', data);
-    },
-    onError: (error) => {
-      console.error('[TelosIntelligence] Optimization data error:', error);
-    }
   });
+
+  // Log optimization data when it changes
+  useEffect(() => {
+    console.log('[TelosIntelligence] Optimization state:', {
+      loading: optimizationLoading,
+      error: !!optimizationError,
+      hasData: !!optimizationData,
+      dataKeys: optimizationData ? Object.keys(optimizationData) : [],
+      totalOpportunities: optimizationData?.totalOpportunities,
+      opportunitiesLength: optimizationData?.opportunities?.length
+    });
+    if (optimizationData) {
+      console.log('[TelosIntelligence] Optimization data received:', optimizationData);
+    }
+    if (optimizationError) {
+      console.error('[TelosIntelligence] Optimization data error:', optimizationError);
+    }
+  }, [optimizationData, optimizationError, optimizationLoading]);
 
   // Run intelligence analysis
   const runAnalysisMutation = useMutation({
@@ -1164,7 +1176,7 @@ export default function TelosIntelligence() {
                 </div>
               </CardContent>
             </Card>
-          ) : optimizationData && optimizationData.totalOpportunities > 0 ? (
+          ) : optimizationData ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
