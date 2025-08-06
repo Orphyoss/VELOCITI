@@ -1,0 +1,77 @@
+ Schema Inconsistencies - Mixed Naming Conventions
+
+  Issues Found:
+
+  A. Mixed camelCase vs snake_case in Same Tables
+  // alerts table - INCONSISTENT NAMING
+  export const alerts = pgTable("alerts", {
+    // snake_case columns:
+    route_name: text("route_name"),
+    metric_value: decimal("metric_value"),
+    agent_id: text("agent_id"),
+    created_at: timestamp("created_at"),
+
+    // camelCase properties:
+    id: uuid("id"),
+    type: text("type"),
+    priority: text("priority"),
+    title: text("title"),
+  });
+
+  B. Inconsistent Timestamp Naming
+  // users table:
+  createdAt: timestamp("created_at")  // camelCase property, snake_case column
+
+  // alerts table:
+  created_at: timestamp("created_at") // snake_case property, snake_case column
+
+  // agents table:
+  lastActive: timestamp("last_active") // camelCase property, snake_case column
+  updatedAt: timestamp("updated_at")   // camelCase property, snake_case column
+
+  C. Mixed Conventions Across Table Groups
+  // Early tables (lines 13-61): Mixed camelCase/snake_case
+  createdAt: timestamp("created_at")
+  agent_id: text("agent_id")
+
+  // Later tables (lines 70+): More consistent snake_case
+  airline_code: varchar("airline_code")
+  created_at: timestamp("created_at")
+
+  D. Foreign Key Naming Inconsistencies
+  // Some use snake_case:
+  alert_id: uuid("alert_id").references(() => alerts.id)
+  agent_id: text("agent_id").references(() => agents.id)
+
+  // Others use camelCase:
+  originAirport: varchar("origin_airport").references(() => airports.airportCode)
+
+  Problems This Causes:
+
+  1. Query Confusion: Developers unsure whether to use createdAt or created_at
+  2. ORM Issues: Mixed property names cause Drizzle mapping problems
+  3. API Inconsistency: Frontend receives mixed naming in API responses
+  4. Migration Problems: Schema changes become error-prone
+  5. Team Confusion: New developers can't predict naming patterns
+
+  Recommended Standardization:
+
+  // OPTION 1: Full snake_case (recommended for PostgreSQL)
+  export const alerts = pgTable("alerts", {
+    id: uuid("id"),
+    route_name: text("route_name"),
+    agent_id: text("agent_id"),
+    created_at: timestamp("created_at"),
+    updated_at: timestamp("updated_at"),
+  });
+
+  // OPTION 2: Full camelCase (with database mapping)
+  export const alerts = pgTable("alerts", {
+    id: uuid("id"),
+    routeName: text("route_name"),
+    agentId: text("agent_id"),
+    createdAt: timestamp("created_at"),
+    updatedAt: timestamp("updated_at"),
+  });
+
+  Impact: Data inconsistency, API confusion, development friction, migration risks
