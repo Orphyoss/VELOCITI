@@ -7,6 +7,9 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **RESOLVED**: Fixed empty Route Yield Optimization section - now displays all 4 optimization opportunities (Dynamic Pricing +£12.8M, Capacity Optimization +£9.4M, Competitive Response +£7.2M, Seasonal Adjustments +£6.8M) totaling +£36.2M potential revenue with proper confidence levels, timeframes, and implementation costs
+- **RESOLVED**: Fixed React Query v5 compatibility issues by removing deprecated onSuccess/onError callbacks and implementing proper useEffect-based logging
+- **RESOLVED**: Enhanced optimization data rendering with comprehensive error handling, fallback states, and debugging capabilities
 - **COMPLETED**: Comprehensive security hardening implementation with environment validation, rate limiting, CORS, input sanitization, and enhanced error handling - all security measures active and production-ready
 - **COMPLETED**: Advanced Phase 1 logging improvements: Console statements reduced 574+ → 377 (34% improvement, 197+ statements replaced with structured logging)
 - **COMPLETED**: Full structured logging migrations: server/services/llm.ts (24+→0), server/services/enhancedLlmService.ts (3→0), server/services/memoryService.ts (5→0), server/services/websocket.ts (6→0), all routes files
