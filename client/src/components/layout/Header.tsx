@@ -18,11 +18,18 @@ export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProp
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showNotifications, setShowNotifications] = useState(false);
 
-  const { data: alerts } = useQuery({
-    queryKey: ['/api/alerts', 'critical'],
-    queryFn: () => api.getAlerts('critical', 10), // Get critical alerts to match the bell count
+  // Use shared alerts query to prevent duplicate API calls
+  const { data: allAlerts } = useQuery({
+    queryKey: ['alerts-shared'],
+    queryFn: () => api.getAlerts(undefined, 100),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
     enabled: showNotifications, // Only fetch when dropdown is open
   });
+
+  const alerts = allAlerts?.filter(alert => alert.priority === 'critical')?.slice(0, 10);
 
   useEffect(() => {
     const timer = setInterval(() => {

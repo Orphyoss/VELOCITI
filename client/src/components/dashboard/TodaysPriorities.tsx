@@ -6,10 +6,10 @@ import { api } from '@/services/api';
 
 function TodaysPriorities() {
   const { data: alerts, isLoading, error } = useQuery({
-    queryKey: ['/api/alerts', 'dashboard'],
-    queryFn: () => api.getAlerts(),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    queryKey: ['alerts-shared'],
+    queryFn: () => api.getAlerts(undefined, 100),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     retry: 1,
   });

@@ -26,8 +26,8 @@ export default function AnalystWorkbench() {
   }, [setCurrentModule]);
 
   const { data: allAlerts, isLoading, error } = useQuery({
-    queryKey: ['workbench-alerts', alertLimit],
-    queryFn: () => api.getAlerts(undefined, alertLimit),
+    queryKey: ['alerts-shared'],
+    queryFn: () => api.getAlerts(undefined, Math.max(alertLimit, 100)),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes  
     refetchOnWindowFocus: false,
@@ -37,9 +37,10 @@ export default function AnalystWorkbench() {
     select: (data: Alert[]) => {
       // Ensure no duplicates at query level
       if (!Array.isArray(data)) return [];
-      return data.filter((alert: Alert, index: number, self: Alert[]) => 
+      const deduped = data.filter((alert: Alert, index: number, self: Alert[]) => 
         self.findIndex(a => a.id === alert.id) === index
       );
+      return deduped.slice(0, alertLimit); // Apply limit after deduplication
     }
   });
 
@@ -64,7 +65,7 @@ export default function AnalystWorkbench() {
       if (searchQuery) {
         const titleMatch = alert.title?.toLowerCase().includes(searchQuery.toLowerCase());
         const descriptionMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        const messageMatch = alert.message?.toLowerCase().includes(searchQuery.toLowerCase());
+        const messageMatch = alert.description?.toLowerCase().includes(searchQuery.toLowerCase());
         if (!titleMatch && !descriptionMatch && !messageMatch) return false;
       }
       return true;

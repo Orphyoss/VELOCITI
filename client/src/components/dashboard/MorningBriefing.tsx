@@ -5,15 +5,18 @@ import { Sunrise } from 'lucide-react';
 import AlertCard from '../alerts/AlertCard';
 
 export default function MorningBriefing() {
-  const { data: criticalAlerts, isLoading } = useQuery({
-    queryKey: ['/api/alerts', 'critical'],
-    queryFn: () => api.getAlerts('critical', 5),
+  // Use single shared query to prevent duplicate API calls
+  const { data: allAlerts, isLoading } = useQuery({
+    queryKey: ['alerts-shared'],
+    queryFn: () => api.getAlerts(undefined, 100),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 
-  const { data: highAlerts } = useQuery({
-    queryKey: ['/api/alerts', 'high'],
-    queryFn: () => api.getAlerts('high', 3),
-  });
+  const criticalAlerts = allAlerts?.filter(alert => alert.priority === 'critical')?.slice(0, 5);
+  const highAlerts = allAlerts?.filter(alert => alert.priority === 'high')?.slice(0, 3);
 
   if (isLoading) {
     return (
