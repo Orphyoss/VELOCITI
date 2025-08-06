@@ -1148,13 +1148,42 @@ export default function TelosIntelligence() {
             </Card>
           </div>
 
+          {/* DEBUG: Deep logging for optimization rendering */}
+          {(() => {
+            console.log('[TelosIntelligence] RENDER ANALYSIS:', {
+              hasOptimizationData: !!optimizationData,
+              hasOpportunities: !!optimizationData?.opportunities,
+              isOpportunitiesArray: Array.isArray(optimizationData?.opportunities),
+              opportunitiesCount: optimizationData?.opportunities?.length,
+              optimizationLoading,
+              optimizationError,
+              dataStructure: optimizationData ? JSON.stringify(optimizationData, null, 2) : 'null'
+            });
+            
+            // Force return true to see if this section renders at all
+            return null;
+          })()}
+
+          {/* TEST CARD - Always visible */}
+          <Card className="border-4 border-blue-500">
+            <CardHeader>
+              <CardTitle className="text-blue-600">TEST: This should always be visible</CardTitle>
+              <CardDescription>
+                Debug card to test visibility. Data state: {optimizationData ? 'HAS DATA' : 'NO DATA'}, Count: {optimizationData?.opportunities?.length || 0}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-yellow-200 p-4">This is a test card that should always render</div>
+            </CardContent>
+          </Card>
+
           {/* Optimization Opportunities - Force display if we have data */}
           {optimizationData && optimizationData.opportunities ? (
-            <Card>
+            <Card className="border-4 border-green-500">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
-                  Optimization Opportunities
+                  Optimization Opportunities (SHOULD BE VISIBLE)
                 </CardTitle>
                 <CardDescription>
                   AI-identified revenue optimization opportunities across the network
@@ -1174,8 +1203,10 @@ export default function TelosIntelligence() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {optimizationData.opportunities && optimizationData.opportunities.map((opp: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 space-y-3 bg-card">
+                  {optimizationData.opportunities && optimizationData.opportunities.map((opp: any, index: number) => {
+                    console.log(`[TelosIntelligence] CARD RENDER ${index}:`, opp);
+                    return (
+                    <div key={index} className="border-4 border-red-500 rounded-lg p-6 space-y-3 bg-yellow-100 dark:bg-yellow-800 text-black dark:text-white">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="font-semibold">{opp.category}</div>
@@ -1202,7 +1233,8 @@ export default function TelosIntelligence() {
                         Routes: {opp.routes?.join(', ') || 'N/A'}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   
                   {(!optimizationData.opportunities || optimizationData.opportunities.length === 0) && (
                     <div className="col-span-2 text-center py-8 text-muted-foreground">
