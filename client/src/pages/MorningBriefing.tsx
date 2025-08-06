@@ -322,6 +322,24 @@ export default function MorningBriefing() {
                     </div>
                   </div>
                 )}
+
+                {briefingData.marketIntelligence.opportunities && briefingData.marketIntelligence.opportunities.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-dark-100 mb-2">Strategic Opportunities</h4>
+                    <div className="space-y-2">
+                      {briefingData.marketIntelligence.opportunities.map((opportunity, index) => (
+                        <div key={index} className="bg-green-900/20 border border-green-800 rounded p-3">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-green-200">{opportunity.title}</span>
+                            <Badge className="bg-green-900 text-green-200">{opportunity.timeframe}</Badge>
+                          </div>
+                          <p className="text-dark-300 text-xs mb-2">{opportunity.description}</p>
+                          <p className="text-dark-400 text-xs">Impact: {opportunity.estimatedImpact}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

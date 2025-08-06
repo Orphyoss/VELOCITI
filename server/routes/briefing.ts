@@ -102,15 +102,22 @@ export async function briefingRoutes(app: Express): Promise<void> {
     try {
       console.log('[API] Generating AI-powered morning briefing...');
       
-      // Check cache first (3-hour TTL)
+      // Check cache first (3-hour TTL) - bypass cache if force parameter is provided
       const currentDate = new Date().toISOString().slice(0, 10);
       const cacheKey = `morning-briefing-${currentDate}`;
-      const cachedBriefing = cacheService.get(cacheKey);
+      const forceRefresh = req.query.force === 'true';
       
-      if (cachedBriefing) {
-        const duration = Date.now() - startTime;
-        console.log(`[API] Returning cached morning briefing (${duration}ms) - Structure:`, Object.keys(cachedBriefing));
-        return res.json(cachedBriefing);
+      if (!forceRefresh) {
+        const cachedBriefing = cacheService.get(cacheKey);
+        if (cachedBriefing) {
+          const duration = Date.now() - startTime;
+          console.log(`[API] Returning cached morning briefing (${duration}ms) - Structure:`, Object.keys(cachedBriefing));
+          return res.json(cachedBriefing);
+        }
+      } else {
+        console.log('[API] Force refresh requested - bypassing cache');
+        // Clear the existing cache entry to ensure fresh generation
+        cacheService.invalidatePattern('morning-briefing');
       }
       
       // Check if OpenAI API key is available
@@ -327,8 +334,22 @@ Generate a detailed JSON response:
 
 3. marketIntelligence: {
    aiGeneratedInsight: "3-4 sentence market analysis incorporating actual competitive data, route performance, and market positioning from the intelligence provided. Reference specific routes, pricing trends, and competitive movements.",
-   competitiveThreats: [],
-   opportunities: []
+   competitiveThreats: [
+     {
+       competitor: "Competitor name (e.g., Ryanair, British Airways)",
+       threat: "Specific threat description based on actual alert data",
+       severity: "HIGH"|"MEDIUM"|"LOW",
+       recommendation: "Specific recommended response action"
+     }
+   ],
+   opportunities: [
+     {
+       title: "Opportunity title based on actual performance data",
+       description: "Detailed opportunity description",
+       estimatedImpact: "£XXK revenue potential",
+       timeframe: "Implementation timeframe"
+     }
+   ]
 }
 
 CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific alert titles, performance metrics, agent accuracy, and competitive intelligence. Do not use generic airline industry commentary.`
