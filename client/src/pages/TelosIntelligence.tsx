@@ -1011,36 +1011,33 @@ export default function TelosIntelligence() {
 
         {/* Yield Optimization Tab */}
         <TabsContent value="yield" className="space-y-4">
-          {/* Route Selection Header */}
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
-                    Route Yield Analysis
-                  </CardTitle>
-                  <CardDescription>Comprehensive yield optimization and revenue management</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Route:</span>
-                  <Select value={selectedYieldRoute} onValueChange={setSelectedYieldRoute}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Select route" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
-                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
-                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
-                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
-                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
-                      <SelectItem value="LGW-MXP">LGW-MXP</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Route Selection */}
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-blue-600" />
+                  Route Yield Analysis
+                </h3>
               </div>
-            </CardHeader>
-          </Card>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Route:</span>
+                <Select value={selectedYieldRoute} onValueChange={setSelectedYieldRoute}>
+                  <SelectTrigger className="w-40 border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-900 shadow-sm">
+                    <SelectValue placeholder="Select route" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
+                    <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
+                    <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
+                    <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
+                    <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
+                    <SelectItem value="LGW-MXP">LGW-MXP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {/* Current Route Yield Performance */}
@@ -1149,8 +1146,7 @@ export default function TelosIntelligence() {
             {/* Route Comparison Card */}
             <Card>
               <CardHeader>
-                <CardTitle>Route Comparison</CardTitle>
-                <CardDescription>How {selectedYieldRoute} compares to network</CardDescription>
+                <CardTitle>Route vs Network</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
