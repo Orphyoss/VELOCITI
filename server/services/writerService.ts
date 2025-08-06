@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { cacheService } from './cacheService.js';
 import { streamingService } from './streamingService.js';
 import { Response } from 'express';
+import { logger } from './logger.js';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -28,7 +29,7 @@ class WriterService {
   constructor() {
     this.apiKey = process.env.WRITER_API_KEY || '';
     if (!this.apiKey) {
-      console.warn('[WriterService] Writer API key not found, falling back to OpenAI');
+      logger.warn('WriterService', 'constructor', 'Writer API key not found, falling back to OpenAI');
     }
   }
 
@@ -37,12 +38,12 @@ class WriterService {
     const cacheKey = cacheService.generateKey(prompt, 'writer', context);
     const cached = cacheService.get(cacheKey);
     if (cached && !res) {
-      console.log('[WriterService] Returning cached strategic analysis');
+      logger.debug('WriterService', 'generateStrategicAnalysis', 'Returning cached strategic analysis');
       return cached;
     }
 
     if (!this.apiKey) {
-      console.log('[WriterService] Using OpenAI fallback for strategic analysis');
+      logger.info('WriterService', 'generateStrategicAnalysis', 'Using OpenAI fallback for strategic analysis');
       return this.fallbackToOpenAI(prompt, context, res);
     }
 
@@ -94,7 +95,7 @@ class WriterService {
       const content = data.choices[0]?.message?.content || 'Analysis could not be generated.';
       const duration = Date.now() - startTime;
       
-      console.log(`[WriterService] Strategic analysis completed in ${duration}ms`);
+      logger.info('WriterService', 'generateStrategicAnalysis', 'Strategic analysis completed', { duration });
       
       // Cache the result
       cacheService.setStrategicAnalysis(cacheKey, content);
@@ -108,8 +109,7 @@ class WriterService {
       return content;
 
     } catch (error) {
-      console.error('[WriterService] Error calling Writer API:', error);
-      console.log('[WriterService] Falling back to OpenAI');
+      logger.error('WriterService', 'generateStrategicAnalysis', 'Error calling Writer API, falling back to OpenAI', error);
       return this.fallbackToOpenAI(prompt, context, res);
     }
   }

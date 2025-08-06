@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { logger } from '@/services/logger';
 import { 
   Calendar, 
   Play, 
@@ -61,13 +62,13 @@ export default function DataGeneration() {
   const { data: recentJobs, isLoading, error: jobsError } = useQuery({
     queryKey: ['/api/admin/data-generation/jobs'],
     queryFn: async () => {
-      console.log('[DataGeneration] Fetching jobs from API...');
+      logger.debug('DataGeneration', 'fetchJobs', 'Fetching jobs from API');
       try {
         const result = await api.request('GET', '/api/admin/data-generation/jobs');
-        console.log('[DataGeneration] Jobs API response:', result);
+        logger.debug('DataGeneration', 'fetchJobs', 'Jobs API response received', { jobCount: result?.length || 0 });
         return result;
       } catch (error) {
-        console.error('[DataGeneration] Jobs API error:', error);
+        logger.error('DataGeneration', 'fetchJobs', 'Jobs API request failed', error);
         throw error;
       }
     },
@@ -78,25 +79,31 @@ export default function DataGeneration() {
   const { data: lastDataInfo, error: lastDataError } = useQuery({
     queryKey: ['/api/admin/data-generation/last-data-date'],
     queryFn: async () => {
-      console.log('[DataGeneration] Fetching last data date...');
+      logger.debug('DataGeneration', 'fetchLastDataDate', 'Fetching last data date');
       try {
         const result = await api.request('GET', '/api/admin/data-generation/last-data-date');
-        console.log('[DataGeneration] Last data date response:', result);
+        logger.debug('DataGeneration', 'fetchLastDataDate', 'Last data date response received', { hasResult: !!result });
         return result;
       } catch (error) {
-        console.error('[DataGeneration] Last data date error:', error);
+        logger.error('DataGeneration', 'fetchLastDataDate', 'Last data date request failed', error);
         throw error;
       }
     },
     staleTime: 300000, // 5 minutes - data changes infrequently
   });
 
-  // Add logging after queries are defined
-  console.log('[DataGeneration] Component render - recentJobs:', recentJobs);
-  console.log('[DataGeneration] Component render - isLoading:', isLoading);
-  console.log('[DataGeneration] Component render - jobsError:', jobsError);
-  console.log('[DataGeneration] Component render - lastDataInfo:', lastDataInfo);
-  console.log('[DataGeneration] Component render - lastDataError:', lastDataError);
+  // Debug component state in development
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug('DataGeneration', 'render', 'Component state update', {
+        hasRecentJobs: !!recentJobs,
+        isLoading,
+        hasJobsError: !!jobsError,
+        hasLastDataInfo: !!lastDataInfo,
+        hasLastDataError: !!lastDataError
+      });
+    }
+  }, [recentJobs, isLoading, jobsError, lastDataInfo, lastDataError]);
 
   // Mutation to trigger data generation
   const generateDataMutation = useMutation({

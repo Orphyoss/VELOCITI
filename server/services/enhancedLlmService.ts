@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { cacheService } from './cacheService.js';
 import { streamingService } from './streamingService.js';
 import { Response } from 'express';
+import { logger } from './logger.js';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 const openai = new OpenAI({ 
@@ -35,7 +36,7 @@ class EnhancedLLMService {
     const cached = cacheService.get(cacheKey);
     
     if (cached && !res) {
-      console.log('[EnhancedLLM] Returning cached OpenAI response');
+      logger.debug('EnhancedLLM', 'queryLLM', 'Returning cached OpenAI response');
       return {
         ...cached,
         metadata: {
@@ -72,7 +73,7 @@ class EnhancedLLMService {
       }
 
     } catch (error) {
-      console.error('[EnhancedLLM] Error:', error);
+      logger.error('EnhancedLLM', 'queryLLM', 'LLM query error', error);
       throw new Error(`LLM query failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -99,7 +100,7 @@ class EnhancedLLMService {
       ...response,
       metadata: {
         model: 'gpt-4o',
-        tokenCount: streamingService.estimateTokens(fullContent),
+        tokenCount: Math.ceil(fullContent.length / 4), // Rough token estimation
         responseTime: duration,
         cached: false
       }
@@ -141,7 +142,10 @@ class EnhancedLLMService {
     // Cache the result
     cacheService.setStrategicAnalysis(cacheKey, enhancedResponse);
 
-    console.log(`[EnhancedLLM] OpenAI analysis completed in ${duration}ms, ${completion.usage?.total_tokens} tokens`);
+    logger.info('EnhancedLLM', 'standardResponse', 'OpenAI analysis completed', { 
+      duration, 
+      totalTokens: completion.usage?.total_tokens 
+    });
 
     return enhancedResponse;
   }

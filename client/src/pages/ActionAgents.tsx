@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { useLocation } from 'wouter';
+import { logger } from '@/services/logger';
 import AppShell from '@/components/layout/AppShell';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,7 +69,7 @@ export default function ActionAgents() {
   const [sortBy, setSortBy] = useState<string>('created');
 
   useEffect(() => {
-    console.log('[ActionAgents] Component mounted');
+    logger.debug('ActionAgents', 'mount', 'Component mounted');
     setCurrentModule('action-agents');
     
     const initializeComponent = async () => {
@@ -76,7 +77,7 @@ export default function ActionAgents() {
         await initializeAgents();
         await loadRealAlerts();
       } catch (error) {
-        console.error('[ActionAgents] Error during initialization:', error);
+        logger.error('ActionAgents', 'initialize', 'Error during initialization', error);
         setLoading(false);
       }
     };
@@ -85,19 +86,18 @@ export default function ActionAgents() {
   }, [setCurrentModule]);
 
   const loadRealAlerts = async () => {
-    console.log('[ActionAgents] Starting loadRealAlerts...');
+    logger.debug('ActionAgents', 'loadRealAlerts', 'Starting alert loading');
     try {
       setLoading(true);
-      console.log('[ActionAgents] Fetching alerts from /api/alerts...');
       const response = await fetch('/api/alerts');
       
       if (!response.ok) {
-        console.error('[ActionAgents] Failed to fetch alerts:', response.status, response.statusText);
+        logger.error('ActionAgents', 'loadRealAlerts', 'Failed to fetch alerts', new Error(`HTTP ${response.status}: ${response.statusText}`));
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
       const realAlerts = await response.json();
-      console.log('[ActionAgents] Received', realAlerts.length, 'alerts from database');
+      logger.debug('ActionAgents', 'loadRealAlerts', 'Alerts received from database', { alertCount: realAlerts.length });
       
       // Transform database alerts to match our interface
       const transformedAlerts: Alert[] = realAlerts.map((alert: any) => ({
@@ -115,15 +115,14 @@ export default function ActionAgents() {
         expiresAt: alert.expires_at ? formatTimeAgo(alert.expires_at) : undefined
       }));
       
-      console.log('[ActionAgents] Successfully transformed', transformedAlerts.length, 'alerts');
+      logger.debug('ActionAgents', 'loadRealAlerts', 'Successfully transformed alerts', { transformedCount: transformedAlerts.length });
       setAlerts(transformedAlerts);
     } catch (error) {
-      console.error('[ActionAgents] Error in loadRealAlerts:', error);
-      // Show user-friendly error message
+      logger.error('ActionAgents', 'loadRealAlerts', 'Error in loadRealAlerts', error);
       setAlerts([]);
     } finally {
       setLoading(false);
-      console.log('[ActionAgents] loadRealAlerts completed');
+      logger.debug('ActionAgents', 'loadRealAlerts', 'Alert loading completed');
     }
   };
 

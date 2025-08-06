@@ -1,5 +1,6 @@
 import { storage } from '../storage';
 import { pineconeService } from './pinecone';
+import { logger } from './logger';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
@@ -58,7 +59,7 @@ export class MemoryService {
   private contextCache = new Map<string, MemoryContext>();
   
   constructor() {
-    console.log('[MemoryService] Initializing intelligent memory system');
+    logger.info('MemoryService', 'constructor', 'Initializing intelligent memory system');
   }
 
   async getMemoryContext(userId: string, sessionId: string): Promise<MemoryContext> {
@@ -238,7 +239,7 @@ Please provide a response that takes into account the user's history, preference
       metadata: { pattern: learning.pattern }
     });
 
-    console.log(`[MemoryService] Recorded ${feedback} feedback for ${agentId}`);
+    logger.info('MemoryService', 'recordAgentFeedback', 'Recorded agent feedback', { agentId, feedback, userId });
   }
 
   private inferCommunicationStyle(activities: any[]): 'concise' | 'detailed' | 'technical' {
@@ -358,7 +359,7 @@ Please provide a response that takes into account the user's history, preference
 
       return completion.choices[0].message.content?.trim() || 'general query';
     } catch (error) {
-      console.error('[MemoryService] Pattern extraction error:', error);
+      logger.error('MemoryService', 'extractPattern', 'Pattern extraction failed', error);
       return 'general query';
     }
   }
@@ -385,14 +386,14 @@ Please provide a response that takes into account the user's history, preference
         }
       });
     } catch (error) {
-      console.error('[MemoryService] Failed to persist message:', error);
+      logger.error('MemoryService', 'persistConversation', 'Failed to persist conversation message', error);
     }
   }
 
   async clearUserContext(userId: string, sessionId: string): Promise<void> {
     const cacheKey = `${userId}-${sessionId}`;
     this.contextCache.delete(cacheKey);
-    console.log(`[MemoryService] Cleared context for user ${userId}, session ${sessionId}`);
+    logger.info('MemoryService', 'clearContext', 'Cleared memory context', { userId, sessionId });
   }
 
   async getMemoryStats(): Promise<{

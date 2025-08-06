@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { logger } from './logger';
 
 // Writer AI SDK interface
 interface WriterAPI {
@@ -17,7 +18,7 @@ class WriterClient implements WriterAPI {
   constructor() {
     this.apiKey = process.env.WRITER_API_KEY || '';
     if (!this.apiKey) {
-      console.warn('[Writer] API key not found in environment variables');
+      logger.warn('Writer', 'constructor', 'API key not found in environment variables');
     }
   }
 
@@ -27,7 +28,7 @@ class WriterClient implements WriterAPI {
     }
 
     try {
-      console.log(`[Writer] Making API request to ${this.baseUrl}/chat/completions`);
+      logger.info('Writer', 'generate', 'Making API request', { baseUrl: this.baseUrl, model: 'palmyra-x-5-32b' });
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -53,7 +54,7 @@ class WriterClient implements WriterAPI {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[Writer] API error: ${response.status} ${response.statusText} - ${errorText}`);
+        logger.error('Writer', 'generate', 'API request failed', new Error(`${response.status} ${response.statusText}`), { errorText });
         throw new Error(`Writer API error: ${response.status} ${response.statusText}`);
       }
 
@@ -63,16 +64,16 @@ class WriterClient implements WriterAPI {
       // Calculate confidence based on response length and structure
       const confidence = this.calculateConfidence(text);
       
-      console.log(`[Writer] Successfully generated ${text.length} characters with confidence ${confidence}`);
+      logger.info('Writer', 'generate', 'Successfully generated content', { textLength: text.length, confidence });
       
       return {
         text,
         confidence
       };
     } catch (error) {
-      console.error('[Writer] API error:', error);
+      logger.error('Writer', 'generate', 'API request error occurred', error);
       // Fallback to OpenAI if Writer fails
-      console.log('[Writer] Falling back to OpenAI for analysis');
+      logger.info('Writer', 'generate', 'Falling back to OpenAI for analysis');
       throw error;
     }
   }
@@ -114,12 +115,14 @@ export class LLMService {
     recommendations: string[];
   }> {
     const startTime = Date.now();
-    console.log(`[LLM] Starting strategic analysis with provider: ${this.currentProvider}`);
-    console.log(`[LLM] Prompt: ${prompt.substring(0, 100)}...`);
+    logger.info('LLM', 'generateStrategicAnalysis', 'Starting strategic analysis', { 
+      provider: this.currentProvider, 
+      promptPreview: prompt.substring(0, 100) + '...' 
+    });
     
     try {
       if (this.currentProvider === 'writer') {
-        console.log('[LLM] Using Writer Palmyra X5 model');
+        logger.debug('LLM', 'generateStrategicAnalysis', 'Using Writer Palmyra X5 model');
         const response = await writer.generate({
           model: 'palmyra-x5',
           prompt: `Provide strategic analysis for EasyJet revenue management: ${prompt}`,
@@ -127,8 +130,10 @@ export class LLMService {
         });
 
         const duration = Date.now() - startTime;
-        console.log(`[LLM] Writer analysis completed in ${duration}ms`);
-        console.log(`[LLM] Response confidence: ${response.confidence}`);
+        logger.info('LLM', 'generateStrategicAnalysis', 'Writer analysis completed', { 
+          duration, 
+          confidence: response.confidence 
+        });
 
         return {
           analysis: response.text,
@@ -136,7 +141,7 @@ export class LLMService {
           recommendations: this.extractRecommendations(response.text)
         };
       } else {
-        console.log('[LLM] Using OpenAI GPT-4o model');
+        logger.debug('LLM', 'generateStrategicAnalysis', 'Using OpenAI GPT-4o model');
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -153,12 +158,15 @@ export class LLMService {
         });
 
         const duration = Date.now() - startTime;
-        console.log(`[LLM] OpenAI analysis completed in ${duration}ms`);
-        console.log(`[LLM] Tokens used - prompt: ${response.usage?.prompt_tokens}, completion: ${response.usage?.completion_tokens}`);
-
         const result = JSON.parse(response.choices[0].message.content || '{}');
-        console.log(`[LLM] Response confidence: ${result.confidence || 0.8}`);
-        console.log(`[LLM] Recommendations count: ${result.recommendations?.length || 0}`);
+        
+        logger.info('LLM', 'generateStrategicAnalysis', 'OpenAI analysis completed', {
+          duration,
+          promptTokens: response.usage?.prompt_tokens,
+          completionTokens: response.usage?.completion_tokens,
+          confidence: result.confidence || 0.8,
+          recommendationsCount: result.recommendations?.length || 0
+        });
 
         return {
           analysis: result.analysis || '',
@@ -168,7 +176,7 @@ export class LLMService {
       }
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`[LLM] Strategic analysis failed after ${duration}ms:`, error);
+      logger.error('LLM', 'generateStrategicAnalysis', `Strategic analysis failed after ${duration}ms`, error);
       throw error;
     }
   }
@@ -179,8 +187,7 @@ export class LLMService {
     results?: any[];
   }> {
     const startTime = Date.now();
-    console.log(`[LLM] Starting data query processing`);
-    console.log(`[LLM] Query: ${query}`);
+    logger.info('LLM', 'processDataQuery', 'Starting data query processing', { queryLength: query.length });
     
     try {
       // This would integrate with Databricks Genie API
@@ -200,12 +207,15 @@ export class LLMService {
       });
 
       const duration = Date.now() - startTime;
-      console.log(`[LLM] Data query completed in ${duration}ms`);
-      console.log(`[LLM] Tokens used - prompt: ${response.usage?.prompt_tokens}, completion: ${response.usage?.completion_tokens}`);
-
       const result = JSON.parse(response.choices[0].message.content || '{}');
-      console.log(`[LLM] Generated SQL: ${result.sql ? 'Yes' : 'No'}`);
-      console.log(`[LLM] Explanation length: ${result.explanation?.length || 0} chars`);
+      
+      logger.info('LLM', 'processDataQuery', 'Data query completed', { 
+        duration, 
+        promptTokens: response.usage?.prompt_tokens, 
+        completionTokens: response.usage?.completion_tokens,
+        hasSql: !!result.sql,
+        explanationLength: result.explanation?.length || 0
+      });
 
       return {
         sql: result.sql,
@@ -214,7 +224,7 @@ export class LLMService {
       };
     } catch (error) {
       const duration = Date.now() - startTime;
-      console.error(`[LLM] Data query failed after ${duration}ms:`, error);
+      logger.error('LLM', 'processDataQuery', `Data query failed after ${duration}ms`, error);
       throw error;
     }
   }

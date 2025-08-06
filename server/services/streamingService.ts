@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { logger } from './logger.js';
 
 interface StreamChunk {
   type: 'start' | 'chunk' | 'end' | 'error';
@@ -38,7 +39,7 @@ class StreamingService {
   }
 
   sendError(res: Response, error: string): void {
-    console.error('[Streaming] Sending error to client:', error);
+    logger.error('Streaming', 'sendError', 'Sending error to client', new Error(error));
     this.sendChunk(res, { type: 'error', error });
     res.end();
   }
@@ -48,7 +49,7 @@ class StreamingService {
     let fullContent = '';
     
     try {
-      console.log('[Streaming] Starting OpenAI stream');
+      logger.debug('Streaming', 'streamOpenAI', 'Starting OpenAI stream');
       this.sendStart(res, { provider: 'openai', model: 'gpt-4o' });
       
       for await (const chunk of openaiStream) {
