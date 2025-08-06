@@ -14,10 +14,7 @@ export async function performanceRoutes(app: Express): Promise<void> {
       // Direct database query for flight performance data
       const { db } = await import('../services/supabase');
       const { flight_performance } = await import('@shared/schema');
-      const { eq, gte, sql, count, desc } = await import('drizzle-orm');
-      
-      const cutoffDate = new Date();
-      cutoffDate.setDate(cutoffDate.getDate() - (parseInt(days as string) || 7));
+      const { eq, sql, count, desc } = await import('drizzle-orm');
       
       if (route) {
         // Get performance for specific route
@@ -27,13 +24,11 @@ export async function performanceRoutes(app: Express): Promise<void> {
             avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor})`,
             totalSeats: sql<string>`SUM(${flight_performance.total_seats})`,
             flightCount: count(),
-            avgYield: sql<string>`AVG(CASE WHEN ${flight_performance.ticket_price} > 0 THEN ${flight_performance.ticket_price} ELSE 150 END)`,
-            totalRevenue: sql<string>`SUM(${flight_performance.total_seats} * ${flight_performance.load_factor} / 100 * CASE WHEN ${flight_performance.ticket_price} > 0 THEN ${flight_performance.ticket_price} ELSE 150 END)`
+            avgYield: sql<string>`AVG(COALESCE(${flight_performance.ticket_price}, 150))`,
+            totalRevenue: sql<string>`SUM(${flight_performance.total_seats}::numeric * ${flight_performance.load_factor}::numeric / 100 * COALESCE(${flight_performance.ticket_price}::numeric, 150))`
           })
           .from(flight_performance)
-          .where(
-            eq(flight_performance.route_id, route as string)
-          )
+          .where(eq(flight_performance.route_id, route as string))
           .groupBy(flight_performance.route_id);
         
         const performanceData = performance.map(p => ({
@@ -55,8 +50,8 @@ export async function performanceRoutes(app: Express): Promise<void> {
             avgLoadFactor: sql<string>`AVG(${flight_performance.load_factor})`,
             totalSeats: sql<string>`SUM(${flight_performance.total_seats})`,
             flightCount: count(),
-            avgYield: sql<string>`AVG(CASE WHEN ${flight_performance.ticket_price} > 0 THEN ${flight_performance.ticket_price} ELSE 150 END)`,
-            totalRevenue: sql<string>`SUM(${flight_performance.total_seats} * ${flight_performance.load_factor} / 100 * CASE WHEN ${flight_performance.ticket_price} > 0 THEN ${flight_performance.ticket_price} ELSE 150 END)`
+            avgYield: sql<string>`AVG(COALESCE(${flight_performance.ticket_price}, 150))`,
+            totalRevenue: sql<string>`SUM(${flight_performance.total_seats}::numeric * ${flight_performance.load_factor}::numeric / 100 * COALESCE(${flight_performance.ticket_price}::numeric, 150))`
           })
           .from(flight_performance)
           .groupBy(flight_performance.route_id)
