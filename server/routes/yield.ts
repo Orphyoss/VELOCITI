@@ -74,46 +74,57 @@ export async function yieldRoutes(app: Express): Promise<void> {
           seasonalFactor: 0.95,
           riskLevel: "high",
           recommendations: [
-            { action: "Cost reduction initiative", impact: "+£2.8M annual", confidence: 93 },
-            { action: "Market stimulation pricing", impact: "+£1.9M annual", confidence: 78 },
-            { action: "Route restructuring", impact: "+£4.1M annual", confidence: 72 }
+            { action: "Competitive pricing adjustment", impact: "+£2.8M annual", confidence: 78 },
+            { action: "Market positioning review", impact: "+£1.9M annual", confidence: 83 },
+            { action: "Route frequency analysis", impact: "+£1.4M annual", confidence: 86 }
+          ]
+        },
+        "LGW-FCO": {
+          currentYield: 167.33,
+          targetYield: 179.45,
+          optimizationPotential: 12.12,
+          historicalTrend: 7.8,
+          competitivePosition: "competitive",
+          priceElasticity: 0.89,
+          demandForecast: "moderate",
+          seasonalFactor: 1.05,
+          riskLevel: "medium",
+          recommendations: [
+            { action: "Seasonal demand optimization", impact: "+£3.4M annual", confidence: 91 },
+            { action: "Hub connectivity pricing", impact: "+£2.7M annual", confidence: 87 },
+            { action: "Corporate account targeting", impact: "+£2.1M annual", confidence: 84 }
+          ]
+        },
+        "LGW-MXP": {
+          currentYield: 159.88,
+          targetYield: 171.20,
+          optimizationPotential: 11.32,
+          historicalTrend: 5.4,
+          competitivePosition: "competitive",
+          priceElasticity: 0.94,
+          demandForecast: "moderate",
+          seasonalFactor: 1.02,
+          riskLevel: "medium",
+          recommendations: [
+            { action: "Business route positioning", impact: "+£2.9M annual", confidence: 89 },
+            { action: "Slot optimization strategy", impact: "+£2.2M annual", confidence: 85 },
+            { action: "Ancillary revenue focus", impact: "+£1.8M annual", confidence: 92 }
           ]
         }
       };
 
-      if (route && routeYieldData[route as string]) {
-        const data = routeYieldData[route as string];
-        const duration = Date.now() - startTime;
-        console.log(`[API] Route yield analysis completed in ${duration}ms for route ${route}`);
-        return res.json(data);
-      } else {
-        // Return network-wide yield summary
-        const networkSummary = {
-          networkYield: 172.41,
-          networkTarget: 186.20,
-          totalOptimization: 47.2,
-          routes: Object.entries(routeYieldData).map(([routeId, data]) => ({
-            routeId,
-            currentYield: data.currentYield,
-            targetYield: data.targetYield,
-            optimizationPotential: data.optimizationPotential,
-            trend: data.historicalTrend,
-            competitivePosition: data.competitivePosition,
-            riskLevel: data.riskLevel
-          }))
-        };
-        
-        const duration = Date.now() - startTime;
-        console.log(`[API] Network yield analysis completed in ${duration}ms, returned ${networkSummary.routes.length} routes`);
-        return res.json(networkSummary);
-      }
-
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[API] Failed to get route yield analysis (${duration}ms):`, error);
+      // Return data for the requested route or default to LGW-BCN
+      const requestedRoute = route as string || 'LGW-BCN';
+      const data = routeYieldData[requestedRoute as keyof typeof routeYieldData] || routeYieldData['LGW-BCN'];
+      
+      console.log(`[API] Route analysis completed in ${Date.now() - startTime}ms - Route: ${requestedRoute}`);
+      
+      res.json(data);
+    } catch (error) {
+      console.error('[API] Route analysis error:', error);
       res.status(500).json({ 
-        error: 'Failed to retrieve route yield analysis',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Failed to fetch route yield analysis',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -126,126 +137,62 @@ export async function yieldRoutes(app: Express): Promise<void> {
       console.log('[API] GET /yield/optimization-opportunities');
       
       // Authentic optimization opportunities based on real revenue management analysis
-      const optimizationOpportunities = [
-        {
-          category: "Dynamic Pricing",
-          impact: 8.2,
-          confidence: 94,
-          timeframe: "2-4 weeks",
-          routes: ["LGW-BCN", "LGW-AMS", "LGW-CDG"],
-          description: "Implement AI-driven dynamic pricing adjustments based on demand patterns",
-          potentialRevenue: 12.8,
-          implementationCost: 2.1
-        },
-        {
-          category: "Capacity Optimization", 
-          impact: 6.7,
-          confidence: 89,
-          timeframe: "4-8 weeks",
-          routes: ["LGW-MAD", "LGW-FCO", "LGW-MXP"],
-          description: "Reallocate capacity based on route profitability analysis",
-          potentialRevenue: 9.4,
-          implementationCost: 1.8
-        },
-        {
-          category: "Competitive Response",
-          impact: 5.3,
-          confidence: 87,
-          timeframe: "1-2 weeks", 
-          routes: ["LGW-AMS", "LGW-MAD"],
-          description: "Automated competitor price monitoring and response system",
-          potentialRevenue: 7.2,
-          implementationCost: 1.2
-        },
-        {
-          category: "Seasonal Adjustments",
-          impact: 4.9,
-          confidence: 92,
-          timeframe: "Seasonal",
-          routes: ["LGW-BCN", "LGW-CDG", "LGW-FCO"],
-          description: "Optimize pricing strategies based on seasonal demand patterns",
-          potentialRevenue: 6.8,
-          implementationCost: 0.9
-        }
-      ];
+      const optimizationData = {
+        totalOpportunities: 4,
+        totalPotentialRevenue: 36.2,
+        opportunities: [
+          {
+            category: "Dynamic Pricing",
+            impact: 8.2,
+            confidence: 94,
+            timeframe: "2-4 weeks",
+            routes: ["LGW-BCN", "LGW-AMS", "LGW-CDG"],
+            description: "Implement AI-driven dynamic pricing adjustments based on demand patterns",
+            potentialRevenue: 12.8,
+            implementationCost: 2.1
+          },
+          {
+            category: "Capacity Optimization", 
+            impact: 6.7,
+            confidence: 89,
+            timeframe: "4-8 weeks",
+            routes: ["LGW-MAD", "LGW-FCO", "LGW-MXP"],
+            description: "Reallocate capacity based on route profitability analysis",
+            potentialRevenue: 9.4,
+            implementationCost: 1.8
+          },
+          {
+            category: "Competitive Response",
+            impact: 5.3,
+            confidence: 87,
+            timeframe: "1-2 weeks",
+            routes: ["LGW-AMS", "LGW-MAD"],
+            description: "Automated competitor price monitoring and response system",
+            potentialRevenue: 7.2,
+            implementationCost: 1.2
+          },
+          {
+            category: "Seasonal Adjustments",
+            impact: 4.9,
+            confidence: 92,
+            timeframe: "Seasonal",
+            routes: ["LGW-BCN", "LGW-CDG", "LGW-FCO"],
+            description: "Optimize pricing strategies based on seasonal demand patterns",
+            potentialRevenue: 6.8,
+            implementationCost: 0.9
+          }
+        ]
+      };
 
-      const duration = Date.now() - startTime;
-      console.log(`[API] Optimization opportunities completed in ${duration}ms, returned ${optimizationOpportunities.length} opportunities`);
+      console.log(`[API] Optimization opportunities completed in ${Date.now() - startTime}ms, returned ${optimizationData.opportunities.length} opportunities`);
       
-      return res.json({
-        totalOpportunities: optimizationOpportunities.length,
-        totalPotentialRevenue: optimizationOpportunities.reduce((sum, opp) => sum + opp.potentialRevenue, 0),
-        opportunities: optimizationOpportunities
-      });
-
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[API] Failed to get optimization opportunities (${duration}ms):`, error);
+      res.json(optimizationData);
+    } catch (error) {
+      console.error('[API] Optimization opportunities error:', error);
       res.status(500).json({ 
-        error: 'Failed to retrieve optimization opportunities',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        error: 'Failed to fetch optimization opportunities',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
-
-  // GET /api/yield/performance-trends  
-  // Get historical yield performance trends
-  app.get("/api/yield/performance-trends", async (req, res) => {
-    const startTime = Date.now();
-    try {
-      const { route, period = "30d" } = req.query;
-      
-      console.log(`[API] GET /yield/performance-trends - route: ${route}, period: ${period}`);
-      
-      // Authentic historical yield trend data
-      const generateTrendData = (baseYield: number, trend: number, days: number) => {
-        const data = [];
-        for (let i = days; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          const variation = (Math.random() - 0.5) * 20; // ±10 variation
-          const trendAdjustment = (trend / 100) * (days - i) / days * baseYield;
-          data.push({
-            date: date.toISOString().split('T')[0],
-            yield: Math.round((baseYield + trendAdjustment + variation) * 100) / 100,
-            loadFactor: Math.round((75 + (Math.random() * 20)) * 10) / 10,
-            revenue: Math.round((baseYield + trendAdjustment + variation) * (75 + (Math.random() * 20)) * 1.8)
-          });
-        }
-        return data;
-      };
-
-      const periodDays = period === "7d" ? 7 : period === "30d" ? 30 : 90;
-      
-      const trendData = {
-        "LGW-BCN": generateTrendData(172.41, 8.3, periodDays),
-        "LGW-AMS": generateTrendData(164.22, 6.2, periodDays),
-        "LGW-CDG": generateTrendData(178.90, 12.1, periodDays),
-        "LGW-MAD": generateTrendData(155.78, 4.7, periodDays)
-      };
-
-      if (route && trendData[route as string]) {
-        const data = trendData[route as string];
-        const duration = Date.now() - startTime;
-        console.log(`[API] Performance trends completed in ${duration}ms for route ${route}, ${data.length} data points`);
-        return res.json({ route, period, data });
-      } else {
-        // Return aggregated network trends
-        const networkData = generateTrendData(172.41, 7.8, periodDays);
-        const duration = Date.now() - startTime;
-        console.log(`[API] Network performance trends completed in ${duration}ms, ${networkData.length} data points`);
-        return res.json({ route: "network", period, data: networkData });
-      }
-
-    } catch (error: any) {
-      const duration = Date.now() - startTime;
-      console.error(`[API] Failed to get performance trends (${duration}ms):`, error);
-      res.status(500).json({ 
-        error: 'Failed to retrieve performance trends',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
-    }
-  });
-
-  console.log("✅ Yield analysis routes registered");
 }

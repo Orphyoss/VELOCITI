@@ -1023,19 +1023,19 @@ export default function TelosIntelligence() {
                     {/* Key Metrics Row */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-blue-600">£{routeYieldData.currentYield.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-blue-600">£{routeYieldData?.currentYield?.toFixed(2) || '0.00'}</div>
                         <div className="text-xs text-muted-foreground">Current Yield</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">£{routeYieldData.targetYield.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-green-600">£{routeYieldData?.targetYield?.toFixed(2) || '0.00'}</div>
                         <div className="text-xs text-muted-foreground">Target Yield</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-600">{routeYieldData.optimizationPotential.toFixed(1)}%</div>
+                        <div className="text-2xl font-bold text-orange-600">{routeYieldData?.optimizationPotential?.toFixed(1) || '0.0'}%</div>
                         <div className="text-xs text-muted-foreground">Optimization</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{formatPercentage(routeYieldData.historicalTrend)}</div>
+                        <div className="text-2xl font-bold text-purple-600">{formatPercentage(routeYieldData?.historicalTrend || 0)}</div>
                         <div className="text-xs text-muted-foreground">30D Trend</div>
                       </div>
                     </div>
