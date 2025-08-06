@@ -6,7 +6,7 @@ import { logger } from '../services/logger.js';
 // Rate limiting configurations
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Higher limit for airline operations data
+  max: process.env.NODE_ENV === 'production' ? 500 : 10000, // Much higher limit for development
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
