@@ -149,15 +149,20 @@ export class MemoryStorage implements IStorage {
       `Fetching ${limit} alerts from database`,
       async () => {
         try {
-          // Use Drizzle ORM with enhanced error handling
-          const result = await db.select()
-            .from(alertsTable)
-            .orderBy(desc(alertsTable.created_at))
-            .limit(limit)
-            .catch((error) => {
-              logger.error('Storage', 'getAlerts', 'Drizzle ORM query failed', error);
-              throw error;
-            });
+          // Use raw SQL with DISTINCT ON for database-level deduplication
+          const result = await client`
+            SELECT DISTINCT ON (title, description) 
+              id, priority, title, description, route, route_name, 
+              metric_value, threshold_value, impact, confidence, 
+              agent_id, metadata, status, created_at, 
+              acknowledged_at, resolved_at, category
+            FROM alerts 
+            ORDER BY title, description, created_at DESC
+            LIMIT ${limit}
+          `.catch((error) => {
+            logger.error('Storage', 'getAlerts', 'PostgreSQL query failed', error);
+            throw error;
+          });
           
           const alertsData = result.map((alert: any) => ({
             id: alert.id,
