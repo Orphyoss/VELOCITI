@@ -1376,20 +1376,20 @@ export default function TelosIntelligence() {
                   {/* Summary Metrics */}
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">£{competitive?.pricing?.easyjetPrice || 159.63}</div>
+                      <div className="text-2xl font-bold text-blue-600">£{((competitive as any)?.pricing?.easyjetPrice || 172.41).toFixed(2)}</div>
                       <div className="text-xs text-muted-foreground">EasyJet Price</div>
                     </div>
                     <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">£{competitive?.pricing?.competitorAvgPrice || 159.63}</div>
+                      <div className="text-2xl font-bold text-orange-600">£{((competitive as any)?.pricing?.competitorAvgPrice || 157.07).toFixed(2)}</div>
                       <div className="text-xs text-muted-foreground">Competitor Avg</div>
                     </div>
                     <div className="text-center p-4 bg-green-50 dark:bg-green-950/20 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{((competitive?.marketShare?.marketSharePct || 20.3)).toFixed(1)}%</div>
+                      <div className="text-2xl font-bold text-green-600">{(((competitive as any)?.marketShare?.marketSharePct || 20.3)).toFixed(1)}%</div>
                       <div className="text-xs text-muted-foreground">Market Share</div>
                     </div>
                     <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">#{competitive?.marketShare?.capacityRank || 2}</div>
-                      <div className="text-xs text-muted-foreground">Capacity Rank</div>
+                      <div className="text-2xl font-bold text-purple-600">#{(competitive as any)?.pricing?.priceRank || 2}</div>
+                      <div className="text-xs text-muted-foreground">Price Rank</div>
                     </div>
                   </div>
 
@@ -1404,22 +1404,29 @@ export default function TelosIntelligence() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Price Rank</span>
-                            <Badge variant="outline">#2 of 6</Badge>
+                            <Badge variant="outline">#{(competitive as any)?.pricing?.priceRank || 2} of {(competitive as any)?.competitorCount || 6}</Badge>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">vs Market Average</span>
-                            <span className="font-medium text-green-600">-£0.00 (0.0%)</span>
+                            <span className={`font-medium ${((competitive as any)?.pricing?.priceAdvantage || 0) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {((competitive as any)?.pricing?.priceAdvantage || 0) > 0 ? '+' : ''}£{((competitive as any)?.pricing?.priceAdvantage || 0).toFixed(2)} ({(((competitive as any)?.pricing?.priceAdvantage || 0) / ((competitive as any)?.pricing?.competitorAvgPrice || 157.07) * 100).toFixed(1)}%)
+                            </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Price Advantage</span>
-                            <Badge variant="secondary">Competitive</Badge>
+                            <Badge variant={((competitive as any)?.pricing?.priceAdvantage || 0) > 0 ? 'default' : 'secondary'}>
+                              {((competitive as any)?.pricing?.priceAdvantage || 0) > 0 ? 'Higher Price' : 'Competitive'}
+                            </Badge>
                           </div>
                         </div>
                         
                         <div className="border-t pt-3">
                           <div className="text-sm font-medium mb-2">Competitive pricing strategy</div>
                           <div className="text-xs text-muted-foreground">
-                            Strong market position with 5% price advantage on weekends, competitive during peak periods
+                            {((competitive as any)?.pricing?.priceAdvantage || 0) > 0 ? 
+                              `Premium pricing with £${Math.abs((competitive as any)?.pricing?.priceAdvantage || 0).toFixed(2)} advantage over competitors` :
+                              `Value pricing strategy, £${Math.abs((competitive as any)?.pricing?.priceAdvantage || 0).toFixed(2)} below market average`
+                            }
                           </div>
                         </div>
                       </CardContent>
@@ -1434,15 +1441,19 @@ export default function TelosIntelligence() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
                             <span className="text-sm">EasyJet Seats</span>
-                            <span className="font-medium">{competitive?.marketShare?.easyjetSeats?.toLocaleString() || '2,700'}</span>
+                            <span className="font-medium">{((competitive as any)?.marketShare?.easyjetSeats?.toLocaleString() || '2,700')}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Total Market</span>
-                            <span className="font-medium">{competitive?.marketShare?.totalMarketSeats?.toLocaleString() || '13,300'}</span>
+                            <span className="font-medium">{((competitive as any)?.marketShare?.totalMarketSeats?.toLocaleString() || '13,300')}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm">Capacity Share</span>
-                            <span className="font-medium">{((competitive?.marketShare?.marketSharePct || 20.3)).toFixed(1)}%</span>
+                            <span className="font-medium">{(((competitive as any)?.marketShare?.marketSharePct || 20.3)).toFixed(1)}%</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Market Rank</span>
+                            <Badge variant="outline">#{((competitive as any)?.marketShare?.capacityRank || 2)}</Badge>
                           </div>
                         </div>
                         
@@ -1466,7 +1477,7 @@ export default function TelosIntelligence() {
                       <div className="space-y-3">
                         {[
                           { name: 'Vueling', price: 145.20, capacity: 4200, change: -2.1 },
-                          { name: 'EasyJet', price: competitive?.pricing?.easyjetPrice || 159.63, capacity: competitive?.marketShare?.easyjetSeats || 2700, change: 1.8, isEasyJet: true },
+                          { name: 'EasyJet', price: ((competitive as any)?.pricing?.easyjetPrice || 172.41), capacity: ((competitive as any)?.marketShare?.easyjetSeats || 2700), change: 1.8, isEasyJet: true },
                           { name: 'Ryanair', price: 165.80, capacity: 3100, change: 3.2 },
                           { name: 'British Airways', price: 189.40, capacity: 2800, change: -1.5 },
                           { name: 'Iberia', price: 172.30, capacity: 1900, change: 0.8 }
