@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { logger } from './logger';
+import { config } from './configValidator.js';
 
 // Writer AI SDK interface
 interface WriterAPI {
@@ -16,7 +17,7 @@ class WriterClient implements WriterAPI {
   private baseUrl: string = 'https://api.writer.com/v1';
 
   constructor() {
-    this.apiKey = process.env.WRITER_API_KEY || '';
+    this.apiKey = config.WRITER_API_KEY || '';
     if (!this.apiKey) {
       logger.warn('Writer', 'constructor', 'API key not found in environment variables');
     }

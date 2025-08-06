@@ -5,8 +5,10 @@ import { Response } from 'express';
 import { logger } from './logger.js';
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+import { config } from './configValidator.js';
+
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || "sk-default-key" 
+  apiKey: config.OPENAI_API_KEY
 });
 
 interface EnhancedLLMResponse {

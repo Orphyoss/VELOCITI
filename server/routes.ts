@@ -27,6 +27,7 @@ import { logger, logAPI } from "./services/logger";
 import { duplicatePreventionService } from "./services/duplicatePreventionService";
 import { db } from "./services/supabase";
 import { alertScheduler } from "./services/alertScheduler";
+import { config } from './services/configValidator.js';
 import OpenAI from 'openai';
 
 // Function to calculate real dashboard metrics from actual data
@@ -2216,7 +2217,7 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
       res.status(500).json({
         error: 'AI briefing generation failed',
         message: 'Unable to generate intelligent briefing at this time',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: config.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });
@@ -2225,11 +2226,11 @@ CRITICAL: Base all analysis on the ACTUAL data provided. Reference specific aler
   app.get('/debug-env', (req, res) => {
     try {
       const envInfo = {
-        NODE_ENV: process.env.NODE_ENV,
-        DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'MISSING',
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'MISSING',
-        PINECONE_API_KEY: process.env.PINECONE_API_KEY ? 'SET' : 'MISSING',
-        WRITER_API_KEY: process.env.WRITER_API_KEY ? 'SET' : 'MISSING',
+        NODE_ENV: config.NODE_ENV,
+        DEV_SUP_DATABASE_URL: 'CONFIGURED',
+        OPENAI_API_KEY: 'CONFIGURED',
+        PINECONE_API_KEY: config.PINECONE_API_KEY ? 'CONFIGURED' : 'NOT_SET',
+        WRITER_API_KEY: config.WRITER_API_KEY ? 'CONFIGURED' : 'NOT_SET',
         hostname: req.hostname,
         host: req.get('host'),
         protocol: req.protocol,
