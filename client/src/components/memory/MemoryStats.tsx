@@ -42,11 +42,23 @@ export default function MemoryStats() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Transform API response to expected format
+  // Query real conversation data
+  const { data: conversationData } = useQuery({
+    queryKey: ['/api/conversations/stats'],
+    enabled: !!apiResponse
+  });
+
+  // Query real learning data from intelligence insights
+  const { data: learningData } = useQuery({
+    queryKey: ['/api/insights/stats'],
+    enabled: !!apiResponse
+  });
+
+  // Transform API response with real data
   const stats: MemoryStats = apiResponse ? {
-    activeContexts: 3, // Mock data - can be enhanced later
-    totalConversations: 247, // Mock data
-    totalLearnings: 89, // Mock data  
+    activeContexts: Math.ceil(apiResponse.memory.heapUsed.mb / 64), // Estimate based on memory usage
+    totalConversations: conversationData?.totalConversations || 0,
+    totalLearnings: learningData?.totalInsights || 0,
     memoryUsage: `${apiResponse.memory.heapUsed.mb} MB`
   } : null;
 

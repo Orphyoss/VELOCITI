@@ -71,8 +71,24 @@ export class DatabaseDataGenerator {
   }
 
   private async generateCompetitivePricing(date: Date, scenario: string): Promise<number> {
-    const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS', 'STN-BCN'];
-    const airlines = ['EZY', 'RYR', 'BA', 'VY', 'TUI'];
+    // Get existing routes and airlines from database to maintain consistency  
+    try {
+      const existingRoutes = await db.selectDistinct({ route: competitive_pricing.route }).from(competitive_pricing).limit(20);
+      const existingAirlines = await db.selectDistinct({ airline: competitive_pricing.airline_code }).from(competitive_pricing).limit(10);
+    
+      const routes = existingRoutes.length > 0 
+        ? existingRoutes.map(r => r.route).filter(Boolean)
+        : ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS', 'STN-BCN']; // Fallback
+      
+      const airlines = existingAirlines.length > 0 
+        ? existingAirlines.map(a => a.airline).filter(Boolean)
+        : ['EZY', 'RYR', 'BA', 'VY', 'TUI']; // Fallback
+    } catch (dbError) {
+      // Use fallback data if database query fails
+      const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO', 'LGW-AMS', 'STN-BCN'];
+      const airlines = ['EZY', 'RYR', 'BA', 'VY', 'TUI'];
+      this.logger.warn('DataGenerator', 'db_fallback', 'Using fallback route/airline data due to database error');
+    }
     
     let recordsGenerated = 0;
     
@@ -111,7 +127,11 @@ export class DatabaseDataGenerator {
   }
 
   private async generateMarketCapacity(date: Date, scenario: string): Promise<number> {
-    const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO'];
+    // Get existing routes from flight performance data
+    const existingRoutes = await db.selectDistinct({ route: flight_performance.route_id }).from(flight_performance).limit(10);
+    const routes = existingRoutes.length > 0 
+      ? existingRoutes.map(r => r.route).filter(Boolean) 
+      : ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'LGW-FCO']; // Fallback
     let recordsGenerated = 0;
     
     for (const route of routes) {
@@ -200,7 +220,11 @@ export class DatabaseDataGenerator {
   }
 
   private async generateFlightPerformance(date: Date, scenario: string): Promise<number> {
-    const routes = ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'STN-BCN', 'STN-MAD', 'LTN-FCO', 'STN-DUB'];
+    // Get existing routes from competitive pricing to maintain consistency
+    const existingRoutes = await db.selectDistinct({ route: competitive_pricing.route }).from(competitive_pricing).limit(15);
+    const routes = existingRoutes.length > 0 
+      ? existingRoutes.map(r => r.route).filter(Boolean)
+      : ['LGW-BCN', 'LGW-MAD', 'LGW-CDG', 'STN-BCN', 'STN-MAD', 'LTN-FCO', 'STN-DUB']; // Fallback
     let recordsGenerated = 0;
     
     for (const route of routes) {
