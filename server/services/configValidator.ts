@@ -9,6 +9,8 @@ const envSchema = z.object({
   WRITER_API_KEY: z.string().optional(),
   PINECONE_API_KEY: z.string().optional(),
   FIREWORKS_API_KEY: z.string().optional(),
+  FIREWORKS_BASE_URL: z.string().optional(),
+  FIREWORKS_MODEL: z.string().optional(),
   PORT: z.string().default('5000'),
   REPLIT_DB_URL: z.string().optional(), // Replit database URL
 });

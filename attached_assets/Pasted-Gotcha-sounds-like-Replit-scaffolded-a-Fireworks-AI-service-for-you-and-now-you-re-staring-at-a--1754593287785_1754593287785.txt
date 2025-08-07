@@ -1,0 +1,83 @@
+Gotcha — sounds like Replit scaffolded a “Fireworks AI” service for you and now you’re staring at a bunch of new files plus a slightly confusing Fireworks UI. You don’t actually need to “configure” anything inside Fireworks beyond having an API key. Just wire the service up to call the gpt-oss-20b endpoint.
+
+Here’s the lean, working setup:
+
+1) Secrets / env (Replit)
+Add these in Replit → Secrets (or a .env locally):
+
+ini
+Copy
+FIREWORKS_API_KEY=your_service_account_key
+FIREWORKS_BASE_URL=https://api.fireworks.ai/inference/v1
+FIREWORKS_MODEL=accounts/fireworks/models/gpt-oss-20b
+You only need the API key. The base URL/model are nice to keep configurable.
+
+2) server/services/fireworksService.ts
+ts
+Copy
+import axios from "axios";
+
+const FIREWORKS_API_KEY = process.env.FIREWORKS_API_KEY!;
+const BASE_URL = process.env.FIREWORKS_BASE_URL || "https://api.fireworks.ai/inference/v1";
+const MODEL = process.env.FIREWORKS_MODEL || "accounts/fireworks/models/gpt-oss-20b";
+
+if (!FIREWORKS_API_KEY) {
+  throw new Error("Missing FIREWORKS_API_KEY");
+}
+
+export async function completeWithFireworks(prompt: string, opts?: {
+  max_tokens?: number;
+  temperature?: number;
+  top_p?: number;
+  stop?: string[]; 
+}) {
+  const payload = {
+    model: MODEL,
+    prompt,
+    max_tokens: opts?.max_tokens ?? 256,
+    temperature: opts?.temperature ?? 0.7,
+    top_p: opts?.top_p ?? 1,
+    stop: opts?.stop
+  };
+
+  const { data } = await axios.post(
+    `${BASE_URL}/completions`,
+    payload,
+    { headers: { Authorization: `Bearer ${FIREWORKS_API_KEY}`, "Content-Type": "application/json" } }
+  );
+
+  // Fireworks returns { choices: [{ text: "..." }], ... }
+  return data.choices?.[0]?.text ?? "";
+}
+(If your app expects chat format, use /chat/completions and pass messages: [{role:'user', content: prompt}] instead of prompt.)
+
+3) server/routes/fireworks.ts
+ts
+Copy
+import { Router } from "express";
+import { completeWithFireworks } from "../services/fireworksService";
+
+const router = Router();
+
+router.post("/completions", async (req, res) => {
+  try {
+    const { prompt, options } = req.body ?? {};
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
+    const text = await completeWithFireworks(prompt, options);
+    res.json({ text });
+  } catch (err: any) {
+    console.error("Fireworks error:", err?.response?.data || err?.message);
+    res.status(500).json({ error: "Fireworks request failed", detail: err?.response?.data || err?.message });
+  }
+});
+
+export default router;
+4) server/routes/index.ts
+Make sure the Fireworks routes are mounted (once):
+
+ts
+Copy
+import fireworksRoutes from "./fireworks";
+// ...
+router.use("/fireworks", fireworksRoutes);
+Now you have POST /api/fireworks/completions.
