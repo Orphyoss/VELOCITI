@@ -19,22 +19,37 @@ class WriterClient {
       throw new Error('Writer API key not configured');
     }
 
+    const requestBody = {
+      model: 'palmyra-x-5-32b',
+      messages: [{ role: 'user', content: params.prompt }],
+      max_tokens: 1000,
+      temperature: 0.7
+    };
+
+    logger.info('Writer API request (LLM)', { 
+      url: `${this.baseUrl}/chat/completions`,
+      model: requestBody.model,
+      promptLength: params.prompt.length,
+      hasApiKey: !!this.apiKey
+    });
+
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: 'palmyra-x-5-32b',
-        messages: [{ role: 'user', content: params.prompt }],
-        max_tokens: 1000,
-        temperature: 0.7
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
-      throw new Error(`Writer API error: ${response.status}`);
+      const errorText = await response.text();
+      logger.error('Writer API error details (LLM)', { 
+        status: response.status, 
+        statusText: response.statusText,
+        error: errorText 
+      });
+      throw new Error(`Writer API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
