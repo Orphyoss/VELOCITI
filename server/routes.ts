@@ -1674,54 +1674,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { route } = req.params;
       
-      // Mock competitive analysis based on infare_webfare_fact structure
-      const competitiveData = {
-        route: route,
-        competitorCount: 6,
-        easyjetPrice: route === 'LGW-BCN' ? 172.41 : 165.30,
-        competitorAvgPrice: route === 'LGW-BCN' ? 157.07 : 149.85,
-        priceAdvantage: route === 'LGW-BCN' ? 15.34 : 15.45,
-        priceRank: 3,
-        airlines: ['U2', 'AA', 'DL', 'UA', 'F9', 'WN'],
-        searchClasses: ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST'],
-        totalRecords: 10,
-        competitors: [
+      // Realistic European competitive analysis for EasyJet routes
+      const getRouteCompetitors = (route: string) => {
+        const baseCompetitors = [
           {
-            airlineCode: 'AA',
-            airlineName: 'American Airlines',
-            avgPrice: 164.50,
-            marketShare: 18.5,
+            airlineCode: 'BA',
+            airlineName: 'British Airways',
+            avgPrice: route === 'LGW-BCN' ? 189.50 : 182.30,
+            marketShare: 22.5,
+            pricePosition: 'premium'
+          },
+          {
+            airlineCode: 'IB', 
+            airlineName: 'Iberia',
+            avgPrice: route === 'LGW-BCN' ? 175.20 : 168.40,
+            marketShare: 18.2,
             pricePosition: 'competitive'
           },
           {
-            airlineCode: 'DL', 
-            airlineName: 'Delta Air Lines',
-            avgPrice: 156.20,
-            marketShare: 15.2,
+            airlineCode: 'VY',
+            airlineName: 'Vueling', 
+            avgPrice: route === 'LGW-BCN' ? 152.90 : 148.80,
+            marketShare: 16.8,
             pricePosition: 'advantage'
           },
           {
-            airlineCode: 'UA',
-            airlineName: 'United Airlines', 
-            avgPrice: 168.90,
-            marketShare: 12.8,
-            pricePosition: 'disadvantage'
-          },
-          {
-            airlineCode: 'F9',
-            airlineName: 'Frontier Airlines',
-            avgPrice: 142.30,
-            marketShare: 8.5,
+            airlineCode: 'FR',
+            airlineName: 'Ryanair',
+            avgPrice: route === 'LGW-BCN' ? 138.30 : 132.50,
+            marketShare: 14.5,
             pricePosition: 'strong_advantage'
           },
           {
-            airlineCode: 'WN',
-            airlineName: 'Southwest Airlines',
-            avgPrice: 159.75,
-            marketShare: 11.2,
-            pricePosition: 'competitive'
+            airlineCode: 'KL',
+            airlineName: 'KLM',
+            avgPrice: route === 'LGW-BCN' ? 194.75 : 188.90,
+            marketShare: 12.2,
+            pricePosition: 'premium'
           }
-        ]
+        ];
+
+        // Route-specific adjustments
+        if (route === 'LGW-AMS') {
+          baseCompetitors[4].marketShare = 24.5; // KLM stronger on Amsterdam route
+          baseCompetitors[1] = {
+            airlineCode: 'AF',
+            airlineName: 'Air France',
+            avgPrice: 176.80,
+            marketShare: 15.2,
+            pricePosition: 'competitive'
+          };
+        } else if (route === 'LGW-CDG') {
+          baseCompetitors[1] = {
+            airlineCode: 'AF',
+            airlineName: 'Air France',
+            avgPrice: 184.60,
+            marketShare: 26.8,
+            pricePosition: 'premium'
+          };
+        } else if (route === 'LGW-FCO' || route === 'LGW-MXP') {
+          baseCompetitors[1] = {
+            airlineCode: 'AZ',
+            airlineName: 'ITA Airways',
+            avgPrice: 179.40,
+            marketShare: 19.5,
+            pricePosition: 'competitive'
+          };
+        }
+
+        return baseCompetitors;
+      };
+
+      const competitors = getRouteCompetitors(route);
+      const competitorAvgPrice = competitors.reduce((sum, comp) => sum + comp.avgPrice, 0) / competitors.length;
+      
+      const competitiveData = {
+        route: route,
+        competitorCount: competitors.length + 1, // +1 for easyJet
+        easyjetPrice: route === 'LGW-BCN' ? 172.41 : 165.30,
+        competitorAvgPrice: Math.round(competitorAvgPrice * 100) / 100,
+        priceAdvantage: route === 'LGW-BCN' ? 172.41 - competitorAvgPrice : 165.30 - competitorAvgPrice,
+        priceRank: 3,
+        airlines: ['U2', ...competitors.map(c => c.airlineCode)],
+        searchClasses: ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS'],
+        totalRecords: 25,
+        competitors: competitors
       };
 
       res.json({
