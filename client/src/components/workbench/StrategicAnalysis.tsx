@@ -25,6 +25,7 @@ export default function StrategicAnalysis() {
   const [prompt, setPrompt] = useState('');
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
 
   // Load historical analyses from database
   const { data: historicalAnalyses } = useQuery({
@@ -134,12 +135,27 @@ export default function StrategicAnalysis() {
     onSuccess: async (result, promptText) => {
       // Save to database
       try {
+        // Ensure we have valid data before saving
+        const analysisText = result?.analysis || streamingContent || '';
+        const promptToSave = promptText?.trim() || '';
+        
+        if (!promptToSave || !analysisText) {
+          console.warn('Skipping database save - missing prompt or analysis data');
+          throw new Error('Missing required data for saving');
+        }
+        
+        console.log('Saving analysis to database:', { 
+          promptLength: promptToSave.length, 
+          responseLength: analysisText.length, 
+          provider: llmProvider 
+        });
+        
         const saveResponse = await fetch('/api/strategic/analyses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            prompt: promptText,
-            response: result.analysis,
+            prompt: promptToSave,
+            response: analysisText,
             provider: llmProvider,
             useRAG,
             confidence: result.confidence || 0.9,
@@ -149,14 +165,19 @@ export default function StrategicAnalysis() {
         
         if (saveResponse.ok) {
           const savedAnalysis = await saveResponse.json();
+          console.log('Analysis saved successfully:', savedAnalysis.data.id);
           const newAnalysis: AnalysisResult = {
             id: savedAnalysis.data.id,
-            prompt: promptText,
-            result: result,
+            prompt: promptToSave,
+            result: { analysis: analysisText, confidence: result.confidence || 0.9, recommendations: result.recommendations || [] },
             timestamp: savedAnalysis.data.createdAt,
           };
           setAnalyses(prev => [newAnalysis, ...prev.slice(0, 19)]); // Keep last 20 analyses
           setSelectedAnalysis(newAnalysis);
+        } else {
+          const errorData = await saveResponse.json();
+          console.error('Failed to save analysis:', errorData);
+          throw new Error(`Database save failed: ${errorData.error}`);
         }
       } catch (error) {
         console.error('Failed to save analysis to database:', error);
