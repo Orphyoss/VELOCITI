@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
 
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Gauge, Settings } from 'lucide-react';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Gauge, Settings, Play } from 'lucide-react';
 import { streamingApi } from '@/services/streamingApi';
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor';
 import { useToast } from '@/hooks/use-toast';
@@ -219,7 +219,8 @@ export default function StrategicAnalysis() {
                 Generative AI Strategic Analysis
               </CardTitle>
               <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40 text-purple-200">
-                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
+                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 
+                 llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'}
               </Badge>
             </div>
           </CardHeader>
@@ -283,8 +284,8 @@ export default function StrategicAnalysis() {
                   </>
                 ) : (
                   <>
-                    <Brain className="w-4 h-4 mr-2" />
-                    {streamingMode ? 'Stream Analysis' : 'Generate Analysis'}
+                    <Play className="w-4 h-4 mr-2" />
+                    Run Analysis
                   </>
                 )}
               </Button>

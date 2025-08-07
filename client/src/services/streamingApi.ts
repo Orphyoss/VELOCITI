@@ -8,7 +8,7 @@ interface StreamChunk {
 }
 
 interface StreamingOptions {
-  provider: 'openai' | 'writer';
+  provider: 'openai' | 'writer' | 'fireworks';
   useRAG: boolean;
   type: 'strategic' | 'competitive' | 'performance' | 'network';
 }

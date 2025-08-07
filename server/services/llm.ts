@@ -227,41 +227,83 @@ Keep the response focused and actionable.`;
     results?: any[];
   }> {
     const startTime = Date.now();
-    logger.info('LLM', 'processDataQuery', 'Starting data query processing', { queryLength: query.length });
+    logger.info('LLM', 'processDataQuery', 'Starting data query processing', { 
+      queryLength: query.length,
+      provider: this.currentProvider 
+    });
     
     try {
-      // This would integrate with Databricks Genie API
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: "You are Databricks Genie helping with EasyJet data queries. Convert natural language to SQL and explain the query. Respond in JSON format."
-          },
-          {
-            role: "user", 
-            content: query
-          }
-        ],
-        response_format: { type: "json_object" }
-      });
+      if (this.currentProvider === 'fireworks') {
+        logger.debug('LLM', 'processDataQuery', 'Using Fireworks GPT-OSS-20B for data query');
+        const fireworksPrompt = `You are Databricks Genie helping with EasyJet data queries. Convert this natural language query to SQL and explain: ${query}
 
-      const duration = Date.now() - startTime;
-      const result = JSON.parse(response.choices[0].message.content || '{}');
-      
-      logger.info('LLM', 'processDataQuery', 'Data query completed', { 
-        duration, 
-        promptTokens: response.usage?.prompt_tokens, 
-        completionTokens: response.usage?.completion_tokens,
-        hasSql: !!result.sql,
-        explanationLength: result.explanation?.length || 0
-      });
+Return a JSON response with:
+- sql: the SQL query
+- explanation: detailed explanation of the query`;
 
-      return {
-        sql: result.sql,
-        explanation: result.explanation || '',
-        results: [] // Would be populated by actual Databricks query
-      };
+        const response = await completeWithFireworks(fireworksPrompt, {
+          max_tokens: 800,
+          temperature: 0.3
+        });
+
+        const duration = Date.now() - startTime;
+        
+        // Try to parse JSON response, fallback to text if needed
+        let result;
+        try {
+          result = JSON.parse(response);
+        } catch {
+          result = {
+            sql: '',
+            explanation: response
+          };
+        }
+
+        logger.info('LLM', 'processDataQuery', 'Fireworks data query completed', { 
+          duration,
+          hasSql: !!result.sql,
+          explanationLength: result.explanation?.length || 0
+        });
+
+        return {
+          sql: result.sql,
+          explanation: result.explanation || response,
+          results: []
+        };
+      } else {
+        // Use OpenAI for OpenAI/Writer providers
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are Databricks Genie helping with EasyJet data queries. Convert natural language to SQL and explain the query. Respond in JSON format."
+            },
+            {
+              role: "user", 
+              content: query
+            }
+          ],
+          response_format: { type: "json_object" }
+        });
+
+        const duration = Date.now() - startTime;
+        const result = JSON.parse(response.choices[0].message.content || '{}');
+        
+        logger.info('LLM', 'processDataQuery', 'Data query completed', { 
+          duration, 
+          promptTokens: response.usage?.prompt_tokens, 
+          completionTokens: response.usage?.completion_tokens,
+          hasSql: !!result.sql,
+          explanationLength: result.explanation?.length || 0
+        });
+
+        return {
+          sql: result.sql,
+          explanation: result.explanation || '',
+          results: []
+        };
+      }
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.error('LLM', 'processDataQuery', `Data query failed after ${duration}ms`, error);
