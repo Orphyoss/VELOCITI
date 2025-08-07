@@ -51,7 +51,7 @@ export default function MemoryStats() {
     );
   }
 
-  const memoryUsageValue = parseInt(stats.memoryUsage.replace('MB', ''));
+  const memoryUsageValue = stats.memoryUsage ? parseInt(stats.memoryUsage.replace('MB', '')) : 0;
   const memoryProgressValue = Math.min((memoryUsageValue / 512) * 100, 100); // Assume 512MB max
 
   return (
@@ -129,7 +129,7 @@ export default function MemoryStats() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-400">
-              {stats.memoryUsage}
+              {stats.memoryUsage || '0 MB'}
             </div>
             <div className="mt-2">
               <Progress 
