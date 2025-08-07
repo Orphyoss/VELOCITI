@@ -12,6 +12,7 @@ import { writerService } from "./services/writerService";
 import { enhancedLLMService } from "./services/enhancedLlmService";
 import { cacheService } from "./services/cacheService";
 import strategicAnalysesRoutes from "./routes/strategicAnalyses";
+import llmRoutes from "./routes/llm";
 import { 
   insertAlertSchema, 
   insertFeedbackSchema,
@@ -1863,6 +1864,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Load and register Competitive Pricing routes
   const competitiveRoutes = await import('./api/competitive.ts');
   app.use('/api/competitive', competitiveRoutes.default);
+
+  // Register strategic analysis routes
+  app.use('/api/strategic', strategicAnalysesRoutes);
+  
+  // Register LLM streaming routes
+  app.use('/api/llm', llmRoutes);
 
   // ============================================================================
   // DATA GENERATION ENDPOINTS
