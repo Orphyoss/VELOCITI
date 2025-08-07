@@ -1412,31 +1412,36 @@ export default function TelosIntelligence() {
 
         {/* Competitive Intelligence Tab */}
         <TabsContent value="competitive" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                <div>
-                  <CardTitle>Route Competitive Intelligence</CardTitle>
-                  <CardDescription>Detailed route-specific competitive positioning and market analysis</CardDescription>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">Route:</span>
-                  <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Select route" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
-                      <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
-                      <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
-                      <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
-                      <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
-                      <SelectItem value="LGW-ZUR">LGW-ZUR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+          {/* Route Selection */}
+          <div className="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-950/50 dark:to-indigo-950/50 border-2 border-blue-300 dark:border-blue-600 rounded-lg p-5 shadow-md mb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+              <div>
+                <h3 className="text-lg font-semibold flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <Target className="h-5 w-5 text-blue-600" />
+                  Route Competitive Intelligence
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">Detailed route-specific competitive positioning and market analysis</p>
               </div>
-            </CardHeader>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Route:</span>
+                <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
+                  <SelectTrigger className="w-40 border-2 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-900 shadow-lg font-medium">
+                    <SelectValue placeholder="Select route" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LGW-BCN">LGW-BCN</SelectItem>
+                    <SelectItem value="LGW-AMS">LGW-AMS</SelectItem>
+                    <SelectItem value="LGW-CDG">LGW-CDG</SelectItem>
+                    <SelectItem value="LGW-MAD">LGW-MAD</SelectItem>
+                    <SelectItem value="LGW-FCO">LGW-FCO</SelectItem>
+                    <SelectItem value="LGW-ZUR">LGW-ZUR</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <Card>
             <CardContent>
               {competitiveLoading ? (
                 <div className="space-y-4">
@@ -1576,10 +1581,10 @@ export default function TelosIntelligence() {
                     Price comparison vs. major competitors across the EasyJet network
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Route:</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Route:</span>
                   <Select value={competitiveRoute} onValueChange={setCompetitiveRoute}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-40 border-2 border-blue-400 dark:border-blue-500 bg-white dark:bg-gray-900 shadow-lg font-medium">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
