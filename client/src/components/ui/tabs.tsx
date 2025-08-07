@@ -27,7 +27,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-3 text-base font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=inactive]:bg-slate-700 data-[state=inactive]:text-slate-300 hover:bg-slate-600 hover:text-white border border-slate-600 data-[state=active]:border-blue-500 mx-1 my-1",
+      "inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-3 text-base font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl data-[state=active]:shadow-blue-500/25 data-[state=active]:scale-105 data-[state=active]:border-blue-400 data-[state=active]:ring-2 data-[state=active]:ring-blue-400/30 data-[state=inactive]:bg-slate-700/50 data-[state=inactive]:text-slate-400 data-[state=inactive]:border-slate-600/50 hover:bg-slate-600 hover:text-white hover:border-slate-500 border mx-1 my-1 relative",
       className
     )}
     {...props}
