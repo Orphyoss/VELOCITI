@@ -352,10 +352,10 @@ export default function TelosIntelligence() {
       topRoutes: (realRMMetrics as any)?.yieldOptimization?.topRoutes || []
     },
     competitiveIntelligence: {
-      priceAdvantageRoutes: competitive?.pricing ? (competitive.pricing.priceAdvantage > 0 ? 1 : 0) : 0,
-      priceDisadvantageRoutes: competitive?.pricing ? (competitive.pricing.priceAdvantage < 0 ? 1 : 0) : 0,
-      responseTime: (realRMMetrics as any)?.competitiveIntelligence?.responseTime || 0,
-      marketShare: competitive?.marketShare?.marketSharePct || 25.3
+      priceAdvantageRoutes: (realRMMetrics as any)?.competitiveIntelligence?.priceAdvantageRoutes || 0,
+      priceDisadvantageRoutes: (realRMMetrics as any)?.competitiveIntelligence?.priceDisadvantageRoutes || 0,
+      responseTime: (realRMMetrics as any)?.competitiveIntelligence?.responseTime || 2.1,
+      marketShare: (realRMMetrics as any)?.competitiveIntelligence?.marketShare || competitive?.marketShare?.marketSharePct || 25.3
     },
     operationalEfficiency: {
       loadFactorVariance: (realRMMetrics as any)?.operationalEfficiency?.loadFactorVariance || 2.1,
@@ -365,13 +365,8 @@ export default function TelosIntelligence() {
         performanceData.reduce((sum: number, route: any) => sum + (route.avgLoadFactor || 0), 0) / performanceData.length : 78.8
     },
     riskMetrics: {
-      routesAtRisk: (realRMMetrics as any)?.riskMetrics?.routesAtRisk || 
-        performanceData.filter((route: any) => (route.avgLoadFactor || 0) < 70).length,
-      volatilityIndex: performanceData.length > 0 ? performanceData.reduce((acc: number, route: any) => {
-        const routeYield = parseFloat(route.avgYield || '0');
-        const avgYield = 172.41; // Current network average
-        return acc + Math.abs(routeYield - avgYield);
-      }, 0) / performanceData.length : 12.5,
+      routesAtRisk: (realRMMetrics as any)?.riskMetrics?.routesAtRisk || 0,
+      volatilityIndex: (realRMMetrics as any)?.riskMetrics?.volatilityIndex || 6.8,
       competitorThreats: (realRMMetrics as any)?.riskMetrics?.competitorThreats || 0,
       seasonalRisks: (realRMMetrics as any)?.riskMetrics?.seasonalRisks || 0
     }
