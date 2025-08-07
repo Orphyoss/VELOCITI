@@ -81,12 +81,17 @@ export default function StrategicAnalysis() {
         throw new Error(`Request failed: ${response.status}`);
       }
       
-      const fullText = await response.text();
-      setStreamingContent(fullText);
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Analysis failed');
+      }
+      
+      setStreamingContent(data.content);
       setIsStreaming(false);
       
       return {
-        analysis: fullText,
+        analysis: data.content,
         confidence: 0.9,
         recommendations: []
       };

@@ -56,10 +56,9 @@ router.post('/stream', async (req, res) => {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    // Set headers for streaming
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    // Set headers for JSON response
+    res.setHeader('Content-Type', 'application/json');
     res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
 
     logger.info('LLM stream request', {
       provider,
@@ -112,24 +111,21 @@ router.post('/stream', async (req, res) => {
         completion = response.choices[0]?.message?.content || '';
       }
 
-      // Send the complete response as streaming chunks
-      const chunks = completion.split(' ');
-      for (let i = 0; i < chunks.length; i++) {
-        const chunk = chunks[i] + (i < chunks.length - 1 ? ' ' : '');
-        res.write(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`);
-        
-        // Small delay to simulate streaming
-        await new Promise(resolve => setTimeout(resolve, 50));
-      }
+      // Return complete response as JSON
+      res.json({
+        success: true,
+        content: completion,
+        provider: provider || 'openai',
+        hasRAG: !!ragContext
+      });
 
-      // Send end signal
-      res.write(`data: ${JSON.stringify({ type: 'end' })}\n\n`);
-      res.end();
-
-    } catch (error) {
+    } catch (error: any) {
       logger.error('LLM streaming error', { error: error.message, provider });
-      res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
-      res.end();
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        provider: provider || 'openai'
+      });
     }
 
   } catch (error) {
