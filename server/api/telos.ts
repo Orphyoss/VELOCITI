@@ -395,7 +395,7 @@ router.get('/rm-metrics', async (req, res) => {
     try {
       // Get real alert data to identify actual route risks
       const { storage } = await import('../storage');
-      const recentAlerts = await storage.getAlerts({ limit: 100 });
+      const recentAlerts = await storage.getAlerts(100);
       
       // Count alerts by category to identify real risks
       const routeRiskAlerts = recentAlerts.filter(alert => 
