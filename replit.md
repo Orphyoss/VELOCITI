@@ -33,6 +33,9 @@ Preferred communication style: Simple, everyday language.
 - **RESOLVED**: Fixed critical TypeScript configuration issues including problematic "allowImportingTsExtensions" setting that was causing build/runtime mismatches and standardized import patterns across server files
 - **RESOLVED**: Completed massive routes.ts refactoring - broke down 2,543-line monolithic file into clean modular structure with dedicated route files and controller classes, significantly improving maintainability and code organization
 - **RESOLVED**: Eliminated critical console log spam issue - removed repeated "Top/Bottom routes sorted by load factor" debug messages that were flooding browser console hundreds of times per minute, significantly improving browser performance and debugging capabilities
+- **RESOLVED**: Fixed Route vs Network comparison calculation showing £0.00 - implemented proper differential calculation logic with debugging, now correctly displays route yield vs network average (e.g., +£1.63 for above-average routes)
+- **RESOLVED**: Fixed route ranking display to show accurate position based on actual yield performance data instead of static values
+- **RESOLVED**: Enhanced Route Comparison card with real-time calculations using authentic database-driven route performance metrics
 - Implemented AlertScheduler service running every 45 minutes for continuous fresh alert generation
 - Added alert limit selector (50-1.5K alerts) allowing users to view more than default 100 alerts
 - Alert generation system now creating diverse realistic scenarios: competitive, performance, network, demand, and operational alerts

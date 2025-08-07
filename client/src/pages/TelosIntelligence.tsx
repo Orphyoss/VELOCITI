@@ -1147,12 +1147,23 @@ export default function TelosIntelligence() {
                       {/* Route vs Network */}
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {routeYieldData.currentYield > (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield) ? '+' : ''}
-                          £{(routeYieldData.currentYield - (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield || 172.41)).toFixed(2)}
+                          {(() => {
+                            const networkAvg = rmMetrics?.yieldOptimization?.currentYield || 172.41;
+                            const routeYield = routeYieldData?.currentYield || 172.41;
+                            const differential = routeYield - networkAvg;
+                            const isPositive = differential > 0;
+                            console.log('[RouteComparison] Network Avg:', networkAvg, 'Route Yield:', routeYield, 'Differential:', differential);
+                            return `${isPositive ? '+' : ''}£${differential.toFixed(2)}`;
+                          })()}
                         </div>
                         <div className="text-sm text-muted-foreground">vs Network Avg</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {routeYieldData.currentYield > (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield) ? 'Above' : 'Below'} network average of £{(realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield || 172.41).toFixed(2)}
+                          {(() => {
+                            const networkAvg = rmMetrics?.yieldOptimization?.currentYield || 172.41;
+                            const routeYield = routeYieldData?.currentYield || 172.41;
+                            const isAbove = routeYield > networkAvg;
+                            return `${isAbove ? 'Above' : 'Below'} network average of £${networkAvg.toFixed(2)}`;
+                          })()}
                         </div>
                       </div>
                       
@@ -1161,11 +1172,22 @@ export default function TelosIntelligence() {
                         <div className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span className="text-xs">Yield Ranking</span>
-                            <Badge variant={routeYieldData.currentYield > 175 ? 'secondary' : 
-                                          routeYieldData.currentYield > 165 ? 'outline' : 'destructive'} 
-                                   className="text-xs">
-                              #{routeYieldData.currentYield > 175 ? '1-2' : 
-                                 routeYieldData.currentYield > 165 ? '3-4' : '5-6'} / 6
+                            <Badge variant="secondary" className="text-xs">
+                              #{(() => {
+                                const routes = rmMetrics?.yieldOptimization?.topRoutes || [];
+                                if (routes.length === 0) return 'N/A';
+                                
+                                // Find the selected route in the top routes data
+                                const selectedRouteData = routes.find((r: any) => r.route === selectedYieldRoute);
+                                if (!selectedRouteData) return 'N/A';
+                                
+                                // Sort all routes by yield (descending) to get ranking
+                                const sortedRoutes = [...routes].sort((a: any, b: any) => (b.yield || 0) - (a.yield || 0));
+                                const ranking = sortedRoutes.findIndex((r: any) => r.route === selectedYieldRoute) + 1;
+                                
+                                console.log('[RouteRanking] Selected route:', selectedYieldRoute, 'Ranking:', ranking, 'Total routes:', routes.length);
+                                return `${ranking} / ${routes.length}`;
+                              })()}
                             </Badge>
                           </div>
                           <div className="flex justify-between items-center">
