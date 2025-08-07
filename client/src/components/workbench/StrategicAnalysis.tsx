@@ -318,8 +318,7 @@ export default function StrategicAnalysis() {
       toast({
         title: "Analysis Complete",
         description: `Strategic analysis generated using ${
-          llmProvider === 'writer' ? 'Writer Palmyra X5' : 
-          llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'
+          llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'
         }${useRAG ? ' with RAG context' : ''}`,
       });
     },
@@ -328,8 +327,7 @@ export default function StrategicAnalysis() {
       toast({
         title: "Analysis Failed",
         description: `Failed to generate strategic analysis using ${
-          llmProvider === 'writer' ? 'Writer API' : 
-          llmProvider === 'fireworks' ? 'Fireworks API' : 'OpenAI'
+          llmProvider === 'writer' ? 'Writer API' : 'OpenAI'
         }. Please try again.`,
         variant: "destructive",
       });
@@ -397,7 +395,7 @@ export default function StrategicAnalysis() {
   // Server-side analysis generation using authenticated backend APIs
   const generateAnalysisServerSide = async (prompt: string, provider: string): Promise<string> => {
     // Simulate different response times for different providers
-    const processingTime = provider === 'writer' ? 8000 : provider === 'fireworks' ? 12000 : 6000;
+    const processingTime = provider === 'writer' ? 8000 : 6000;
     await new Promise(resolve => setTimeout(resolve, processingTime));
     
     const analysisTemplates = {
@@ -497,53 +495,7 @@ Market intelligence indicates EasyJet's positioning advantages:
 - **Payback Period**: 6.8 months
 - **Strategic Competitive Advantage**: Sustained through proprietary AI capabilities`,
 
-      fireworks: `# Fireworks AI Open-Source Intelligence Analysis
 
-## Open-Source Strategic Assessment
-Leveraging open-source intelligence models and transparent AI methodologies for EasyJet's strategic revenue management enhancement.
-
-## Key Strategic Discoveries
-
-**Open-Source Advantage Implementation**
-- **Transparent AI Decision-Making**: £11.2M opportunity through explainable revenue algorithms
-- **Community-Driven Optimization**: Crowdsourced route performance insights
-- **Cost-Effective Innovation**: 40% reduced implementation costs vs. proprietary solutions
-
-**Democratic Intelligence Approach**
-Open-source methodologies reveal:
-- Collaborative pricing intelligence networks
-- Transparent competitive analysis frameworks
-- Community-validated demand forecasting models
-
-## Strategic Implementation Framework
-
-### Open-Source Integration Phase
-1. **Community-Powered Analytics**
-   - Open-source revenue optimization tools
-   - Transparent algorithmic decision processes
-   - Expected cost savings: £1.8M annually
-
-2. **Collaborative Intelligence Networks**
-   - Industry data sharing protocols
-   - Peer-to-peer pricing intelligence
-   - Collective demand forecasting accuracy: +28%
-
-### Innovation Acceleration Phase
-1. **Rapid Deployment Capabilities**
-   - Open-source infrastructure advantages
-   - Faster iteration and testing cycles
-   - Reduced vendor lock-in risks
-
-## Transparency & Ethics Framework
-**Algorithmic Transparency**: Full explainability of pricing decisions
-**Data Ethics**: Community-validated fair pricing practices
-**Innovation Openness**: Shared learning with industry peers
-
-## Strategic Value Assessment
-- **Revenue Enhancement**: £14.6M through transparent optimization
-- **Cost Reduction**: £2.1M in implementation savings
-- **Innovation Velocity**: 65% faster deployment cycles
-- **Strategic Sustainability**: Future-proof through open-source evolution`
     };
     
     const selectedTemplate = analysisTemplates[provider as keyof typeof analysisTemplates] || analysisTemplates.openai;
@@ -566,8 +518,7 @@ Open-source methodologies reveal:
                 Generative AI Strategic Analysis
               </CardTitle>
               <Badge variant="outline" className="bg-purple-600/20 border-purple-600/40 text-purple-200">
-                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 
-                 llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'}
+                {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}
               </Badge>
             </div>
           </CardHeader>
@@ -835,8 +786,7 @@ Open-source methodologies reveal:
               <span className="text-sm text-green-400">Connected</span>
             </div>
             <p className="text-xs text-dark-400">
-              {llmProvider === 'writer' ? 'Writer Palmyra X5' : 
-               llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'} with RAG context
+              {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'} with RAG context
             </p>
           </CardContent>
         </Card>

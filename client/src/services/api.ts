@@ -54,7 +54,7 @@ export const api = {
     return response.json();
   },
 
-  setLLMProvider: async (provider: 'openai' | 'writer' | 'fireworks'): Promise<void> => {
+  setLLMProvider: async (provider: 'openai' | 'writer'): Promise<void> => {
     await apiRequest('POST', '/api/llm/provider', { provider });
   },
 

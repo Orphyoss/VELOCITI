@@ -10,7 +10,7 @@ interface VelocitiState {
   
   // UI State
   currentModule: 'dashboard' | 'workbench' | 'agents' | 'genie' | 'strategic' | 'telos' | 'admin' | 'action-agents';
-  llmProvider: 'openai' | 'writer' | 'fireworks';
+  llmProvider: 'openai' | 'writer';
   isConnected: boolean;
   
   // Actions
@@ -23,7 +23,7 @@ interface VelocitiState {
   setActivities: (activities: Activity[]) => void;
   addActivity: (activity: Activity) => void;
   setCurrentModule: (module: 'dashboard' | 'workbench' | 'agents' | 'genie' | 'strategic' | 'telos' | 'admin' | 'action-agents') => void;
-  setLLMProvider: (provider: 'openai' | 'writer' | 'fireworks') => void;
+  setLLMProvider: (provider: 'openai' | 'writer') => void;
   setConnectionStatus: (connected: boolean) => void;
 }
 

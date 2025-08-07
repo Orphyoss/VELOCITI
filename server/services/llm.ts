@@ -105,17 +105,16 @@ const openai = new OpenAI({
 const writer = new WriterClient();
 
 export class LLMService {
-  private currentProvider: 'openai' | 'writer' | 'fireworks' = 'writer';
+  private currentProvider: 'openai' | 'writer' = 'writer';
 
-  setProvider(provider: 'openai' | 'writer' | 'fireworks') {
+  setProvider(provider: 'openai' | 'writer') {
     this.currentProvider = provider;
   }
 
   getAvailableProviders(): Array<{ id: string; name: string; model: string }> {
     return [
       { id: 'writer', name: 'Writer AI', model: 'Palmyra X5' },
-      { id: 'openai', name: 'OpenAI', model: 'GPT-4o' },
-      { id: 'fireworks', name: 'GPT OSS-20B', model: 'gpt-oss-20b' }
+      { id: 'openai', name: 'OpenAI', model: 'GPT-4o' }
     ];
   }
 
