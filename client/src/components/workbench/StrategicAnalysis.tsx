@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
 
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Settings, Play } from 'lucide-react';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Settings, Play, Gauge } from 'lucide-react';
 import { streamingApi } from '@/services/streamingApi';
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor';
 import { useToast } from '@/hooks/use-toast';
