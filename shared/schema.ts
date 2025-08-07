@@ -342,6 +342,41 @@ export const routeMarkets = pgTable("route_markets", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Route Capacity Configuration - New table for detailed route capacity data
+export const routeCapacity = pgTable("route_capacity", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  route_code: varchar("route_code", { length: 10 }).notNull(), // LGW-BCN, etc.
+  origin_airport: varchar("origin_airport", { length: 3 }).notNull(), // LGW
+  destination_airport: varchar("destination_airport", { length: 3 }).notNull(), // BCN
+  route_name: varchar("route_name", { length: 100 }).notNull(), // London Gatwick → Barcelona
+  carrier_code: varchar("carrier_code", { length: 3 }).notNull(), // EZY, BA, FR, etc.
+  carrier_name: varchar("carrier_name", { length: 50 }).notNull(), // easyJet, British Airways
+  aircraft_type: varchar("aircraft_type", { length: 10 }).notNull(), // A320, A319, B737
+  seats_per_flight: integer("seats_per_flight").notNull(), // 180, 186, etc.
+  daily_flights: integer("daily_flights").notNull(), // Number of flights per day
+  weekly_frequency: integer("weekly_frequency").notNull(), // Total flights per week
+  active_flag: boolean("active_flag").default(true),
+  effective_from: date("effective_from").notNull(),
+  effective_to: date("effective_to"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Route Competitive Carriers - Mapping of competitors by route
+export const routeCompetitors = pgTable("route_competitors", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  route_code: varchar("route_code", { length: 10 }).notNull(),
+  carrier_code: varchar("carrier_code", { length: 3 }).notNull(),
+  carrier_name: varchar("carrier_name", { length: 50 }).notNull(),
+  market_share_pct: decimal("market_share_pct", { precision: 5, scale: 2 }), // Market share %
+  avg_price: decimal("avg_price", { precision: 8, scale: 2 }), // Average price
+  daily_capacity: integer("daily_capacity"), // Total daily seats offered
+  competitive_position: varchar("competitive_position", { length: 20 }), // strong, neutral, weak
+  active_flag: boolean("active_flag").default(true),
+  last_updated: timestamp("last_updated").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -374,6 +409,18 @@ export const insertConversationSchema = createInsertSchema(conversations).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertRouteCapacitySchema = createInsertSchema(routeCapacity).omit({
+  id: true,
+  created_at: true,
+  updated_at: true,
+});
+
+export const insertRouteCompetitorsSchema = createInsertSchema(routeCompetitors).omit({
+  id: true,
+  created_at: true,
+  last_updated: true,
 });
 
 export const insertSystemMetricSchema = createInsertSchema(systemMetrics).omit({
