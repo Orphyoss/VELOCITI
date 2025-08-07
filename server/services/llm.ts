@@ -1,6 +1,7 @@
 import OpenAI from 'openai';
 import { logger } from './logger';
 import { config } from './configValidator.js';
+import { completeWithFireworks } from './fireworksService';
 
 // Writer AI SDK interface
 interface WriterAPI {
@@ -104,10 +105,18 @@ const openai = new OpenAI({
 const writer = new WriterClient();
 
 export class LLMService {
-  private currentProvider: 'openai' | 'writer' = 'writer';
+  private currentProvider: 'openai' | 'writer' | 'fireworks' = 'writer';
 
-  setProvider(provider: 'openai' | 'writer') {
+  setProvider(provider: 'openai' | 'writer' | 'fireworks') {
     this.currentProvider = provider;
+  }
+
+  getAvailableProviders(): Array<{ id: string; name: string; model: string }> {
+    return [
+      { id: 'writer', name: 'Writer AI', model: 'Palmyra X5' },
+      { id: 'openai', name: 'OpenAI', model: 'GPT-4o' },
+      { id: 'fireworks', name: 'GPT OSS-20B', model: 'gpt-oss-20b' }
+    ];
   }
 
   async generateStrategicAnalysis(prompt: string, context?: any): Promise<{
@@ -140,6 +149,36 @@ export class LLMService {
           analysis: response.text,
           confidence: response.confidence,
           recommendations: this.extractRecommendations(response.text)
+        };
+      } else if (this.currentProvider === 'fireworks') {
+        logger.debug('LLM', 'generateStrategicAnalysis', 'Using Fireworks GPT-OSS-20B model');
+        const fireworksPrompt = `As an expert airline revenue management analyst specializing in EasyJet operations, provide strategic analysis for: ${prompt}
+
+Please provide:
+1. Key insights and analysis
+2. Specific recommendations
+3. Risk factors to consider
+4. Implementation priorities
+
+Keep the response focused and actionable.`;
+
+        const response = await completeWithFireworks(fireworksPrompt, {
+          max_tokens: 1500,
+          temperature: 0.7
+        });
+
+        const duration = Date.now() - startTime;
+        logger.info('LLM', 'generateStrategicAnalysis', 'Fireworks analysis completed', { 
+          duration,
+          model: 'gpt-oss-20b'
+        });
+
+        const confidence = this.calculateConfidenceFromText(response);
+        
+        return {
+          analysis: response,
+          confidence: confidence,
+          recommendations: this.extractRecommendations(response)
         };
       } else {
         logger.debug('LLM', 'generateStrategicAnalysis', 'Using OpenAI GPT-4o model');
@@ -228,6 +267,22 @@ export class LLMService {
       logger.error('LLM', 'processDataQuery', `Data query failed after ${duration}ms`, error);
       throw error;
     }
+  }
+
+  private calculateConfidenceFromText(text: string): number {
+    // Calculate confidence based on response quality indicators
+    const hasRecommendations = text.toLowerCase().includes('recommend');
+    const hasSpecifics = /\d+/.test(text); // Contains numbers/data
+    const isDetailed = text.length > 500;
+    const hasStructure = text.includes('\n') || text.includes('•') || text.includes('-');
+    
+    let confidence = 0.6; // Base confidence
+    if (hasRecommendations) confidence += 0.1;
+    if (hasSpecifics) confidence += 0.1;
+    if (isDetailed) confidence += 0.1;
+    if (hasStructure) confidence += 0.1;
+    
+    return Math.min(confidence, 0.95);
   }
 
   private extractRecommendations(text: string): string[] {

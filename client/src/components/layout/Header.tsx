@@ -56,7 +56,7 @@ export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProp
     };
   }, [showNotifications]);
 
-  const handleProviderChange = async (provider: 'openai' | 'writer') => {
+  const handleProviderChange = async (provider: 'openai' | 'writer' | 'fireworks') => {
     try {
       await api.setLLMProvider(provider);
       setLLMProvider(provider);
@@ -210,6 +210,7 @@ export default function Header({ onMobileMenuToggle, hidePageTitle }: HeaderProp
               <SelectContent>
                 <SelectItem value="writer">Writer (Palmyra X5)</SelectItem>
                 <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
+                <SelectItem value="fireworks">GPT OSS-20B</SelectItem>
               </SelectContent>
             </Select>
           </div>
