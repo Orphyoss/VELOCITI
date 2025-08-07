@@ -1019,6 +1019,7 @@ export default function TelosIntelligence() {
                   <DollarSign className="h-5 w-5 text-orange-600" />
                   Route Yield Analysis
                 </h3>
+                <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">Comprehensive yield optimization and revenue management analysis</p>
               </div>
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Route:</span>
