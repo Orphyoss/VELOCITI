@@ -5,21 +5,21 @@
 
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { competitivePricing, routeMarkets } from '../shared/schema';
+import { infare_webfare_fact } from '../shared/schema';
 
 const client = postgres(process.env.DEV_DATABASE_URL || process.env.DATABASE_URL!);
 const db = drizzle(client);
 
-// Sample data from the provided infare_webfare_fact table
+// Sample data from the provided infare_webfare_fact table (proper field names)
 const sampleCompetitiveData = [
   {
-    marketKey: 274, snapshotDateKey: 1872, dptrDateKey: 20260711, dptrTimeKey: 4081,
-    outbndBookingClassCd: 'M', outbndFareBasis: 'YAP21', observationTmKey: 1418, outbndFltNbr: 9586,
-    priceExclTaxAmt: 848.48, priceInclTaxAmt: 610.82, taxAmt: 116.68, currencyKey: 1,
-    carrKey: 999, carrAirlineCode: 'TL', carrAirlineName: 'Telos Airlines',
-    priceOutbndAmt: 405.59, priceInbndAmt: 1288.52, isTaxInclFlg: 'dummy_IS_TAX_INCL_FLG_0',
-    searchClass: 'PREMIUM_ECONOMY', estimatedCos: 'dummy_ESTIMATED_COS_0', saverSellup: 122.3,
-    expectedFareBasis: '["BAP21"]', saverPrice: 140.89, mainPrice: 1233.56, fltNbr: 232
+    market_key: 274, snapshot_date_key: 1872, dptr_date_key: 20260711, dptr_time_key: 4081,
+    outbnd_booking_class_cd: 'M', outbnd_fare_basis: 'YAP21', observation_tm_key: 1418, outbnd_flt_nbr: 9586,
+    price_excl_tax_amt: 848.48, price_incl_tax_amt: 610.82, tax_amt: 116.68, currency_key: 1,
+    carr_key: 999, carr_airline_code: 'TL', carr_airline_name: 'Telos Airlines',
+    price_outbnd_amt: 405.59, price_inbnd_amt: 1288.52, is_tax_incl_flg: 'Y',
+    search_class: 'PREMIUM_ECONOMY', estimated_cos: 'dummy_ESTIMATED_COS_0', saver_sellup: 122.3,
+    expected_fare_basis: JSON.parse('["BAP21"]'), saver_price: 140.89, main_price: 1233.56, flt_nbr: 232
   },
   {
     marketKey: 274, snapshotDateKey: 1870, dptrDateKey: 20260526, dptrTimeKey: 6174,
@@ -84,7 +84,7 @@ const sampleCompetitiveData = [
     searchClass: 'BUSINESS', estimatedCos: 'dummy_ESTIMATED_COS_40', saverSellup: 141.5,
     expectedFareBasis: '["HAP21"]', saverPrice: 138.44, mainPrice: 856.33, fltNbr: 5020
   },
-  // Add EasyJet data as competitor reference
+  // Realistic European competitor data for EasyJet routes
   {
     marketKey: 274, snapshotDateKey: 1875, dptrDateKey: 20260612, dptrTimeKey: 1430,
     outbndBookingClassCd: 'Y', outbndFareBasis: 'FLEX', observationTmKey: 1430, outbndFltNbr: 8912,
@@ -95,56 +95,85 @@ const sampleCompetitiveData = [
     expectedFareBasis: '["FLEX"]', saverPrice: 132.40, mainPrice: 156.50, fltNbr: 8912
   },
   {
-    marketKey: 306, snapshotDateKey: 1876, dptrDateKey: 20260612, dptrTimeKey: 845,
-    outbndBookingClassCd: 'Y', outbndFareBasis: 'FLEX', observationTmKey: 845, outbndFltNbr: 1047,
-    priceExclTaxAmt: 142.30, priceInclTaxAmt: 169.80, taxAmt: 27.50, currencyKey: 1,
-    carrKey: 200, carrAirlineCode: 'U2', carrAirlineName: 'easyJet',
-    priceOutbndAmt: 142.30, priceInbndAmt: 0, isTaxInclFlg: 'Y',
-    searchClass: 'ECONOMY', estimatedCos: 'STANDARD', saverSellup: 12.50,
-    expectedFareBasis: '["FLEX"]', saverPrice: 121.80, mainPrice: 142.30, fltNbr: 1047
+    marketKey: 274, snapshotDateKey: 1876, dptrDateKey: 20260612, dptrTimeKey: 845,
+    outbndBookingClassCd: 'Y', outbndFareBasis: 'BASIC', observationTmKey: 845, outbndFltNbr: 6732,
+    priceExclTaxAmt: 189.50, priceInclTaxAmt: 215.30, taxAmt: 25.80, currencyKey: 1,
+    carrKey: 201, carrAirlineCode: 'BA', carrAirlineName: 'British Airways',
+    priceOutbndAmt: 189.50, priceInbndAmt: 0, isTaxInclFlg: 'Y',
+    searchClass: 'ECONOMY', estimatedCos: 'PREMIUM', saverSellup: 22.50,
+    expectedFareBasis: '["BASIC"]', saverPrice: 167.00, mainPrice: 189.50, fltNbr: 6732
+  },
+  {
+    marketKey: 274, snapshotDateKey: 1877, dptrDateKey: 20260612, dptrTimeKey: 920,
+    outbndBookingClassCd: 'Y', outbndFareBasis: 'BASIC', observationTmKey: 920, outbndFltNbr: 4521,
+    priceExclTaxAmt: 138.30, priceInclTaxAmt: 159.80, taxAmt: 21.50, currencyKey: 1,
+    carrKey: 202, carrAirlineCode: 'FR', carrAirlineName: 'Ryanair',
+    priceOutbndAmt: 138.30, priceInbndAmt: 0, isTaxInclFlg: 'Y',
+    searchClass: 'ECONOMY', estimatedCos: 'BASIC', saverSellup: 8.20,
+    expectedFareBasis: '["BASIC"]', saverPrice: 118.40, mainPrice: 138.30, fltNbr: 4521
+  },
+  {
+    marketKey: 306, snapshotDateKey: 1878, dptrDateKey: 20260612, dptrTimeKey: 1015,
+    outbndBookingClassCd: 'Y', outbndFareBasis: 'LIGHT', observationTmKey: 1015, outbndFltNbr: 1123,
+    priceExclTaxAmt: 194.75, priceInclTaxAmt: 224.90, taxAmt: 30.15, currencyKey: 1,
+    carrKey: 203, carrAirlineCode: 'KL', carrAirlineName: 'KLM',
+    priceOutbndAmt: 194.75, priceInbndAmt: 0, isTaxInclFlg: 'Y',
+    searchClass: 'ECONOMY', estimatedCos: 'PREMIUM', saverSellup: 28.50,
+    expectedFareBasis: '["LIGHT"]', saverPrice: 172.20, mainPrice: 194.75, fltNbr: 1123
+  },
+  {
+    marketKey: 419, snapshotDateKey: 1879, dptrDateKey: 20260612, dptrTimeKey: 1145,
+    outbndBookingClassCd: 'Y', outbndFareBasis: 'LITE', observationTmKey: 1145, outbndFltNbr: 5647,
+    priceExclTaxAmt: 184.60, priceInclTaxAmt: 212.40, taxAmt: 27.80, currencyKey: 1,
+    carrKey: 204, carrAirlineCode: 'AF', carrAirlineName: 'Air France',
+    priceOutbndAmt: 184.60, priceInbndAmt: 0, isTaxInclFlg: 'Y',
+    searchClass: 'ECONOMY', estimatedCos: 'PREMIUM', saverSellup: 24.80,
+    expectedFareBasis: '["LITE"]', saverPrice: 162.30, mainPrice: 184.60, fltNbr: 5647
   }
 ];
 
-// Route market mappings
-const routeMarketMappings = [
-  { marketKey: 274, originAirport: 'LGW', destinationAirport: 'BCN', routeCode: 'LGW-BCN', marketName: 'London Gatwick to Barcelona' },
-  { marketKey: 306, originAirport: 'LGW', destinationAirport: 'AMS', routeCode: 'LGW-AMS', marketName: 'London Gatwick to Amsterdam' },
-  { marketKey: 419, originAirport: 'LGW', destinationAirport: 'CDG', routeCode: 'LGW-CDG', marketName: 'London Gatwick to Paris Charles de Gaulle' },
-  { marketKey: 345, originAirport: 'LGW', destinationAirport: 'MAD', routeCode: 'LGW-MAD', marketName: 'London Gatwick to Madrid' },
-  { marketKey: 461, originAirport: 'LGW', destinationAirport: 'FCO', routeCode: 'LGW-FCO', marketName: 'London Gatwick to Rome Fiumicino' },
-  { marketKey: 369, originAirport: 'LGW', destinationAirport: 'MXP', routeCode: 'LGW-MXP', marketName: 'London Gatwick to Milan Malpensa' },
-  { marketKey: 370, originAirport: 'LGW', destinationAirport: 'ZUR', routeCode: 'LGW-ZUR', marketName: 'London Gatwick to Zurich' }
-];
+// Convert market keys to route mappings
+const marketToRoute: Record<number, string> = {
+  274: 'LGW-BCN',
+  306: 'LGW-AMS', 
+  419: 'LGW-CDG',
+  345: 'LGW-MAD',
+  461: 'LGW-FCO',
+  369: 'LGW-MXP',
+  370: 'LGW-ZUR'
+};
 
 async function populateCompetitiveData() {
   console.log('🚀 Starting competitive pricing data population...');
   
   try {
-    // Insert route market mappings first
-    console.log('📍 Inserting route market mappings...');
-    for (const mapping of routeMarketMappings) {
-      await db.insert(routeMarkets).values(mapping).onConflictDoNothing();
-    }
-    console.log(`✅ Inserted ${routeMarketMappings.length} route market mappings`);
-    
-    // Insert competitive pricing data
+    // Insert competitive pricing data with proper mapping to database schema
     console.log('💰 Inserting competitive pricing data...');
     let insertedCount = 0;
+    
     for (const data of sampleCompetitiveData) {
-      await db.insert(competitivePricing).values(data).onConflictDoNothing();
+      const routeId = marketToRoute[data.market_key];
+      if (!routeId) {
+        console.log(`⚠️ Skipping unknown market key: ${data.market_key}`);
+        continue;
+      }
+      
+      // Insert directly into infare_webfare_fact table with original structure
+      await db.insert(infare_webfare_fact).values(data).onConflictDoNothing();
       insertedCount++;
     }
+    
     console.log(`✅ Inserted ${insertedCount} competitive pricing records`);
     
     // Verify data
-    const totalRecords = await db.select().from(competitivePricing);
-    const totalMarkets = await db.select().from(routeMarkets);
+    const totalRecords = await db.select().from(infare_webfare_fact);
+    const uniqueAirlines = [...new Set(totalRecords.map(r => r.carr_airline_code))];
+    const uniqueMarkets = [...new Set(totalRecords.map(r => r.market_key))];
     
     console.log(`📊 Database now contains:`);
-    console.log(`   - ${totalRecords.length} competitive pricing records`);
-    console.log(`   - ${totalMarkets.length} route market mappings`);
-    console.log(`   - Airlines: ${[...new Set(totalRecords.map(r => r.carrAirlineName))].join(', ')}`);
-    console.log(`   - Routes: ${totalMarkets.map(m => m.routeCode).join(', ')}`);
+    console.log(`   - ${totalRecords.length} infare webfare fact records`);
+    console.log(`   - Airlines: ${uniqueAirlines.join(', ')}`);
+    console.log(`   - Market Keys: ${uniqueMarkets.join(', ')}`);
     
   } catch (error) {
     console.error('❌ Error populating competitive data:', error);

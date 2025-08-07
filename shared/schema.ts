@@ -107,6 +107,37 @@ export const aircraft_types = pgTable("aircraft_types", {
   aircraft_category: varchar("aircraft_category", { length: 20 }), // Narrowbody, Widebody, Regional
 });
 
+// Infare Webfare Fact Table - matches the provided data structure
+export const infare_webfare_fact = pgTable("infare_webfare_fact", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  market_key: integer("market_key").notNull(),
+  snapshot_date_key: integer("snapshot_date_key").notNull(),
+  dptr_date_key: integer("dptr_date_key").notNull(),
+  dptr_time_key: integer("dptr_time_key").notNull(),
+  outbnd_booking_class_cd: varchar("outbnd_booking_class_cd", { length: 10 }),
+  outbnd_fare_basis: varchar("outbnd_fare_basis", { length: 20 }),
+  observation_tm_key: integer("observation_tm_key").notNull(),
+  outbnd_flt_nbr: integer("outbnd_flt_nbr"),
+  price_excl_tax_amt: decimal("price_excl_tax_amt", { precision: 10, scale: 2 }),
+  price_incl_tax_amt: decimal("price_incl_tax_amt", { precision: 10, scale: 2 }),
+  tax_amt: decimal("tax_amt", { precision: 10, scale: 2 }),
+  currency_key: integer("currency_key"),
+  carr_key: integer("carr_key"),
+  carr_airline_code: varchar("carr_airline_code", { length: 10 }),
+  carr_airline_name: varchar("carr_airline_name", { length: 100 }),
+  price_outbnd_amt: decimal("price_outbnd_amt", { precision: 10, scale: 2 }),
+  price_inbnd_amt: decimal("price_inbnd_amt", { precision: 10, scale: 2 }),
+  is_tax_incl_flg: varchar("is_tax_incl_flg", { length: 1 }),
+  search_class: varchar("search_class", { length: 20 }),
+  estimated_cos: varchar("estimated_cos", { length: 50 }),
+  saver_sellup: decimal("saver_sellup", { precision: 10, scale: 2 }),
+  expected_fare_basis: jsonb("expected_fare_basis"),
+  saver_price: decimal("saver_price", { precision: 10, scale: 2 }),
+  main_price: decimal("main_price", { precision: 10, scale: 2 }),
+  flt_nbr: integer("flt_nbr"),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
 // Competitive Pricing Data (existing table with correct column names)
 export const competitive_pricing = pgTable("competitive_pricing", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
