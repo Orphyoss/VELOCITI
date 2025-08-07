@@ -7,6 +7,7 @@ Velociti is an AI-powered revenue management and analytics platform designed for
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **RESOLVED**: Major codebase cleanup completed - archived 70+ outdated files including troubleshooting scripts, migration files, and old reports into organized archive directories (database-scripts, migration-scripts, old-reports, troubleshooting)
 - **RESOLVED**: Fixed RAG document management system - created dedicated documents route module and properly registered it in the modular routing system, resolving HTML vs JSON response issues
 - **RESOLVED**: Documents API fully functional - system now properly lists 6 existing documents from Pinecone vector database with structured JSON responses
 - **RESOLVED**: Fixed System Monitoring functionality - created admin routes module for health, performance, and memory APIs, all now returning proper JSON responses
