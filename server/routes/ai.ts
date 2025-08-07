@@ -73,7 +73,7 @@ router.post('/generate-analysis', async (req, res) => {
       });
     }
 
-    logger.info('AI analysis request', {
+    logger.info('AI analysis request', 'Request details', {
       provider: provider || 'openai',
       type,
       useRAG,
@@ -85,13 +85,13 @@ router.post('/generate-analysis', async (req, res) => {
     
     try {
       if (provider === 'fireworks') {
-        logger.info('Using Fireworks GPT-OSS-20B for analysis');
+        logger.info('Using Fireworks GPT-OSS-20B for analysis', 'Provider selection');
         analysis = await completeWithFireworks(prompt, { 
           max_tokens: 1500,
           temperature: 0.7 
         });
       } else if (provider === 'writer') {
-        logger.info('Using Writer Palmyra X5 for analysis');
+        logger.info('Using Writer Palmyra X5 for analysis', 'Provider selection');
         const writerClient = new WriterClient();
         const result = await writerClient.generate({ 
           model: 'palmyra-x-5-32b', 
@@ -100,7 +100,7 @@ router.post('/generate-analysis', async (req, res) => {
         analysis = result.text;
         confidence = result.confidence;
       } else {
-        logger.info('Using OpenAI GPT-4o for analysis');
+        logger.info('Using OpenAI GPT-4o for analysis', 'Provider selection');
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         const response = await openai.chat.completions.create({
           model: 'gpt-4o',
@@ -124,7 +124,7 @@ router.post('/generate-analysis', async (req, res) => {
         throw new Error('No analysis generated');
       }
 
-      logger.info('Analysis generation completed', {
+      logger.info('Analysis generation completed', 'Generation success', {
         provider: provider || 'openai',
         analysisLength: analysis.length,
         confidence
@@ -139,7 +139,7 @@ router.post('/generate-analysis', async (req, res) => {
       });
 
     } catch (error: any) {
-      logger.error('LLM generation error', { 
+      logger.error('LLM generation error', 'Generation failed', { 
         error: error?.message, 
         provider: provider || 'openai' 
       });
@@ -152,7 +152,7 @@ router.post('/generate-analysis', async (req, res) => {
     }
 
   } catch (error: any) {
-    logger.error('Analysis request error', { error: error?.message });
+    logger.error('Analysis request error', 'Request failed', { error: error?.message });
     res.status(500).json({
       success: false,
       error: 'Failed to process analysis request'
