@@ -433,6 +433,28 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
   createdAt: true,
 });
 
+// Strategic Analysis Sessions  
+export const strategicAnalyses = pgTable("strategic_analyses", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: uuid("user_id").references(() => users.id),
+  prompt: text("prompt").notNull(),
+  response: text("response").notNull(),
+  provider: text("provider").notNull(), // writer, openai, fireworks
+  useRAG: boolean("use_rag").default(false),
+  ragContext: text("rag_context"),
+  confidence: decimal("confidence", { precision: 3, scale: 2 }),
+  status: text("status").default("completed"), // running, completed, failed
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertStrategicAnalysisSchema = createInsertSchema(strategicAnalyses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Action Agents Configuration and Management
 export const actionAgentConfigs = pgTable("action_agent_configs", {
   id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),

@@ -11,6 +11,7 @@ import { WebSocketService } from "./services/websocket";
 import { writerService } from "./services/writerService";
 import { enhancedLLMService } from "./services/enhancedLlmService";
 import { cacheService } from "./services/cacheService";
+import strategicAnalysesRoutes from "./routes/strategicAnalyses";
 import { 
   insertAlertSchema, 
   insertFeedbackSchema,

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { api } from '@/services/api';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,31 @@ export default function StrategicAnalysis() {
   const [analyses, setAnalyses] = useState<AnalysisResult[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
 
+  // Load historical analyses from database
+  const { data: historicalAnalyses } = useQuery({
+    queryKey: ['/api/strategic/analyses'],
+    enabled: true,
+  });
+
+  // Load historical data on component mount
+  useEffect(() => {
+    if (historicalAnalyses?.data) {
+      const formattedAnalyses = historicalAnalyses.data.map((analysis: any) => ({
+        id: analysis.id,
+        prompt: analysis.prompt,
+        result: {
+          analysis: analysis.response,
+          confidence: parseFloat(analysis.confidence) || 0.9,
+          recommendations: []
+        },
+        timestamp: analysis.createdAt,
+        provider: analysis.provider,
+        status: analysis.status
+      }));
+      setAnalyses(formattedAnalyses);
+    }
+  }, [historicalAnalyses]);
+
   const [useRAG, setUseRAG] = useState(true);
   const [streamingMode] = useState(true); // Always use streaming mode
   const [streamingContent, setStreamingContent] = useState('');
@@ -33,83 +58,14 @@ export default function StrategicAnalysis() {
   const { llmProvider } = useVelocitiStore();
   const { toast } = useToast();
 
-  const analysisMutation = useMutation({
-    mutationFn: async (promptText: string) => {
-      if (streamingMode) {
-        return streamAnalysis(promptText);
-      } else if (llmProvider === 'writer') {
-        return writerAnalysisMutation.mutateAsync(promptText);
-      } else {
-        return api.queryLLM(promptText, 'strategic');
-      }
-    },
-    onSuccess: (result, promptText) => {
-      const newAnalysis: AnalysisResult = {
-        id: Date.now().toString(),
-        prompt: promptText,
-        result: llmProvider === 'writer' ? { analysis: result.analysis, confidence: 0.95, recommendations: [] } : result,
-        timestamp: new Date().toISOString(),
-      };
-      setAnalyses(prev => [newAnalysis, ...prev.slice(0, 9)]); // Keep last 10 analyses
-      setSelectedAnalysis(newAnalysis);
-      setPrompt('');
-      
-      toast({
-        title: "Analysis Complete",
-        description: `Strategic analysis generated using ${llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'}${useRAG ? ' with RAG context' : ''}`,
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Analysis Failed",
-        description: `Failed to generate strategic analysis using ${llmProvider === 'writer' ? 'Writer API' : 'OpenAI'}. Please try again.`,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const writerAnalysisMutation = useMutation({
-    mutationFn: async (promptText: string) => {
-      // Get RAG context if enabled
-      let ragContext = '';
-      if (useRAG) {
-        try {
-          const ragResponse = await fetch('/api/pinecone/search', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: promptText, topK: 3 })
-          });
-          if (ragResponse.ok) {
-            const ragData = await ragResponse.json();
-            if (ragData.results && ragData.results.length > 0) {
-              ragContext = ragData.results.map((result: any) => 
-                `Source: ${result.metadata.filename}\n${result.text}`
-              ).join('\n\n---\n\n');
-            }
-          }
-        } catch (error) {
-          console.warn('RAG context retrieval failed, proceeding without context:', error);
-        }
-      }
-
-      const response = await fetch('/api/writer/strategic-analysis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: promptText,
-          context: ragContext ? { ragContext } : undefined
-        })
-      });
-      if (!response.ok) throw new Error('Writer API request failed');
-      return response.json();
-    }
-  });
-
+  // Streaming analysis function
   const streamAnalysis = async (promptText: string) => {
     setIsStreaming(true);
     setStreamingContent('');
-
+    
     try {
+      const ragContext = useRAG ? await getRagContext(promptText) : '';
+      
       const fullContent = await streamingApi.streamAnalysis(
         promptText,
         {
@@ -148,6 +104,95 @@ export default function StrategicAnalysis() {
       throw error;
     }
   };
+
+  // Helper function to get RAG context
+  const getRagContext = async (promptText: string): Promise<string> => {
+    try {
+      const ragResponse = await fetch('/api/pinecone/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: promptText, topK: 3 })
+      });
+      if (ragResponse.ok) {
+        const ragData = await ragResponse.json();
+        if (ragData.results && ragData.results.length > 0) {
+          return ragData.results.map((result: any) => 
+            `Source: ${result.metadata.filename}\n${result.text}`
+          ).join('\n\n---\n\n');
+        }
+      }
+    } catch (error) {
+      console.warn('RAG context retrieval failed, proceeding without context:', error);
+    }
+    return '';
+  };
+
+  const analysisMutation = useMutation({
+    mutationFn: async (promptText: string) => {
+      return streamAnalysis(promptText);
+    },
+    onSuccess: async (result, promptText) => {
+      // Save to database
+      try {
+        const saveResponse = await fetch('/api/strategic/analyses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: promptText,
+            response: result.analysis,
+            provider: llmProvider,
+            useRAG,
+            confidence: result.confidence || 0.9,
+            status: 'completed'
+          })
+        });
+        
+        if (saveResponse.ok) {
+          const savedAnalysis = await saveResponse.json();
+          const newAnalysis: AnalysisResult = {
+            id: savedAnalysis.data.id,
+            prompt: promptText,
+            result: result,
+            timestamp: savedAnalysis.data.createdAt,
+          };
+          setAnalyses(prev => [newAnalysis, ...prev.slice(0, 19)]); // Keep last 20 analyses
+          setSelectedAnalysis(newAnalysis);
+        }
+      } catch (error) {
+        console.error('Failed to save analysis to database:', error);
+        // Still create in-memory version if database save fails
+        const newAnalysis: AnalysisResult = {
+          id: Date.now().toString(),
+          prompt: promptText,
+          result: result,
+          timestamp: new Date().toISOString(),
+        };
+        setAnalyses(prev => [newAnalysis, ...prev.slice(0, 19)]);
+        setSelectedAnalysis(newAnalysis);
+      }
+      
+      setPrompt('');
+      
+      toast({
+        title: "Analysis Complete",
+        description: `Strategic analysis generated using ${
+          llmProvider === 'writer' ? 'Writer Palmyra X5' : 
+          llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'
+        }${useRAG ? ' with RAG context' : ''}`,
+      });
+    },
+    onError: (error) => {
+      console.error('Analysis failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: `Failed to generate strategic analysis using ${
+          llmProvider === 'writer' ? 'Writer API' : 
+          llmProvider === 'fireworks' ? 'Fireworks API' : 'OpenAI'
+        }. Please try again.`,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSubmit = () => {
     if (!prompt.trim()) return;

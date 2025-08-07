@@ -53,6 +53,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await insightsRoutes(app);
   await conversationRoutes(app);
   await fireworksRoutes(app);
+  
+  // Strategic Analysis routes
+  const strategicAnalysesRoutes = await import('./strategicAnalyses');
+  app.use('/api/strategic', strategicAnalysesRoutes.default);
 
   await debugRoutes(app);
 
