@@ -20,7 +20,7 @@ class WriterClient {
     }
 
     const requestBody = {
-      model: 'palmyra-x-5-32b',
+      model: 'palmyra-x-003-instruct',
       messages: [{ role: 'user', content: params.prompt }],
       max_tokens: 1000,
       temperature: 0.7
@@ -111,7 +111,7 @@ router.post('/stream', async (req, res) => {
       } else if (provider === 'writer') {
         const writerClient = new WriterClient();
         const result = await writerClient.generate({ 
-          model: 'palmyra-x-5-32b', 
+          model: 'palmyra-x-003-instruct', 
           prompt: enhancedPrompt 
         });
         completion = result.text;

@@ -20,7 +20,7 @@ class WriterClient {
     }
 
     const requestBody = {
-      model: 'palmyra-x-5-32b',
+      model: 'palmyra-x-003-instruct',
       messages: [{ role: 'user', content: params.prompt }],
       max_tokens: 1500,
       temperature: 0.7
@@ -30,7 +30,8 @@ class WriterClient {
       url: `${this.baseUrl}/chat/completions`,
       model: requestBody.model,
       promptLength: params.prompt.length,
-      hasApiKey: !!this.apiKey
+      hasApiKey: !!this.apiKey,
+      keyPrefix: this.apiKey?.substring(0, 8) + '...'
     });
 
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
