@@ -46,12 +46,7 @@ export default function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       icon: Database,
       path: '/genie'
     },
-    {
-      id: 'competitive',
-      label: 'Competitive Pricing',
-      icon: TrendingUp,
-      path: '/competitive'
-    }
+
   ];
 
   const adminNavigationItems = [

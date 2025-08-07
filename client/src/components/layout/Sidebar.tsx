@@ -40,18 +40,7 @@ export default function Sidebar() {
       icon: Database,
       path: '/genie'
     },
-    {
-      id: 'competitive',
-      label: 'Competitive Pricing',
-      icon: TrendingUp,
-      path: '/competitive'
-    },
-    {
-      id: 'fireworks',
-      label: 'Fireworks AI',
-      icon: Zap,
-      path: '/fireworks'
-    }
+
   ];
 
   const adminNavigationItems = [
