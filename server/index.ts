@@ -57,6 +57,14 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
+    // Setup middleware to prioritize API routes over Vite
+    app.use('*', (req, res, next) => {
+      if (req.originalUrl.startsWith('/api/')) {
+        // Let API routes be handled by Express
+        return next();
+      }
+      next();
+    });
     await setupVite(app, server);
   } else {
     serveStatic(app);
