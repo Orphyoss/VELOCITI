@@ -80,6 +80,24 @@ router.post('/generate-analysis', async (req, res) => {
       promptLength: prompt.length
     });
 
+    // Handle RAG document retrieval if requested
+    let ragContext = '';
+    if (useRAG) {
+      try {
+        const { pineconeService } = await import('../services/pinecone');
+        const relevantDocs = await pineconeService.searchDocuments(prompt, 3);
+        if (relevantDocs.length > 0) {
+          ragContext = `\n\nRelevant Documents:\n${relevantDocs.map(doc => `- ${doc.title}: ${doc.content.substring(0, 500)}...`).join('\n')}`;
+          logger.info('RAG context added', 'Document retrieval', { 
+            docsFound: relevantDocs.length,
+            contextLength: ragContext.length 
+          });
+        }
+      } catch (error) {
+        logger.warn('RAG retrieval failed', 'Document search', { error: error.message });
+      }
+    }
+
     let analysis = '';
     let confidence = 0.9;
     
@@ -102,7 +120,7 @@ router.post('/generate-analysis', async (req, res) => {
 ## Implementation Timeline
 [Suggested timeline for implementation]
 
-User Request: ${prompt}
+User Request: ${prompt}${ragContext}
 
 Please provide a comprehensive analysis following the structure above:`;
 
@@ -117,8 +135,8 @@ Please provide a comprehensive analysis following the structure above:`;
         logger.info('Using Writer Palmyra X5 for analysis', 'Provider selection');
         const writerClient = new WriterClient();
         const result = await writerClient.generate({ 
-          model: 'palmyra-x-5-32b', 
-          prompt 
+          model: 'palmyra-x-003-instruct', 
+          prompt: prompt + ragContext
         });
         analysis = result.text;
         confidence = result.confidence;
@@ -134,7 +152,7 @@ Please provide a comprehensive analysis following the structure above:`;
             },
             { 
               role: 'user', 
-              content: prompt 
+              content: prompt + ragContext
             }
           ],
           max_tokens: 1500,
