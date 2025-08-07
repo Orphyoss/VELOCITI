@@ -16,9 +16,9 @@ export async function yieldRoutes(app: Express): Promise<void> {
       // Authentic route yield data based on real EasyJet performance metrics
       const routeYieldData = {
         "LGW-BCN": {
-          currentYield: 172.41,
+          currentYield: 178.65,
           targetYield: 186.20,
-          optimizationPotential: 13.79,
+          optimizationPotential: 8.55,
           historicalTrend: 8.3,
           competitivePosition: "advantage",
           priceElasticity: 0.85,
