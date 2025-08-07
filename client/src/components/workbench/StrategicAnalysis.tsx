@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 
 
-import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Gauge, Settings, Play } from 'lucide-react';
+import { Brain, Loader2, Lightbulb, TrendingUp, AlertCircle, Download, Zap, Database, Settings, Play } from 'lucide-react';
 import { streamingApi } from '@/services/streamingApi';
 import { PerformanceMonitor } from '@/components/performance/PerformanceMonitor';
 import { useToast } from '@/hooks/use-toast';
@@ -27,7 +27,7 @@ export default function StrategicAnalysis() {
   const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisResult | null>(null);
 
   const [useRAG, setUseRAG] = useState(true);
-  const [streamingMode, setStreamingMode] = useState(true);
+  const [streamingMode] = useState(true); // Always use streaming mode
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const { llmProvider } = useVelocitiStore();
@@ -240,22 +240,6 @@ export default function StrategicAnalysis() {
               <div className="flex items-center space-x-3 text-xs text-dark-400">
                 <span>Press Ctrl+Enter to analyze</span>
                 
-                {/* Performance Mode Toggle */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setStreamingMode(!streamingMode)}
-                  className={`h-7 px-3 transition-all duration-200 ${
-                    streamingMode 
-                      ? 'bg-blue-600/20 border-blue-600/40 text-blue-400 hover:bg-blue-600/30' 
-                      : 'bg-dark-800 border-dark-600 text-dark-400 hover:bg-dark-700'
-                  }`}
-                >
-                  <Gauge className="w-3 h-3 mr-1.5" />
-                  {streamingMode ? 'Streaming' : 'Standard'}
-                  <div className={`ml-2 w-2 h-2 rounded-full ${streamingMode ? 'bg-blue-400' : 'bg-dark-500'}`} />
-                </Button>
-
                 {/* RAG Context Toggle */}
                 <Button
                   variant="outline"
@@ -275,7 +259,7 @@ export default function StrategicAnalysis() {
               <Button 
                 onClick={handleSubmit}
                 disabled={analysisMutation.isPending || isStreaming || !prompt.trim()}
-                className="bg-purple-600 hover:bg-purple-700"
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium"
               >
                 {analysisMutation.isPending || isStreaming ? (
                   <>
@@ -504,7 +488,8 @@ export default function StrategicAnalysis() {
               <span className="text-sm text-green-400">Connected</span>
             </div>
             <p className="text-xs text-dark-400">
-              {llmProvider === 'writer' ? 'Writer Palmyra X5' : 'OpenAI GPT-4o'} with RAG context
+              {llmProvider === 'writer' ? 'Writer Palmyra X5' : 
+               llmProvider === 'fireworks' ? 'GPT OSS-20B' : 'OpenAI GPT-4o'} with RAG context
             </p>
           </CardContent>
         </Card>
