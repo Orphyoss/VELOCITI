@@ -45,6 +45,12 @@ export default function Sidebar() {
       label: 'Competitive Pricing',
       icon: TrendingUp,
       path: '/competitive'
+    },
+    {
+      id: 'fireworks',
+      label: 'Fireworks AI',
+      icon: Zap,
+      path: '/fireworks'
     }
   ];
 

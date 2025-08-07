@@ -16,6 +16,7 @@ import { adminRoutes } from "./admin";
 import { dataGenerationRoutes } from "./dataGeneration";
 import { insightsRoutes } from './insights';
 import { conversationRoutes } from './conversations';
+import { fireworksRoutes } from './fireworks';
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -51,6 +52,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await dataGenerationRoutes(app);
   await insightsRoutes(app);
   await conversationRoutes(app);
+  await fireworksRoutes(app);
 
   await debugRoutes(app);
 

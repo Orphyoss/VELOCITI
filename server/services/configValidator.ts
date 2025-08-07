@@ -8,6 +8,7 @@ const envSchema = z.object({
   OPENAI_API_KEY: z.string().min(1, 'OPENAI_API_KEY is required'),
   WRITER_API_KEY: z.string().optional(),
   PINECONE_API_KEY: z.string().optional(),
+  FIREWORKS_API_KEY: z.string().optional(),
   PORT: z.string().default('5000'),
   REPLIT_DB_URL: z.string().optional(), // Replit database URL
 });
@@ -30,6 +31,7 @@ export function validateEnv(): Env {
     hasOpenAI: !!result.data.OPENAI_API_KEY,
     hasWriter: !!result.data.WRITER_API_KEY,
     hasPinecone: !!result.data.PINECONE_API_KEY,
+    hasFireworks: !!result.data.FIREWORKS_API_KEY,
   });
 
   return result.data;
