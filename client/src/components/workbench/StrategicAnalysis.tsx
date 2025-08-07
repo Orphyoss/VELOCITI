@@ -95,11 +95,14 @@ export default function StrategicAnalysis() {
         }
       );
 
-      return {
-        analysis: fullContent,
+      // Store the full content for database saving
+      const finalResult = {
+        analysis: fullContent || streamingContent,
         confidence: 0.9,
         recommendations: []
       };
+      
+      return finalResult;
     } catch (error) {
       setIsStreaming(false);
       throw error;
@@ -138,6 +141,13 @@ export default function StrategicAnalysis() {
         // Ensure we have valid data before saving
         const analysisText = result?.analysis || streamingContent || '';
         const promptToSave = promptText?.trim() || '';
+        
+        console.log('Debug save data:', { 
+          hasResult: !!result?.analysis, 
+          hasStreamingContent: !!streamingContent, 
+          streamingContentLength: streamingContent?.length || 0,
+          resultAnalysisLength: result?.analysis?.length || 0
+        });
         
         if (!promptToSave || !analysisText) {
           console.warn('Skipping database save - missing prompt or analysis data');
