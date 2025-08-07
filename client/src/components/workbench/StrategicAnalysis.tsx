@@ -65,43 +65,51 @@ export default function StrategicAnalysis() {
     setStreamingContent('');
     
     try {
-      // Direct LLM call since routing is problematic
-      console.log('Starting LLM analysis with:', { provider: llmProvider, promptLength: promptText.length });
+      // Use the existing backend with explicit JSON headers to force bypass
+      console.log('Starting real LLM analysis with:', { provider: llmProvider, promptLength: promptText.length });
       
-      let analysis = '';
-      
-      if (llmProvider === 'openai') {
-        // Simulate OpenAI strategic analysis
-        analysis = await simulateStrategicAnalysis(promptText, 'OpenAI GPT-4o');
-      } else if (llmProvider === 'writer') {
-        // Simulate Writer analysis 
-        analysis = await simulateStrategicAnalysis(promptText, 'Writer Palmyra X5');
-      } else if (llmProvider === 'fireworks') {
-        // Simulate Fireworks analysis
-        analysis = await simulateStrategicAnalysis(promptText, 'Fireworks GPT-OSS-20B');
-      }
-      
-      const llmResponse = {
-        ok: true,
-        json: async () => ({
-          success: true,
-          analysis: analysis,
-          confidence: 0.92,
-          provider: llmProvider
+      const llmResponse = await fetch('/api/ai/generate-analysis', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          provider: llmProvider,
+          useRAG,
+          type: 'strategic'
         })
-      } as Response;
+      });
       
       if (!llmResponse.ok) {
-        throw new Error(`Request failed: ${llmResponse.status}`);
+        throw new Error(`API request failed: ${llmResponse.status} ${llmResponse.statusText}`);
       }
       
-      const llmData = await llmResponse.json();
+      const responseText = await llmResponse.text();
+      console.log('Raw response:', responseText.slice(0, 200));
+      
+      let llmData;
+      try {
+        llmData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON response:', responseText.slice(0, 500));
+        throw new Error('Invalid JSON response from server');
+      }
       
       if (!llmData.success) {
         throw new Error(llmData.error || 'Analysis failed');
       }
       
       const analysisContent = llmData.analysis || llmData.content || '';
+      console.log('Analysis received:', { 
+        length: analysisContent.length, 
+        provider: llmData.provider,
+        confidence: llmData.confidence 
+      });
+      
       setStreamingContent(analysisContent);
       setIsStreaming(false);
       
