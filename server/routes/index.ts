@@ -17,6 +17,8 @@ import { dataGenerationRoutes } from "./dataGeneration";
 import { insightsRoutes } from './insights';
 import { conversationRoutes } from './conversations';
 import { fireworksRoutes } from './fireworks';
+import llmRoutes from './llm';
+import aiRoutes from './ai';
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -53,6 +55,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await insightsRoutes(app);
   await conversationRoutes(app);
   await fireworksRoutes(app);
+  
+  // LLM and AI Analysis routes
+  app.use('/api/llm', llmRoutes);
+  app.use('/api/ai', aiRoutes);
   
   // Strategic Analysis routes
   const strategicAnalysesRoutes = await import('./strategicAnalyses');

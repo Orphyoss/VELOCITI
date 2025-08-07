@@ -65,35 +65,96 @@ export default function StrategicAnalysis() {
     setStreamingContent('');
     
     try {
-      // Real LLM analysis using direct server-side implementation
-      console.log('Starting real LLM analysis with:', { provider: llmProvider, promptLength: promptText.length });
-      
-      // Use the existing working endpoint that bypasses Vite routing issues
-      const response = await fetch(`/api/llm/analyze?provider=${llmProvider}&useRAG=${useRAG}`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Bypass-Vite': 'true'
-        },
-        body: JSON.stringify({ prompt: promptText })
+      // Test both working API endpoints with proper logging
+      console.log('Starting LLM analysis with detailed debugging:', { 
+        provider: llmProvider, 
+        promptLength: promptText.length,
+        useRAG 
       });
       
       let analysis = '';
+      let apiResponse = null;
       
-      if (!response.ok) {
-        // Fallback to server-side generation if routing fails
-        analysis = await generateAnalysisServerSide(promptText, llmProvider);
-      } else {
-        try {
-          const result = await response.json();
-          analysis = result.analysis || result.content || '';
-        } catch (e) {
-          // If JSON parsing fails, use server-side generation
-          analysis = await generateAnalysisServerSide(promptText, llmProvider);
+      try {
+        // First try the AI analysis endpoint with explicit JSON-only headers
+        console.log('Attempting /api/ai/generate-analysis...');
+        const aiResponse = await fetch('/api/ai/generate-analysis', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: JSON.stringify({
+            prompt: promptText,
+            provider: llmProvider,
+            useRAG,
+            type: 'strategic'
+          })
+        });
+        
+        console.log('AI API Response:', { 
+          ok: aiResponse.ok, 
+          status: aiResponse.status, 
+          contentType: aiResponse.headers.get('content-type') 
+        });
+        
+        const aiText = await aiResponse.text();
+        console.log('AI Response body (first 200 chars):', aiText.slice(0, 200));
+        
+        if (aiResponse.ok && aiText.startsWith('{')) {
+          const aiData = JSON.parse(aiText);
+          if (aiData.success && aiData.analysis) {
+            analysis = aiData.analysis;
+            apiResponse = aiData;
+            console.log('✓ Successfully got analysis from AI endpoint');
+          }
         }
+        
+        // If AI endpoint failed, try LLM stream endpoint
+        if (!analysis) {
+          console.log('Attempting /api/llm/stream...');
+          const llmResponse = await fetch('/api/llm/stream', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+              query: promptText,
+              provider: llmProvider,
+              useRAG,
+              type: 'strategic'
+            })
+          });
+          
+          console.log('LLM API Response:', { 
+            ok: llmResponse.ok, 
+            status: llmResponse.status, 
+            contentType: llmResponse.headers.get('content-type') 
+          });
+          
+          const llmText = await llmResponse.text();
+          console.log('LLM Response body (first 200 chars):', llmText.slice(0, 200));
+          
+          if (llmResponse.ok && llmText.startsWith('{')) {
+            const llmData = JSON.parse(llmText);
+            if (llmData.success && llmData.content) {
+              analysis = llmData.content;
+              apiResponse = llmData;
+              console.log('✓ Successfully got analysis from LLM endpoint');
+            }
+          }
+        }
+        
+      } catch (error) {
+        console.error('API request error:', error);
       }
       
+      // If both API calls failed, use server-side generation
       if (!analysis) {
+        console.log('Both API endpoints failed, falling back to server-side generation');
         analysis = await generateAnalysisServerSide(promptText, llmProvider);
       }
 
