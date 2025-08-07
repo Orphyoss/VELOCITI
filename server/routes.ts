@@ -1870,6 +1870,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register LLM streaming routes
   app.use('/api/llm', llmRoutes);
+  
+  // Register AI analysis routes (bypass Vite routing issues)
+  const aiRoutes = await import('./routes/ai');
+  app.use('/api/ai', aiRoutes.default);
 
   // ============================================================================
   // DATA GENERATION ENDPOINTS

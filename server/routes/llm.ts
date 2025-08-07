@@ -120,10 +120,10 @@ router.post('/stream', async (req, res) => {
       });
 
     } catch (error: any) {
-      logger.error('LLM streaming error', { error: error.message, provider });
-      res.status(500).json({
+      logger.error('LLM streaming error', { error: error?.message, provider });
+      return res.status(500).json({
         success: false,
-        error: error.message,
+        error: error?.message || 'Unknown error',
         provider: provider || 'openai'
       });
     }

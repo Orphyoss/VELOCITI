@@ -65,48 +65,52 @@ export default function StrategicAnalysis() {
     setStreamingContent('');
     
     try {
-      // Direct API call instead of using broken streaming service
-      const response = await fetch('/api/llm/stream', {
+      // Fallback to existing LLM service since Vite intercepts streaming routes
+      const llmResponse = await fetch('/api/ai/generate-analysis', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: promptText,
+          prompt: promptText,
           provider: llmProvider,
           useRAG,
           type: 'strategic'
         })
       });
       
-      if (!response.ok) {
-        throw new Error(`Request failed: ${response.status}`);
+      if (!llmResponse.ok) {
+        throw new Error(`Request failed: ${llmResponse.status}`);
       }
       
-      const data = await response.json();
+      const llmData = await llmResponse.json();
       
-      if (!data.success) {
-        throw new Error(data.error || 'Analysis failed');
+      if (!llmData.success) {
+        throw new Error(llmData.error || 'Analysis failed');
       }
       
-      setStreamingContent(data.content);
+      const analysisContent = llmData.analysis || llmData.content || '';
+      setStreamingContent(analysisContent);
       setIsStreaming(false);
       
       return {
-        analysis: data.content,
-        confidence: 0.9,
-        recommendations: []
+        analysis: analysisContent,
+        confidence: llmData.confidence || 0.9,
+        recommendations: llmData.recommendations || []
       };
-
-      // Store the full content for database saving
-      const finalResult = {
-        analysis: fullContent || streamingContent,
-        confidence: 0.9,
-        recommendations: []
-      };
-      
-      return finalResult;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Analysis failed:', error);
       setIsStreaming(false);
-      throw error;
+      
+      toast({
+        title: "Analysis Failed",
+        description: error.message || 'Failed to generate strategic analysis. Please try again.',
+        variant: "destructive",
+      });
+      
+      return {
+        analysis: `Analysis failed: ${error.message || 'Unknown error occurred'}`,
+        confidence: 0,
+        recommendations: []
+      };
     }
   };
 
