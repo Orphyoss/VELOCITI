@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { useVelocitiStore } from '@/stores/useVelocitiStore';
-import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Sunrise, Zap, ChevronDown, ChevronRight, BarChart3, Activity, Cog } from 'lucide-react';
+import { Plane, ChartLine, ClipboardList, Users, Database, Brain, Settings, Target, Sunrise, Zap, ChevronDown, ChevronRight, BarChart3, Activity, Cog, TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import AgentStatus from '../agents/AgentStatus';
 
@@ -39,6 +39,12 @@ export default function Sidebar() {
       label: 'Databricks Genie',
       icon: Database,
       path: '/genie'
+    },
+    {
+      id: 'competitive',
+      label: 'Competitive Pricing',
+      icon: TrendingUp,
+      path: '/competitive'
     }
   ];
 

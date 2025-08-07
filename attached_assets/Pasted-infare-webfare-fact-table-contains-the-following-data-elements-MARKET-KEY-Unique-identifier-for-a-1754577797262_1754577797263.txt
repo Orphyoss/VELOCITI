@@ -1,0 +1,29 @@
+infare_webfare_fact table contains the following data elements:
+
+MARKET_KEY: Unique identifier for a specific market where outbound flight bookings are made.
+SNAPSHOT_DATE_KEY: Unique identifier for the date of data snapshot taken for outbound flight bookings.
+DPTR_DATE_KEY: Unique identifier for the departure date of outbound flights.
+DPTR_TIME_KEY: Unique identifier for the time of departure of outbound flights.
+OUTBND_BOOKING_CLASS_CD: The booking class code for outbound flights.
+OUTBND_FARE_BASIS: The fare basis code for outbound flights.
+OBSERVATION_TM_KEY: Unique identifier for the time of observation when outbound flight booking data was recorded.
+OUTBND_FLT_NBR: The flight number for outbound flights.
+PRICE_EXCL_TAX_AMT: The price of the outbound flight booking excluding taxes.
+PRICE_INCL_TAX_AMT: The total price of the outbound flight booking, including taxes.
+TAX_AMT: The tax amount for the outbound flight booking.
+CURRENCY_KEY: Unique identifier for the currency used in the pricing details.
+CARR_KEY: Unique identifier for the airline associated with the outbound flight booking.
+CARR_AIRLINE_CODE: The code representing the specific airline associated with the outbound flight booking.
+CARR_AIRLINE_NAME: The name of the airline associated with the outbound flight booking.
+PRICE_OUTBND_AMT: The price amount for outbound flights, excluding taxes and fees.
+PRICE_INBND_AMT: The price amount for inbound flights, excluding taxes and fees.
+IS_TAX_INCL_FLG: Flag indicating whether the tax amount is included in the total price.
+SEARCH_CLASS: The class of search criteria used for filtering outbound flight bookings.
+ESTIMATED_COS: Estimated cost of service for the outbound flight booking.
+SAVER_SELLUP: Indicator for whether the booking is in a saver or sell-up class.
+EXPECTED_FARE_BASIS: The expected fare basis code for outbound flights.
+SAVER_PRICE: The discounted price offered for outbound flight bookings.
+MAIN_PRICE: The primary cost amount excluding taxes and additional fees.
+FLT_NBR: The flight number for outbound flights.
+__CREATED_AT: The timestamp indicating the creation time of the data entry.
+Is 

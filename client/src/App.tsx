@@ -18,6 +18,7 @@ import Admin from "@/pages/Admin";
 import DataGeneration from "@/pages/DataGeneration";
 import SystemMonitoring from "@/pages/SystemMonitoring";
 import ProductionTroubleshoot from "@/pages/ProductionTroubleshoot";
+import CompetitivePricing from "@/pages/CompetitivePricing";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
 
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/data-generation" component={DataGeneration} />
       <Route path="/system-monitoring" component={SystemMonitoring} />
       <Route path="/production-troubleshoot" component={ProductionTroubleshoot} />
+      <Route path="/competitive" component={CompetitivePricing} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

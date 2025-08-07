@@ -269,6 +269,48 @@ export const activities = pgTable("activities", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Competitive Pricing Data (infare_webfare_fact)
+export const competitivePricing = pgTable("competitive_pricing", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  marketKey: integer("market_key").notNull(),
+  snapshotDateKey: integer("snapshot_date_key").notNull(),
+  dptrDateKey: integer("dptr_date_key").notNull(),
+  dptrTimeKey: integer("dptr_time_key").notNull(),
+  outbndBookingClassCd: varchar("outbnd_booking_class_cd", { length: 10 }),
+  outbndFareBasis: varchar("outbnd_fare_basis", { length: 20 }),
+  observationTmKey: integer("observation_tm_key"),
+  outbndFltNbr: integer("outbnd_flt_nbr"),
+  priceExclTaxAmt: decimal("price_excl_tax_amt", { precision: 10, scale: 2 }),
+  priceInclTaxAmt: decimal("price_incl_tax_amt", { precision: 10, scale: 2 }),
+  taxAmt: decimal("tax_amt", { precision: 10, scale: 2 }),
+  currencyKey: integer("currency_key"),
+  carrKey: integer("carr_key"),
+  carrAirlineCode: varchar("carr_airline_code", { length: 10 }),
+  carrAirlineName: varchar("carr_airline_name", { length: 255 }),
+  priceOutbndAmt: decimal("price_outbnd_amt", { precision: 10, scale: 2 }),
+  priceInbndAmt: decimal("price_inbnd_amt", { precision: 10, scale: 2 }),
+  isTaxInclFlg: varchar("is_tax_incl_flg", { length: 50 }),
+  searchClass: varchar("search_class", { length: 50 }),
+  estimatedCos: varchar("estimated_cos", { length: 50 }),
+  saverSellup: decimal("saver_sellup", { precision: 10, scale: 2 }),
+  expectedFareBasis: text("expected_fare_basis"),
+  saverPrice: decimal("saver_price", { precision: 10, scale: 2 }),
+  mainPrice: decimal("main_price", { precision: 10, scale: 2 }),
+  fltNbr: integer("flt_nbr"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Route Markets mapping
+export const routeMarkets = pgTable("route_markets", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  marketKey: integer("market_key").unique().notNull(),
+  originAirport: varchar("origin_airport", { length: 3 }).notNull(),
+  destinationAirport: varchar("destination_airport", { length: 3 }).notNull(),
+  routeCode: varchar("route_code", { length: 10 }).notNull(),
+  marketName: varchar("market_name", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
