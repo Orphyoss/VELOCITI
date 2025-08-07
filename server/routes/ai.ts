@@ -86,9 +86,32 @@ router.post('/generate-analysis', async (req, res) => {
     try {
       if (provider === 'fireworks') {
         logger.info('Using Fireworks GPT-OSS-20B for analysis', 'Provider selection');
-        analysis = await completeWithFireworks(prompt, { 
-          max_tokens: 1500,
-          temperature: 0.7 
+        
+        // Enhanced prompt for open-source model with clear structure
+        const structuredPrompt = `You are an expert airline revenue management analyst for EasyJet. Provide a strategic analysis following this exact structure:
+
+## Executive Summary
+[Brief overview in 2-3 sentences]
+
+## Key Findings
+[3-4 bullet points with specific insights]
+
+## Strategic Recommendations
+[3-4 actionable recommendations with impact estimates]
+
+## Implementation Timeline
+[Suggested timeline for implementation]
+
+User Request: ${prompt}
+
+Please provide a comprehensive analysis following the structure above:`;
+
+        analysis = await completeWithFireworks(structuredPrompt, { 
+          max_tokens: 1000,
+          temperature: 0.3,
+          top_p: 0.9,
+          repetition_penalty: 1.2,
+          stop: ["User Request:", "## Additional", "---", "\n\n\n"]
         });
       } else if (provider === 'writer') {
         logger.info('Using Writer Palmyra X5 for analysis', 'Provider selection');

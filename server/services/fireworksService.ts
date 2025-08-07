@@ -10,7 +10,8 @@ export async function completeWithFireworks(prompt: string, opts?: {
   max_tokens?: number;
   temperature?: number;
   top_p?: number;
-  stop?: string[]; 
+  stop?: string[];
+  repetition_penalty?: number;
 }) {
   const payload = {
     model: MODEL,
@@ -18,7 +19,8 @@ export async function completeWithFireworks(prompt: string, opts?: {
     max_tokens: opts?.max_tokens ?? 256,
     temperature: opts?.temperature ?? 0.7,
     top_p: opts?.top_p ?? 1,
-    stop: opts?.stop
+    stop: opts?.stop,
+    repetition_penalty: opts?.repetition_penalty ?? 1.1
   };
 
   const response = await fetch(`${BASE_URL}/completions`, {
