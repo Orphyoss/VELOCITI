@@ -1147,12 +1147,12 @@ export default function TelosIntelligence() {
                       {/* Route vs Network */}
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {routeYieldData.currentYield > 172.41 ? '+' : ''}
-                          £{(routeYieldData.currentYield - 172.41).toFixed(2)}
+                          {routeYieldData.currentYield > (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield) ? '+' : ''}
+                          £{(routeYieldData.currentYield - (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield || 172.41)).toFixed(2)}
                         </div>
                         <div className="text-sm text-muted-foreground">vs Network Avg</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          {routeYieldData.currentYield > 172.41 ? 'Above' : 'Below'} network average of £172.41
+                          {routeYieldData.currentYield > (realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield) ? 'Above' : 'Below'} network average of £{(realRMMetrics?.yieldOptimization?.currentYield || rmMetrics.yieldOptimization.currentYield || 172.41).toFixed(2)}
                         </div>
                       </div>
                       
